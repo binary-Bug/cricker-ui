@@ -1,41 +1,43 @@
-<div class="main grid place-content-center">
-  <div class="main example-button-row grid place-items-center">
-    <div>
-      <h1 class="text-6xl text-purple-800 font-mono">
-        Current room id is {{ roomService.currentRoom.roomId }}
-      </h1>
-    </div>
-    <div>
-      <button
-        mat-raised-button
-        color="primary"
-        style="width: 12em; height: 6em"
-        (click)="openCodeDialog()"
-      >
-        Create New Match
-      </button>
-    </div>
+<div class="main grid justify-content-center">
+  <div class="grid place-items-center">
+    <div class="example-button-row grid place-items-center">
+      <div>
+        <h1 class="text-6xl text-purple-800 font-mono">
+          Current room id is {{ roomService.currentRoom.roomId }}
+        </h1>
+      </div>
+      <div>
+        <button
+          mat-raised-button
+          color="primary"
+          style="width: 12em; height: 6em"
+          (click)="openCodeDialog()"
+        >
+          Create New Match
+        </button>
+      </div>
 
-    <div>
-      <button mat-raised-button style="width: 10em; height: 6em">
-        View All Players
-      </button>
-    </div>
+      <div>
+        <button mat-raised-button style="width: 10em; height: 6em">
+          View All Players
+        </button>
+      </div>
 
-    <div>
-      <button mat-raised-button style="width: 10em; height: 6em">
-        View All Matches
-      </button>
-    </div>
-    <div>
-      <button
-        mat-raised-button
-        color="warn"
-        style="width: 7em; height: 4em; background-color: red"
-        (click)="exit()"
-      >
-        Exit Room
-      </button>
+      <div>
+        <button mat-raised-button style="width: 10em; height: 6em">
+          View All Matches
+        </button>
+      </div>
+      <div>
+        <button
+          mat-raised-button
+          color="warn"
+          style="width: 7em; height: 4em; background-color: red"
+          (click)="exit()"
+        >
+          Exit Room
+        </button>
+      </div>
     </div>
   </div>
 </div>

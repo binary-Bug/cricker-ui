@@ -1,112 +1,114 @@
-<div class="main grid place-content-center">
-  <div class="main example-button-row grid place-items-center">
-    <div *ngIf="!isCreateRoomClicked && !isJoinRoomClicked">
-      <button
-        mat-raised-button
-        style="width: 10em; height: 6em"
-        (click)="toggleCreateRoom()"
-      >
-        Create New Room
-      </button>
-    </div>
-
-    <div *ngIf="isCreateRoomClicked && !isJoinRoomClicked">
-      <mat-form-field class="example-full-width">
-        <mat-label style="color: red">Your New Room ID is</mat-label>
-        <input
-          style="color: red; font-weight: bolder"
-          disabled="true"
-          matInput
-          value="{{ id }}"
-        />
-      </mat-form-field>
-    </div>
-
-    <div *ngIf="isCreateRoomClicked && !isJoinRoomClicked">
-      <mat-form-field [floatLabel]="'always'">
-        <mat-label>Enter an admin code for your room</mat-label>
-        <input
-          [(ngModel)]="code"
-          matInput
-          [type]="hide ? 'password' : 'text'"
-          placeholder="Enter Code"
-        />
+<div class="main grid justify-content-center">
+  <div class="example-button-row grid place-items-center">
+    <div class="grid place-items-center">
+      <div *ngIf="!isCreateRoomClicked && !isJoinRoomClicked">
         <button
-          mat-icon-button
-          matSuffix
-          (click)="hide = !hide"
-          [attr.aria-label]="'Hide password'"
-          [attr.aria-pressed]="hide"
+          mat-raised-button
+          style="width: 10em; height: 6em"
+          (click)="toggleCreateRoom()"
         >
-          <mat-icon>{{ hide ? "visibility_off" : "visibility" }}</mat-icon>
+          Create New Room
         </button>
-      </mat-form-field>
-    </div>
+      </div>
 
-    <div *ngIf="isCreateRoomClicked && !isJoinRoomClicked">
-      <button
-        (click)="createRoom()"
-        mat-raised-button
-        color="primary"
-        style="width: 12em; height: 6em"
-      >
-        Create and Join Room
-      </button>
-    </div>
+      <div *ngIf="isCreateRoomClicked && !isJoinRoomClicked">
+        <mat-form-field class="example-full-width">
+          <mat-label style="color: red">Your New Room ID is</mat-label>
+          <input
+            style="color: red; font-weight: bolder"
+            disabled="true"
+            matInput
+            value="{{ id }}"
+          />
+        </mat-form-field>
+      </div>
 
-    <div *ngIf="isCreateRoomClicked && !isJoinRoomClicked">
-      <button
-        mat-raised-button
-        style="width: 10em; height: 6em"
-        (click)="toggleCreateRoom()"
-      >
-        Go Back
-      </button>
-    </div>
+      <div *ngIf="isCreateRoomClicked && !isJoinRoomClicked">
+        <mat-form-field [floatLabel]="'always'">
+          <mat-label>Enter an admin code for your room</mat-label>
+          <input
+            [(ngModel)]="code"
+            matInput
+            [type]="hide ? 'password' : 'text'"
+            placeholder="Enter Code"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            (click)="hide = !hide"
+            [attr.aria-label]="'Hide password'"
+            [attr.aria-pressed]="hide"
+          >
+            <mat-icon>{{ hide ? "visibility_off" : "visibility" }}</mat-icon>
+          </button>
+        </mat-form-field>
+      </div>
 
-    <div *ngIf="!isCreateRoomClicked && !isJoinRoomClicked">
-      <button
-        (click)="toggleJoinRoom()"
-        mat-raised-button
-        color="primary"
-        style="width: 12em; height: 6em"
-      >
-        Join Room
-      </button>
-    </div>
+      <div *ngIf="isCreateRoomClicked && !isJoinRoomClicked">
+        <button
+          (click)="createRoom()"
+          mat-raised-button
+          color="primary"
+          style="width: 12em; height: 6em"
+        >
+          Create and Join Room
+        </button>
+      </div>
 
-    <div *ngIf="!isCreateRoomClicked && isJoinRoomClicked">
-      <mat-form-field class="example-full-width">
-        <mat-label>Enter Your Room ID</mat-label>
-        <input
-          [formControl]="roomId"
-          type="number"
-          style="color: purple; font-weight: bolder"
-          matInput
-        />
-        <mat-error>Please enter a valid room id</mat-error>
-      </mat-form-field>
-    </div>
+      <div *ngIf="isCreateRoomClicked && !isJoinRoomClicked">
+        <button
+          mat-raised-button
+          style="width: 10em; height: 6em"
+          (click)="toggleCreateRoom()"
+        >
+          Go Back
+        </button>
+      </div>
 
-    <div *ngIf="!isCreateRoomClicked && isJoinRoomClicked">
-      <button
-        (click)="joinRoom()"
-        mat-raised-button
-        color="primary"
-        style="width: 12em; height: 6em"
-      >
-        Join Room
-      </button>
-    </div>
+      <div *ngIf="!isCreateRoomClicked && !isJoinRoomClicked">
+        <button
+          (click)="toggleJoinRoom()"
+          mat-raised-button
+          color="primary"
+          style="width: 12em; height: 6em"
+        >
+          Join Room
+        </button>
+      </div>
 
-    <div *ngIf="!isCreateRoomClicked && isJoinRoomClicked">
-      <button
-        mat-raised-button
-        style="width: 10em; height: 6em"
-        (click)="toggleJoinRoom()"
-      >
-        Go Back
-      </button>
+      <div *ngIf="!isCreateRoomClicked && isJoinRoomClicked">
+        <mat-form-field class="example-full-width">
+          <mat-label>Enter Your Room ID</mat-label>
+          <input
+            [formControl]="roomId"
+            type="number"
+            style="color: purple; font-weight: bolder"
+            matInput
+          />
+          <mat-error>Please enter a valid room id</mat-error>
+        </mat-form-field>
+      </div>
+
+      <div *ngIf="!isCreateRoomClicked && isJoinRoomClicked">
+        <button
+          (click)="joinRoom()"
+          mat-raised-button
+          color="primary"
+          style="width: 12em; height: 6em"
+        >
+          Join Room
+        </button>
+      </div>
+
+      <div *ngIf="!isCreateRoomClicked && isJoinRoomClicked">
+        <button
+          mat-raised-button
+          style="width: 10em; height: 6em"
+          (click)="toggleJoinRoom()"
+        >
+          Go Back
+        </button>
+      </div>
     </div>
   </div>
 </div>
