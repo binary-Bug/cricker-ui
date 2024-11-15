@@ -1,0 +1,30 @@
+.mat-column-nameBat {
+  width: 50%;
+}
+
+.mat-column-nameBowl {
+  width: 70%;
+}
+
+.wicket {
+  background-color: red;
+}
+
+.four {
+  background-color: #0b9b67;
+  color: white;
+}
+
+.dot {
+  background-color: rgb(224, 224, 224);
+  color: black;
+}
+
+.run {
+  background-color: rgb(156, 155, 153);
+  color: black;
+}
+
+.six {
+  background-color: #673ab7;
+}

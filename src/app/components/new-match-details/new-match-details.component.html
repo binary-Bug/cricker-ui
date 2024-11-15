@@ -1,0 +1,81 @@
+<div class="main grid place-content-center">
+  <div>
+    <mat-form-field>
+      <mat-label>Team 1 Name</mat-label>
+      <input matInput [(ngModel)]="team1Name" />
+    </mat-form-field>
+  </div>
+  <div>
+    <mat-form-field>
+      <mat-label>Team 2 Name</mat-label>
+      <input matInput [(ngModel)]="team2Name" />
+    </mat-form-field>
+  </div>
+  <div>
+    <mat-form-field>
+      <mat-label>{{
+        team1Name ? team1Name + " Captain" : "Team 1 Captain"
+      }}</mat-label>
+      <input matInput [(ngModel)]="team1Captain" />
+    </mat-form-field>
+  </div>
+  <div>
+    <mat-form-field>
+      <mat-label>{{
+        team2Name ? team2Name + " Captain" : "Team 2 Captain"
+      }}</mat-label>
+      <input matInput [(ngModel)]="team2Captain" />
+    </mat-form-field>
+  </div>
+  <div>
+    <label>Toss Won by: </label>
+    <mat-radio-group [formControl]="tossWinner">
+      <mat-radio-button color="primary" value="team1">{{
+        team1Name ? team1Name : "Team 1"
+      }}</mat-radio-button>
+      <br />
+      <mat-radio-button
+        color="primary"
+        style="margin-left: 86px"
+        value="team2"
+        >{{ team2Name ? team2Name : "Team 2" }}</mat-radio-button
+      >
+    </mat-radio-group>
+  </div>
+  <div>
+    <label>Elected to: </label>
+    <mat-radio-group [formControl]="tossResult">
+      <mat-radio-button color="primary" style="margin-left: 17px" value="bat"
+        >Bat</mat-radio-button
+      >
+      <br />
+      <mat-radio-button color="primary" style="margin-left: 86px" value="ball"
+        >Ball</mat-radio-button
+      >
+    </mat-radio-group>
+  </div>
+  <div>
+    <mat-form-field>
+      <mat-label>Enter Total Players</mat-label>
+      <input type="number" matInput [(ngModel)]="totalPlayers" />
+    </mat-form-field>
+  </div>
+  <div>
+    <mat-form-field>
+      <mat-label>Enter Total Overs</mat-label>
+      <input type="number" matInput [(ngModel)]="totalOvers" />
+    </mat-form-field>
+  </div>
+  <div class="example-button-row place-items-center">
+    <div>
+      <button
+        (click)="openCurrentPlayerDialog()"
+        mat-raised-button
+        color="primary"
+        style="width: 12em; height: 6em"
+      >
+        Start Match
+      </button>
+    </div>
+  </div>
+</div>

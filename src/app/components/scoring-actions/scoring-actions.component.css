@@ -1,0 +1,10 @@
+.example-button-row .mat-mdc-button-base {
+  border-radius: 40px;
+  width: 50px !important;
+  height: 50px !important;
+}
+
+.smallText .mat-mdc-button-base {
+  font-size: 11px !important;
+  line-height: 1;
+}
