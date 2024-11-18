@@ -1,24 +1,31 @@
-name: Azure Static Web Apps CI/CD
+name: Deploy 🚀🚀
+
+# on:
+#   push:
+#     branches:
+#       - Initial
+#   pull_request:
+#     types: [opened, synchronize, reopened, closed]
+#     branches:
+#       - Initial
 
 on:
-  push:
-    branches:
-      - Initial
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
-    branches:
-      - Initial
+  workflow_run:
+    workflows: ["UI Status Check 🤠"]
+    types: [completed]
+  workflow_dispatch:
 
 jobs:
   build_and_deploy_job:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    # if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     environment:
-      name: 'Production'
+      name: "Production"
     name: Build and Deploy Job
     permissions:
-       id-token: write
-       contents: read
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v3
         with:
@@ -30,10 +37,10 @@ jobs:
         uses: actions/github-script@v6
         id: idtoken
         with:
-           script: |
-               const coredemo = require('@actions/core')
-               return await coredemo.getIDToken()
-           result-encoding: string
+          script: |
+            const coredemo = require('@actions/core')
+            return await coredemo.getIDToken()
+          result-encoding: string
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
