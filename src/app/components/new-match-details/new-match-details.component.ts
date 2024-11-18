@@ -19,6 +19,7 @@ import {
 } from '@angular/material/dialog';
 import { LiveMatchService } from '../../services/live-match.service';
 import { Router } from '@angular/router';
+import { MatchService } from '../../services/match.service';
 @Component({
   selector: 'app-new-match-details',
   standalone: true,
@@ -38,7 +39,7 @@ export class NewMatchDetailsComponent {
   constructor(
     public dialog: MatDialog,
     private router: Router,
-    private liveMatchService: LiveMatchService
+    private matchService: MatchService
   ) {}
   team1Name: string = '';
   team2Name: string = '';
@@ -54,14 +55,14 @@ export class NewMatchDetailsComponent {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        this.liveMatchService.team1.name = this.team1Name;
-        this.liveMatchService.team2.name = this.team2Name;
-        this.liveMatchService.team1.captain = this.team1Captain;
-        this.liveMatchService.team2.captain = this.team2Captain;
-        this.liveMatchService.tossWinner = this.tossWinner.value;
-        this.liveMatchService.tossResult = this.tossResult.value;
-        this.liveMatchService.totalPlayers = this.totalPlayers;
-        this.liveMatchService.totalOvers = this.totalOvers;
+        this.matchService.team1.name = this.team1Name;
+        this.matchService.team1.captain = this.team1Captain;
+        this.matchService.team2.name = this.team2Name;
+        this.matchService.team2.captain = this.team2Captain;
+        this.matchService.tossResult = this.tossResult.value;
+        this.matchService.tossWinner = this.tossWinner.value;
+        this.matchService.totalPlayers = this.totalPlayers;
+        this.matchService.totalOvers = this.totalOvers;
         this.router.navigateByUrl('live');
       }
     });

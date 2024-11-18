@@ -3,6 +3,7 @@ import { MatGridListModule } from '@angular/material/grid-list';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { LiveMatchService } from '../../services/live-match.service';
+import { MatchService } from '../../services/match.service';
 @Component({
   selector: 'app-scoring-actions',
   standalone: true,
@@ -12,16 +13,15 @@ import { LiveMatchService } from '../../services/live-match.service';
 })
 export class ScoringActionsComponent {
   liveMatchService: LiveMatchService = inject(LiveMatchService);
+  matchService: MatchService = inject(MatchService);
   addRun(run: string, color: string): void {
-    this.liveMatchService.overData[
-      this.liveMatchService.currentBowlNumber
-    ].hasBeenBowled = true;
-    this.liveMatchService.overData[
-      this.liveMatchService.currentBowlNumber
-    ].class = color;
-    this.liveMatchService.overData[
-      this.liveMatchService.currentBowlNumber
-    ].label = run;
-    this.liveMatchService.currentBowlNumber += 1;
+    this.liveMatchService.updateOverData();
+    this.liveMatchService.updateBallDataCSS(run, color);
+    this.liveMatchService.updateBallDataRuns(run);
+    this.liveMatchService.updateBallNumber();
+  }
+
+  undo(): void {
+    this.liveMatchService.undo();
   }
 }

@@ -10,6 +10,7 @@ import { MatTableModule } from '@angular/material/table';
 import { CommonModule } from '@angular/common';
 import { ScoringActionsComponent } from '../scoring-actions/scoring-actions.component';
 import { MatButtonModule } from '@angular/material/button';
+import { MatchService } from '../../services/match.service';
 
 @Component({
   selector: 'app-scoring',
@@ -26,6 +27,7 @@ import { MatButtonModule } from '@angular/material/button';
 export class ScoringComponent implements OnInit {
   @ViewChild('overView') overView: ElementRef<HTMLDivElement> | undefined;
   liveMatchService: LiveMatchService = inject(LiveMatchService);
+  matchService: MatchService = inject(MatchService);
   displayedColumns: string[] = ['nameBat', 'runs', 'balls', 'S/R'];
   displayedColumnsBowler: string[] = [
     'nameBowl',

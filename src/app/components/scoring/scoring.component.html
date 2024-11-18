@@ -1,15 +1,50 @@
 <div class="grid place-items-center" style="margin-top: 12px">
-  <div>
-    <h1 style="display: inline">
-      {{ liveMatchService.runsScored }} / {{ liveMatchService.wicketsLost }}
-    </h1>
-    <h3 style="display: inline">
-      {{ liveMatchService.completedOvers | number : "1.1-1" }} Overs
-    </h3>
+  <div class="w-[100%] flex justify-between">
+    <div *ngIf="!matchService.isSecondInning">
+      <h1 style="display: inline">
+        {{ matchService.team1.runsScored }}
+        / {{ matchService.team1.wicketsLost }}
+      </h1>
+      <h3 style="display: inline">
+        {{ matchService.team1.oversPlayed | number : "1.1-1" }} Overs
+      </h3>
+    </div>
+    <div *ngIf="matchService.isSecondInning">
+      <h1 style="display: inline">
+        {{ matchService.team2.runsScored }}
+        / {{ matchService.team2.wicketsLost }}
+      </h1>
+      <h3 style="display: inline">
+        {{ matchService.team2.oversPlayed | number : "1.1-1" }} Overs
+      </h3>
+    </div>
+    <div *ngIf="!matchService.isSecondInning">
+      <h1 style="display: inline">
+        CRR: {{ matchService.team1.runRate | number : "1.1-2" }}
+      </h1>
+    </div>
+    <div *ngIf="matchService.isSecondInning">
+      <h1 style="display: inline">
+        CRR: {{ matchService.team2.runRate | number : "1.1-2" }}
+      </h1>
+    </div>
+    <div *ngIf="matchService.isSecondInning">
+      <h1 style="display: inline">target: 68</h1>
+    </div>
   </div>
   <br />
-  <div #overView class="grid grid-cols-6 gap-2">
-    <ng-container *ngFor="let ball of liveMatchService.overData">
+  <div
+    #overViewTeam1
+    *ngIf="!matchService.isSecondInning"
+    class="grid grid-cols-6 gap-2"
+  >
+    <ng-container
+      *ngFor="
+        let ball of matchService.team1.oversPlayedData[
+          liveMatchService.currentOverNumber
+        ]
+      "
+    >
       <div>
         <button
           class="{{ ball.class }}"
@@ -23,60 +58,32 @@
         </button>
       </div>
     </ng-container>
-
-    <!-- <div>
-      <button
-        mat-mini-fab
-        class="six"
-        matTooltip="Primary"
-        color="primary"
-        aria-label="Example mini fab with a heart icon"
-      >
-        6
-      </button>
-    </div>
-    <div>
-      <button
-        mat-mini-fab
-        matTooltip="Primary"
-        color="warn"
-        aria-label="Example mini fab with a heart icon"
-      >
-        W
-      </button>
-    </div>
-    <div>
-      <button
-        class="four"
-        mat-mini-fab
-        matTooltip="Primary"
-        color="accent"
-        aria-label="Example mini fab with a heart icon"
-      >
-        4
-      </button>
-    </div>
-    <div>
-      <button
-        class="dot"
-        mat-mini-fab
-        matTooltip="Primary"
-        color="primary"
-        aria-label="Example mini fab with a heart icon"
-      >
-        0
-      </button>
-    </div>
-    <div>
-      <button
-        mat-mini-fab
-        matTooltip="Primary"
-        color="primary"
-        aria-label="Example mini fab with a heart icon"
-      >
-        2
-      </button>
-    </div> -->
+  </div>
+  <div
+    #overViewTeam2
+    *ngIf="matchService.isSecondInning"
+    class="grid grid-cols-6 gap-2"
+  >
+    <ng-container
+      *ngFor="
+        let ball of matchService.team2.oversPlayedData[
+          liveMatchService.currentOverNumber
+        ]
+      "
+    >
+      <div>
+        <button
+          class="{{ ball.class }}"
+          mat-mini-fab
+          matTooltip="Primary"
+          color="primary"
+          [disabled]="ball.hasBeenBowled ? null : 'true'"
+          aria-label="Example mini fab with a heart icon"
+        >
+          {{ ball.label }}
+        </button>
+      </div>
+    </ng-container>
   </div>
 </div>
 <br />

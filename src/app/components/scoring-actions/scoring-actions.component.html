@@ -146,6 +146,13 @@
   <mat-grid-tile
     ><div class="example-button-row">
       <button
+        [disabled]="
+          liveMatchService.currentBowlNumber > 0 ||
+          liveMatchService.currentOverNumber > 0
+            ? null
+            : 'true'
+        "
+        (click)="undo()"
         color="primary"
         mat-raised-button
         style="width: 10em; height: 6em"
