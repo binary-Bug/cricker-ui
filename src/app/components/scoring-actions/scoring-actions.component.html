@@ -122,6 +122,7 @@
   <mat-grid-tile
     ><div class="example-button-row">
       <button
+        (click)="liveMatchService.swapStriker()"
         color="primary"
         mat-raised-button
         style="width: 10em; height: 6em"
@@ -152,7 +153,7 @@
             ? null
             : 'true'
         "
-        (click)="undo()"
+        (click)="liveMatchService.undo()"
         color="primary"
         mat-raised-button
         style="width: 10em; height: 6em"

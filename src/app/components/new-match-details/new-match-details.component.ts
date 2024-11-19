@@ -149,7 +149,7 @@ export class OnFieldPlayerDetailsDialog implements OnInit {
   }
 
   onOkClick(): void {
-    this.liveMatchService.striker.name = this.striker.value + '*';
+    this.liveMatchService.striker.name = this.striker.value + '';
     this.liveMatchService.nonStriker.name = this.nonStriker.value + '';
     this.liveMatchService.currentBowler.name = this.currentBowler.value + '';
     this.dialogRef.close('Done');

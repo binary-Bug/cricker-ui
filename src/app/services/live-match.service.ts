@@ -1,8 +1,9 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { MatchService } from './match.service';
 import { Batsmen } from '../models/batsmen.interface';
 import { Bowler } from '../models/bowler.interface';
 import { BALL_DATA } from '../models/ball_data.class';
+import { EventHandlerService } from './event-handler.service';
 
 const OVER_DATA = [
   new BALL_DATA(),
@@ -19,6 +20,8 @@ const OVER_DATA = [
 export class LiveMatchService {
   constructor(private matchService: MatchService) {}
 
+  eventHandler: EventHandlerService = inject(EventHandlerService);
+
   striker: Batsmen = { name: '', runs: 0, balls: 0, fours: 0, six: 0 };
   nonStriker: Batsmen = { name: '', runs: 0, balls: 0, fours: 0, six: 0 };
   currentBowler: Bowler = {
@@ -33,6 +36,22 @@ export class LiveMatchService {
   previousBowlNumber: number = 0;
   totalBallsinCurrentOver: number = 6;
   currentOverNumber: number = 0;
+
+  addRunToStriker(run: number): void {
+    if (run % 2 === 0) {
+      this.striker.runs += run;
+    } else {
+      this.striker.runs += run;
+      this.swapStriker();
+    }
+  }
+
+  public swapStriker(): void {
+    let temp: Batsmen = this.striker;
+    this.striker = this.nonStriker;
+    this.nonStriker = temp;
+    this.eventHandler.NotifyBatsmenSwappedEvent();
+  }
 
   undo(): void {
     if (!this.matchService.isSecondInning) {

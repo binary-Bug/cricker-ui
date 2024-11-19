@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { LiveMatchService } from '../../services/live-match.service';
 import { MatchService } from '../../services/match.service';
+import { EventHandlerService } from '../../services/event-handler.service';
 @Component({
   selector: 'app-scoring-actions',
   standalone: true,
@@ -12,6 +13,7 @@ import { MatchService } from '../../services/match.service';
   styleUrl: './scoring-actions.component.css',
 })
 export class ScoringActionsComponent {
+  eventHandler: EventHandlerService = inject(EventHandlerService);
   liveMatchService: LiveMatchService = inject(LiveMatchService);
   matchService: MatchService = inject(MatchService);
   addRun(run: string, color: string): void {
@@ -19,9 +21,7 @@ export class ScoringActionsComponent {
     this.liveMatchService.updateBallDataCSS(run, color);
     this.liveMatchService.updateBallDataRuns(run);
     this.liveMatchService.updateBallNumber();
-  }
-
-  undo(): void {
-    this.liveMatchService.undo();
+    this.liveMatchService.addRunToStriker(+run);
+    this.eventHandler.NotifyRunAddedEvent();
   }
 }

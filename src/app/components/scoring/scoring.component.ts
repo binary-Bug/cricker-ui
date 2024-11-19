@@ -2,6 +2,7 @@ import {
   Component,
   ElementRef,
   inject,
+  OnDestroy,
   OnInit,
   ViewChild,
 } from '@angular/core';
@@ -11,6 +12,8 @@ import { CommonModule } from '@angular/common';
 import { ScoringActionsComponent } from '../scoring-actions/scoring-actions.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatchService } from '../../services/match.service';
+import { EventHandlerService } from '../../services/event-handler.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-scoring',
@@ -24,8 +27,10 @@ import { MatchService } from '../../services/match.service';
   templateUrl: './scoring.component.html',
   styleUrl: './scoring.component.css',
 })
-export class ScoringComponent implements OnInit {
+export class ScoringComponent implements OnInit, OnDestroy {
   @ViewChild('overView') overView: ElementRef<HTMLDivElement> | undefined;
+  subscriptions: Subscription[] = [];
+  eventHandler: EventHandlerService = inject(EventHandlerService);
   liveMatchService: LiveMatchService = inject(LiveMatchService);
   matchService: MatchService = inject(MatchService);
   displayedColumns: string[] = ['nameBat', 'runs', 'balls', 'S/R'];
@@ -38,7 +43,7 @@ export class ScoringComponent implements OnInit {
   ];
   ELEMENT_DATA_BATSMEN: any[] = [
     {
-      name: this.liveMatchService.striker.name,
+      name: this.liveMatchService.striker.name + '*',
       runs: this.liveMatchService.striker.runs,
       balls: this.liveMatchService.striker.balls,
     },
@@ -63,6 +68,15 @@ export class ScoringComponent implements OnInit {
   ngOnInit(): void {
     this.calculateSR();
     this.calculateEco();
+    this.subscriptions.push(
+      this.eventHandler.RunAddedEvent$().subscribe(() => {
+        this.reAssignBatsmenData();
+      }),
+
+      this.eventHandler.BatsmenSwapEvent$().subscribe(() => {
+        this.reAssignBatsmenData();
+      })
+    );
   }
 
   public calculateSR(): void {
@@ -78,5 +92,21 @@ export class ScoringComponent implements OnInit {
 
   openStat(player: string): void {
     console.log(player);
+  }
+
+  reAssignBatsmenData() {
+    this.ELEMENT_DATA_BATSMEN[0].runs = this.liveMatchService.striker.runs;
+    this.ELEMENT_DATA_BATSMEN[0].balls = this.liveMatchService.striker.balls;
+    this.ELEMENT_DATA_BATSMEN[0].name =
+      this.liveMatchService.striker.name + '*';
+    this.ELEMENT_DATA_BATSMEN[1].runs = this.liveMatchService.nonStriker.runs;
+    this.ELEMENT_DATA_BATSMEN[1].balls = this.liveMatchService.nonStriker.balls;
+    this.ELEMENT_DATA_BATSMEN[1].name = this.liveMatchService.nonStriker.name;
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach((sub) => {
+      sub.unsubscribe();
+    });
   }
 }
