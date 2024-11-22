@@ -24,4 +24,9 @@ export class EventHandlerService {
   NotifyBatsmenSwappedEvent(): void {
     this._batsmenSwapSubj.next();
   }
+
+  // Undo Event
+  NotifyUndoEvent(): void {
+    this._runAddedSubj.next();
+  }
 }

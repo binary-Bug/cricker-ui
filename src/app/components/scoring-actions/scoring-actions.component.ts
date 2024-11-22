@@ -20,9 +20,9 @@ export class ScoringActionsComponent {
     this.liveMatchService.updateOverData();
     this.liveMatchService.updateBallDataCSS(run, color);
     this.liveMatchService.updateBallDataRuns(run);
-    this.liveMatchService.updateBallNumber();
-    this.liveMatchService.addRunToStriker(+run);
     this.liveMatchService.updateBowlerData(+run);
+    this.liveMatchService.addRunToStriker(+run);
+    this.liveMatchService.updateBallNumber();
     this.eventHandler.NotifyRunAddedEvent();
   }
 }

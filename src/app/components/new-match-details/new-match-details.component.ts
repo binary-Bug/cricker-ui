@@ -55,14 +55,15 @@ export class NewMatchDetailsComponent {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        this.matchService.team1.name = this.team1Name;
-        this.matchService.team1.captain = this.team1Captain;
-        this.matchService.team2.name = this.team2Name;
-        this.matchService.team2.captain = this.team2Captain;
+        this.matchService.teamData['team1'].name = this.team1Name;
+        this.matchService.teamData['team1'].captain = this.team1Captain;
+        this.matchService.teamData['team2'].name = this.team2Name;
+        this.matchService.teamData['team2'].captain = this.team2Captain;
         this.matchService.tossResult = this.tossResult.value;
         this.matchService.tossWinner = this.tossWinner.value;
         this.matchService.totalPlayers = this.totalPlayers;
         this.matchService.totalOvers = this.totalOvers;
+        this.matchService.setCurrentRoles();
         this.router.navigateByUrl('live');
       }
     });

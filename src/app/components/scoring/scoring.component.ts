@@ -14,6 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatchService } from '../../services/match.service';
 import { EventHandlerService } from '../../services/event-handler.service';
 import { Subscription } from 'rxjs';
+import { UtilityService } from '../../services/utility.service';
 
 @Component({
   selector: 'app-scoring',
@@ -32,6 +33,7 @@ export class ScoringComponent implements OnInit, OnDestroy {
   subscriptions: Subscription[] = [];
   eventHandler: EventHandlerService = inject(EventHandlerService);
   liveMatchService: LiveMatchService = inject(LiveMatchService);
+  utilityService: UtilityService = inject(UtilityService);
   matchService: MatchService = inject(MatchService);
   displayedColumns: string[] = ['nameBat', 'runs', 'balls', 'S/R'];
   displayedColumnsBowler: string[] = [
@@ -73,6 +75,7 @@ export class ScoringComponent implements OnInit, OnDestroy {
         this.reAssignBatsmenData();
         this.calculateSR();
         this.reAssignBowlerData();
+        this.calculateEco();
       }),
 
       this.eventHandler.BatsmenSwapEvent$().subscribe(() => {
@@ -88,7 +91,8 @@ export class ScoringComponent implements OnInit, OnDestroy {
   }
   public calculateEco(): void {
     this.ELEMENT_DATA_BOWLER.forEach((bowler) => {
-      bowler['eco'] = bowler['runs'] / bowler['overs'];
+      bowler['eco'] =
+        (bowler['runs'] / this.utilityService.ballplayed(bowler['overs'])) * 6;
     });
   }
 
