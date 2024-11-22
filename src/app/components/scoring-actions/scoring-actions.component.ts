@@ -22,6 +22,7 @@ export class ScoringActionsComponent {
     this.liveMatchService.updateBallDataRuns(run);
     this.liveMatchService.updateBallNumber();
     this.liveMatchService.addRunToStriker(+run);
+    this.liveMatchService.updateBowlerData(+run);
     this.eventHandler.NotifyRunAddedEvent();
   }
 }

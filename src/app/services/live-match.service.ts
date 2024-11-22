@@ -38,11 +38,25 @@ export class LiveMatchService {
   currentOverNumber: number = 0;
 
   addRunToStriker(run: number): void {
+    this.striker.balls += 1;
     if (run % 2 === 0) {
       this.striker.runs += run;
     } else {
       this.striker.runs += run;
       this.swapStriker();
+    }
+  }
+
+  updateBowlerData(run: number): void {
+    this.currentBowler.runs += run;
+    this.currentBowler.overs = +parseFloat(
+      this.currentBowler.overs + 0.1 + ''
+    ).toFixed(1);
+    if (
+      this.currentBowler.overs - Math.trunc(this.currentBowler.overs) ===
+      0.6
+    ) {
+      this.currentBowler.overs = Math.trunc(this.currentBowler.overs) + 1;
     }
   }
 

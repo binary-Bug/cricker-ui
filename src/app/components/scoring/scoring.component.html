@@ -134,7 +134,9 @@
 
   <ng-container matColumnDef="overs">
     <th mat-header-cell *matHeaderCellDef>O</th>
-    <td mat-cell *matCellDef="let element">{{ element.overs }}</td>
+    <td mat-cell *matCellDef="let element">
+      {{ element.overs | number : "1.1-1" }}
+    </td>
   </ng-container>
 
   <ng-container matColumnDef="wickets">

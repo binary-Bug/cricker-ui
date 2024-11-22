@@ -71,10 +71,12 @@ export class ScoringComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.eventHandler.RunAddedEvent$().subscribe(() => {
         this.reAssignBatsmenData();
+        this.calculateSR();
+        this.reAssignBowlerData();
       }),
 
       this.eventHandler.BatsmenSwapEvent$().subscribe(() => {
-        this.reAssignBatsmenData();
+        this.reAssignBatsmenData(true);
       })
     );
   }
@@ -94,7 +96,7 @@ export class ScoringComponent implements OnInit, OnDestroy {
     console.log(player);
   }
 
-  reAssignBatsmenData() {
+  reAssignBatsmenData(isSwap: boolean = false) {
     this.ELEMENT_DATA_BATSMEN[0].runs = this.liveMatchService.striker.runs;
     this.ELEMENT_DATA_BATSMEN[0].balls = this.liveMatchService.striker.balls;
     this.ELEMENT_DATA_BATSMEN[0].name =
@@ -102,6 +104,24 @@ export class ScoringComponent implements OnInit, OnDestroy {
     this.ELEMENT_DATA_BATSMEN[1].runs = this.liveMatchService.nonStriker.runs;
     this.ELEMENT_DATA_BATSMEN[1].balls = this.liveMatchService.nonStriker.balls;
     this.ELEMENT_DATA_BATSMEN[1].name = this.liveMatchService.nonStriker.name;
+    if (isSwap) {
+      this.swapSR();
+    }
+  }
+
+  swapSR(): void {
+    let temp: number = this.ELEMENT_DATA_BATSMEN[0].sr;
+    this.ELEMENT_DATA_BATSMEN[0].sr = this.ELEMENT_DATA_BATSMEN[1].sr;
+    this.ELEMENT_DATA_BATSMEN[1].sr = temp;
+  }
+
+  reAssignBowlerData() {
+    this.ELEMENT_DATA_BOWLER[0].name = this.liveMatchService.currentBowler.name;
+    this.ELEMENT_DATA_BOWLER[0].overs =
+      this.liveMatchService.currentBowler.overs;
+    this.ELEMENT_DATA_BOWLER[0].runs = this.liveMatchService.currentBowler.runs;
+    this.ELEMENT_DATA_BOWLER[0].wickets =
+      this.liveMatchService.currentBowler.wickets;
   }
 
   ngOnDestroy(): void {
