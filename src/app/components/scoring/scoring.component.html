@@ -1,6 +1,6 @@
 <div class="grid place-items-center" style="margin-top: 12px">
   <div class="w-[100%] flex justify-between">
-    <div>
+    <div class="ml-4">
       <h1 style="display: inline">
         {{
           matchService.teamData[this.matchService.currentRoles["bat"]]
@@ -20,7 +20,7 @@
         Overs
       </h3>
     </div>
-    <div>
+    <div class="mr-4">
       <h1 style="display: inline">
         CRR:
         {{
@@ -34,7 +34,7 @@
     </div>
   </div>
   <br />
-  <div #overViewTeam1 class="grid grid-cols-6 gap-2">
+  <div #overView class="grid grid-cols-6 gap-2">
     <ng-container
       *ngFor="
         let ball of matchService.teamData[this.matchService.currentRoles['bat']]

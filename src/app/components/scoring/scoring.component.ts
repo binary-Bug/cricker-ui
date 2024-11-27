@@ -80,7 +80,21 @@ export class ScoringComponent implements OnInit, OnDestroy {
 
       this.eventHandler.BatsmenSwapEvent$().subscribe(() => {
         this.reAssignBatsmenData(true);
-      })
+      }),
+
+      this.eventHandler
+        .UpdateOverViewGridEvent$()
+        .subscribe((isRemove: boolean) => {
+          if (isRemove) {
+            this.overView?.nativeElement.classList.remove(
+              'grid-cols-' + this.liveMatchService.totalBallsinCurrentOver
+            );
+          } else {
+            this.overView?.nativeElement.classList.add(
+              'grid-cols-' + this.liveMatchService.totalBallsinCurrentOver
+            );
+          }
+        })
     );
   }
 

@@ -29,4 +29,13 @@ export class EventHandlerService {
   NotifyUndoEvent(): void {
     this._runAddedSubj.next();
   }
+
+  // Extras Checked Event
+  private _updateOverViewGridSubj = new Subject<boolean>();
+  UpdateOverViewGridEvent$(): Observable<any> {
+    return this._updateOverViewGridSubj.asObservable();
+  }
+  NotifyUpdateOverViewGridEvent(isRemove: boolean): void {
+    this._updateOverViewGridSubj.next(isRemove);
+  }
 }

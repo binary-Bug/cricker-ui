@@ -28,12 +28,22 @@ export class LiveMatchService {
   totalBallsinCurrentOver: number = 6;
   currentOverNumber: number = 0;
 
-  addRunToStriker(run: number): void {
+  addRunToStriker(
+    run: number,
+    isNBChecked: boolean,
+    isByesChecked: boolean,
+    isLBChecked: boolean
+  ): void {
+    if (isNBChecked) run -= 1;
+
     this.striker.balls += 1;
+
     if (run % 2 === 0) {
+      if (isByesChecked || isLBChecked) run = 0;
       this.striker.runs += run;
       this.updatePlayerData();
     } else {
+      if (isByesChecked || isLBChecked) run = 0;
       this.striker.runs += run;
       this.swapStriker();
     }
@@ -66,11 +76,20 @@ export class LiveMatchService {
     ].currentBowler = { ...this.currentBowler };
   }
 
-  updateBowlerData(run: number): void {
-    this.currentBowler.runs += run;
-    this.currentBowler.overs = +parseFloat(
-      this.currentBowler.overs + 0.1 + ''
-    ).toFixed(1);
+  updateBowlerData(
+    run: number,
+    isWideChecked: boolean,
+    isNBChecked: boolean,
+    isByesChecked: boolean
+  ): void {
+    if (!isByesChecked) this.currentBowler.runs += run;
+
+    if (!isWideChecked && !isNBChecked) {
+      this.currentBowler.overs = +parseFloat(
+        this.currentBowler.overs + 0.1 + ''
+      ).toFixed(1);
+    }
+
     if (
       this.currentBowler.overs - Math.trunc(this.currentBowler.overs) ===
       0.6
@@ -83,33 +102,47 @@ export class LiveMatchService {
     if (this.currentBowlNumber > 0 || this.currentOverNumber > 0) {
       this.currentBowlNumber -= 1;
       if (
-        this.matchService.teamData[this.matchService.currentRoles['bat']]
-          .oversPlayed -
-          Math.trunc(
-            this.matchService.teamData[this.matchService.currentRoles['bat']]
-              .oversPlayed
-          ) ===
-        0
+        !this.matchService.teamData[this.matchService.currentRoles['bat']]
+          .oversPlayedData[this.currentOverNumber][this.currentBowlNumber]
+          .isExtra
       ) {
+        if (
+          this.matchService.teamData[this.matchService.currentRoles['bat']]
+            .oversPlayed -
+            Math.trunc(
+              this.matchService.teamData[this.matchService.currentRoles['bat']]
+                .oversPlayed
+            ) ===
+          0
+        ) {
+          this.matchService.teamData[
+            this.matchService.currentRoles['bat']
+          ].oversPlayed =
+            Math.trunc(
+              this.matchService.teamData[this.matchService.currentRoles['bat']]
+                .oversPlayed
+            ) -
+            1 +
+            0.6;
+        }
+
         this.matchService.teamData[
           this.matchService.currentRoles['bat']
-        ].oversPlayed =
-          Math.trunc(
-            this.matchService.teamData[this.matchService.currentRoles['bat']]
-              .oversPlayed
-          ) -
-          1 +
-          0.6;
+        ].oversPlayed -= 0.1;
+        this.matchService.teamData[
+          this.matchService.currentRoles['bat']
+        ].oversPlayed = +parseFloat(
+          this.matchService.teamData[this.matchService.currentRoles['bat']]
+            .oversPlayed + ''
+        ).toFixed(1);
+      } else {
+        this.eventHandler.NotifyUpdateOverViewGridEvent(true);
+        this.totalBallsinCurrentOver -= 1;
+        this.matchService.teamData[
+          this.matchService.currentRoles['bat']
+        ].oversPlayedData[this.currentOverNumber].pop();
+        this.eventHandler.NotifyUpdateOverViewGridEvent(false);
       }
-      this.matchService.teamData[
-        this.matchService.currentRoles['bat']
-      ].oversPlayed -= 0.1;
-      this.matchService.teamData[
-        this.matchService.currentRoles['bat']
-      ].oversPlayed = +parseFloat(
-        this.matchService.teamData[this.matchService.currentRoles['bat']]
-          .oversPlayed + ''
-      ).toFixed(1);
 
       this.matchService.teamData[
         this.matchService.currentRoles['bat']
@@ -179,9 +212,7 @@ export class LiveMatchService {
     }
   }
 
-  updateBallNumber(): void {
-    this.currentBowlNumber += 1;
-    this.previousBowlNumber = this.currentBowlNumber - 1;
+  updateOversPlayed(): void {
     this.matchService.teamData[
       this.matchService.currentRoles['bat']
     ].oversPlayed += 0.1;
@@ -209,10 +240,15 @@ export class LiveMatchService {
             .oversPlayed
         ) + 1;
     }
-    this.matchService.calculateCurrentRunRate();
+  }
+
+  updateBallNumber(): void {
+    this.currentBowlNumber += 1;
+    this.previousBowlNumber = this.currentBowlNumber - 1;
   }
 
   updateOverData(): void {
+    // This method checks if the exisiting over has completed and if true add a new over data array in match service team data
     if (
       this.matchService.teamData[this.matchService.currentRoles['bat']]
         .oversPlayed -
@@ -241,6 +277,9 @@ export class LiveMatchService {
         ].oversPlayedData.push(overData);
         this.currentBowlNumber = 0;
         this.previousBowlNumber = 0;
+        this.eventHandler.NotifyUpdateOverViewGridEvent(true);
+        this.totalBallsinCurrentOver = 6;
+        this.eventHandler.NotifyUpdateOverViewGridEvent(false);
       }
     }
   }
@@ -261,7 +300,7 @@ export class LiveMatchService {
       run;
   }
 
-  updateBallDataRuns(run: string): void {
+  updateBallDataRuns(run: string, isExtra: boolean): void {
     this.matchService.teamData[
       this.matchService.currentRoles['bat']
     ].oversPlayedData[this.currentOverNumber][
@@ -269,8 +308,20 @@ export class LiveMatchService {
     ].currentRuns =
       this.matchService.teamData[this.matchService.currentRoles['bat']]
         .runsScored + +run;
+
     this.matchService.teamData[
       this.matchService.currentRoles['bat']
     ].runsScored += +run;
+
+    this.matchService.teamData[
+      this.matchService.currentRoles['bat']
+    ].oversPlayedData[this.currentOverNumber][this.currentBowlNumber].isExtra =
+      isExtra;
+  }
+
+  addNewBalltoOversPlayedData(): void {
+    this.matchService.teamData[
+      this.matchService.currentRoles['bat']
+    ].oversPlayedData[this.currentOverNumber].push(new BALL_DATA());
   }
 }

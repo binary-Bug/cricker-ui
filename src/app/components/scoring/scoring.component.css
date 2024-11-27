@@ -26,5 +26,15 @@
 }
 
 .six {
-  background-color: #673ab7;
+  background-color: #f05129;
+  font-size: larger;
+}
+
+.wide {
+  background-color: yellow;
+  color: black;
+}
+
+.noBall {
+  background-color: red;
 }

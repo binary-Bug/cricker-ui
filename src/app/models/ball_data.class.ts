@@ -5,7 +5,7 @@ export class BALL_DATA {
   class: string = 'none';
   label: string = '-';
   hasBeenBowled: boolean = false;
-  isSwapped: boolean = false;
+  isExtra: boolean = false;
   currentRuns: number = 0;
   wicketsLost: number = 0;
   striker: Batsmen = { name: '', runs: 0, balls: 0, fours: 0, six: 0 };

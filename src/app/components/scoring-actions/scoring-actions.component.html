@@ -1,26 +1,45 @@
 <mat-grid-list cols="4" rowHeight="1.8:1">
   <mat-grid-tile
-    ><mat-checkbox color="accent" class="example-margin"
+    ><mat-checkbox
+      color="accent"
+      class="example-margin"
+      [(ngModel)]="isWideChecked"
+      [disabled]="isByesChecked || isNBChecked || isLBChecked"
       >Wide</mat-checkbox
     ></mat-grid-tile
   >
   <mat-grid-tile
-    ><mat-checkbox color="warn" class="example-margin"
+    ><mat-checkbox
+      color="warn"
+      class="example-margin"
+      [(ngModel)]="isNBChecked"
+      [disabled]="isWideChecked"
       >NB</mat-checkbox
     ></mat-grid-tile
   >
   <mat-grid-tile
-    ><mat-checkbox color="primary" class="example-margin"
+    ><mat-checkbox
+      color="primary"
+      class="example-margin"
+      [(ngModel)]="isLBChecked"
+      [disabled]="isWideChecked || isByesChecked"
       >LB</mat-checkbox
     ></mat-grid-tile
   >
   <mat-grid-tile
-    ><mat-checkbox color="primary" class="example-margin"
+    ><mat-checkbox
+      color="primary"
+      class="example-margin"
+      [(ngModel)]="isByesChecked"
+      [disabled]="isWideChecked || isLBChecked"
       >Byes</mat-checkbox
     ></mat-grid-tile
   >
   <mat-grid-tile colspan="2"
-    ><mat-checkbox color="warn" class="example-margin"
+    ><mat-checkbox
+      color="warn"
+      class="example-margin"
+      [(ngModel)]="isWicketChecked"
       >Wicket</mat-checkbox
     ></mat-grid-tile
   >
