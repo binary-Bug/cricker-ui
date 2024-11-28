@@ -93,6 +93,7 @@ export class NewMatchDetailsComponent {
       <button
         [disabled]="formValid ? null : 'true'"
         mat-button
+        color="primary"
         (click)="onOkClick()"
       >
         Done

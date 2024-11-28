@@ -56,7 +56,9 @@ export class RoomComponent {
     </mat-dialog-content>
     <mat-dialog-actions>
       <button mat-button (click)="onCancelClick()">Cancel</button>
-      <button mat-button (click)="onOkClick()" cdkFocusInitial>Submit</button>
+      <button mat-button color="primary" (click)="onOkClick()" cdkFocusInitial>
+        Submit
+      </button>
     </mat-dialog-actions>`,
   standalone: true,
   imports: [
