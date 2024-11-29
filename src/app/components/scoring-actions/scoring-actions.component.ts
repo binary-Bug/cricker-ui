@@ -81,6 +81,7 @@ export class ScoringActionsComponent {
         this.isByesChecked,
         this.isLBChecked
       );
+    else this.liveMatchService.updatePlayerData();
 
     this.liveMatchService.updateBallNumber();
 
@@ -95,13 +96,24 @@ export class ScoringActionsComponent {
   updateBallDataCSS(run: string, color: string): void {
     if (this.isWideChecked) {
       this.liveMatchService.updateBallDataCSS(run + 'wd', 'extra');
+      this.liveMatchService.addExtra('w', +run);
+      this.liveMatchService.updateCurrentPatnership(+run, false);
     } else if (this.isLBChecked) {
       this.liveMatchService.updateBallDataCSS(run + ' LB', 'run');
+      this.liveMatchService.addExtra('lb', +run);
+      this.liveMatchService.updateCurrentPatnership(+run);
     } else if (this.isByesChecked) {
       this.liveMatchService.updateBallDataCSS(run + ' B', 'run');
+      this.liveMatchService.addExtra('b', +run);
+      this.liveMatchService.updateCurrentPatnership(+run);
     } else if (this.isNBChecked) {
       this.liveMatchService.updateBallDataCSS(run + 'nb', 'extra');
-    } else this.liveMatchService.updateBallDataCSS(run, color);
+      this.liveMatchService.addExtra('nb', +run);
+      this.liveMatchService.updateCurrentPatnership(+run);
+    } else {
+      this.liveMatchService.updateBallDataCSS(run, color);
+      this.liveMatchService.updateCurrentPatnership(+run);
+    }
   }
 
   unCheckExtras(): void {
@@ -152,7 +164,14 @@ export class ScoringActionsComponent {
 
       <div *ngIf="currentWicketOption" class="mt-4 grid place-items-center">
         <form class="example-form">
-          <mat-form-field *ngIf="currentWicketOption === 'Caught' || currentWicketOption === 'Stumped' || currentWicketOption === 'Run-out'" class="example-full-width">
+          <mat-form-field
+            *ngIf="
+              currentWicketOption === 'Caught' ||
+              currentWicketOption === 'Stumped' ||
+              currentWicketOption === 'Run-out'
+            "
+            class="example-full-width"
+          >
             <mat-label>{{ label }}</mat-label>
             <input
               type="text"
@@ -167,7 +186,7 @@ export class ScoringActionsComponent {
               }
             </mat-autocomplete>
           </mat-form-field>
-            <mat-divider></mat-divider>
+          <mat-divider></mat-divider>
           <mat-form-field class="example-full-width">
             <mat-label>New Batsmen</mat-label>
             <input
@@ -189,7 +208,14 @@ export class ScoringActionsComponent {
 
     <mat-dialog-actions>
       <button mat-button (click)="onCancelClick()">Cancel</button>
-      <button mat-button [disabled]="isInvalid ? 'true' : null" color="primary" (click)="onOkClick()">Done</button>
+      <button
+        mat-button
+        [disabled]="isInvalid ? 'true' : null"
+        color="primary"
+        (click)="onOkClick()"
+      >
+        Done
+      </button>
     </mat-dialog-actions>
   `,
   standalone: true,
@@ -230,7 +256,7 @@ export class WicketDialog implements OnInit {
   filteredOptions!: Observable<string[]>;
   filteredOptionsNewBatsmen!: Observable<string[]>;
   label: string = '';
-  isInvalid : boolean = true;
+  isInvalid: boolean = true;
 
   currentWicketOption: string = '';
 
@@ -240,38 +266,43 @@ export class WicketDialog implements OnInit {
       map((value) => this._filter(value || ''))
     );
 
-    this.actionPlayer.valueChanges.subscribe((value)=>{
-      if(this.currentWicketOption === 'Caught' || this.currentWicketOption === 'Stumped' || this.currentWicketOption === 'Run-out'){
-        if(this.newBatsmen.value && this.newBatsmen.value?.length > 3){
-          if(value && value.length > 3) this.isInvalid = false;
+    this.actionPlayer.valueChanges.subscribe((value) => {
+      if (
+        this.currentWicketOption === 'Caught' ||
+        this.currentWicketOption === 'Stumped' ||
+        this.currentWicketOption === 'Run-out'
+      ) {
+        if (this.newBatsmen.value && this.newBatsmen.value?.length > 3) {
+          if (value && value.length > 3) this.isInvalid = false;
           else this.isInvalid = true;
-        }
-        else{
+        } else {
           this.isInvalid = true;
         }
       }
-    })
+    });
 
     this.filteredOptionsNewBatsmen = this.newBatsmen.valueChanges.pipe(
       startWith(''),
       map((value) => this._filter(value || ''))
     );
 
-    this.newBatsmen.valueChanges.subscribe((value)=>{
-      if(this.currentWicketOption === 'Caught' || this.currentWicketOption === 'Stumped' || this.currentWicketOption === 'Run-out'){
-        if(this.actionPlayer.value && this.actionPlayer.value?.length > 3){
-          if(value && value.length > 3) this.isInvalid = false;
+    this.newBatsmen.valueChanges.subscribe((value) => {
+      if (
+        this.currentWicketOption === 'Caught' ||
+        this.currentWicketOption === 'Stumped' ||
+        this.currentWicketOption === 'Run-out'
+      ) {
+        if (this.actionPlayer.value && this.actionPlayer.value?.length > 3) {
+          if (value && value.length > 3) this.isInvalid = false;
           else this.isInvalid = true;
-        }
-        else{
+        } else {
           this.isInvalid = true;
         }
+      } else {
+        if (value && value.length > 3) this.isInvalid = false;
+        else this.isInvalid = true;
       }
-      else{
-        if(value && value.length > 3) this.isInvalid = false;
-          else this.isInvalid = true;
-      }
-    })
+    });
   }
 
   private _filter(value: string): string[] {

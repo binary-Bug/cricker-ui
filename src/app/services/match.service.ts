@@ -32,6 +32,7 @@ export class MatchService {
     wicketsLost: 0,
     runRate: 0,
     oversPlayedData: [OVER_DATA],
+    extras: { w: 0, nb: 0, lb: 0, b: 0 },
   };
 
   team2Data: Team = {
@@ -42,6 +43,7 @@ export class MatchService {
     wicketsLost: 0,
     runRate: 0,
     oversPlayedData: [OVER_DATA],
+    extras: { w: 0, nb: 0, lb: 0, b: 0 },
   };
 
   teamData: { [key: string]: Team } = {

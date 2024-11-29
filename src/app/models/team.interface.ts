@@ -8,4 +8,5 @@ export interface Team {
   wicketsLost: number;
   runRate: number;
   oversPlayedData: BALL_DATA[][];
+  extras: { [key: string]: number };
 }

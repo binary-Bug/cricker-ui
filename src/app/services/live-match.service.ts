@@ -21,12 +21,15 @@ export class LiveMatchService {
     overs: 0,
     maidens: 0,
     wickets: 0,
+    extras: { w: 0, nb: 0, lb: 0 },
   };
 
   currentBowlNumber: number = 0;
   previousBowlNumber: number = 0;
   totalBallsinCurrentOver: number = 6;
   currentOverNumber: number = 0;
+  bowlerRunsBeforeStart: number = 0;
+  currentPatnership: { runs: number; balls: number } = { runs: 0, balls: 0 };
 
   addRunToStriker(
     run: number,
@@ -41,6 +44,14 @@ export class LiveMatchService {
     if (run % 2 === 0) {
       if (isByesChecked || isLBChecked) run = 0;
       this.striker.runs += run;
+      switch (run) {
+        case 4:
+          this.striker.fours += 1;
+          break;
+        case 6:
+          this.striker.six += 1;
+          break;
+      }
       this.updatePlayerData();
     } else {
       if (isByesChecked || isLBChecked) run = 0;
@@ -74,6 +85,12 @@ export class LiveMatchService {
     ].oversPlayedData[this.currentOverNumber][
       this.currentBowlNumber
     ].currentBowler = { ...this.currentBowler };
+
+    this.matchService.teamData[
+      this.matchService.currentRoles['bat']
+    ].oversPlayedData[this.currentOverNumber][
+      this.currentBowlNumber
+    ].currentBowler.extras = { ...this.currentBowler.extras };
   }
 
   updateBowlerData(
@@ -91,10 +108,14 @@ export class LiveMatchService {
     }
 
     if (
-      this.currentBowler.overs - Math.trunc(this.currentBowler.overs) ===
-      0.6
+      +parseFloat(
+        this.currentBowler.overs - Math.trunc(this.currentBowler.overs) + ''
+      ).toFixed(1) === 0.6
     ) {
       this.currentBowler.overs = Math.trunc(this.currentBowler.overs) + 1;
+      if (this.currentBowler.runs - this.bowlerRunsBeforeStart === 0)
+        this.currentBowler.maidens += 1;
+      this.bowlerRunsBeforeStart = this.currentBowler.runs;
     }
   }
 
@@ -188,7 +209,20 @@ export class LiveMatchService {
           this.previousBowlNumber
         ].wicketsLost;
 
+      this.matchService.teamData[this.matchService.currentRoles['bat']].extras =
+        {
+          ...this.matchService.teamData[this.matchService.currentRoles['bat']]
+            .oversPlayedData[this.currentOverNumber][this.previousBowlNumber]
+            .extras,
+        };
+
       this.matchService.calculateCurrentRunRate();
+
+      this.currentPatnership = {
+        ...this.matchService.teamData[this.matchService.currentRoles['bat']]
+          .oversPlayedData[this.currentOverNumber][this.previousBowlNumber]
+          .currentPatnership,
+      };
 
       this.striker = {
         ...this.matchService.teamData[this.matchService.currentRoles['bat']]
@@ -206,6 +240,12 @@ export class LiveMatchService {
         ...this.matchService.teamData[this.matchService.currentRoles['bat']]
           .oversPlayedData[this.currentOverNumber][this.previousBowlNumber]
           .currentBowler,
+      };
+
+      this.currentBowler.extras = {
+        ...this.matchService.teamData[this.matchService.currentRoles['bat']]
+          .oversPlayedData[this.currentOverNumber][this.previousBowlNumber]
+          .currentBowler.extras,
       };
 
       this.eventHandler.NotifyUndoEvent();
@@ -290,10 +330,12 @@ export class LiveMatchService {
     ].oversPlayedData[this.currentOverNumber][
       this.currentBowlNumber
     ].hasBeenBowled = true;
+
     this.matchService.teamData[
       this.matchService.currentRoles['bat']
     ].oversPlayedData[this.currentOverNumber][this.currentBowlNumber].class =
       color;
+
     this.matchService.teamData[
       this.matchService.currentRoles['bat']
     ].oversPlayedData[this.currentOverNumber][this.currentBowlNumber].label =
@@ -317,11 +359,37 @@ export class LiveMatchService {
       this.matchService.currentRoles['bat']
     ].oversPlayedData[this.currentOverNumber][this.currentBowlNumber].isExtra =
       isExtra;
+
+    this.matchService.teamData[
+      this.matchService.currentRoles['bat']
+    ].oversPlayedData[this.currentOverNumber][this.currentBowlNumber].extras = {
+      ...this.matchService.teamData[this.matchService.currentRoles['bat']]
+        .extras,
+    };
+
+    this.matchService.teamData[
+      this.matchService.currentRoles['bat']
+    ].oversPlayedData[this.currentOverNumber][
+      this.currentBowlNumber
+    ].currentPatnership = { ...this.currentPatnership };
   }
 
   addNewBalltoOversPlayedData(): void {
     this.matchService.teamData[
       this.matchService.currentRoles['bat']
     ].oversPlayedData[this.currentOverNumber].push(new BALL_DATA());
+  }
+
+  addExtra(type: string, run: number) {
+    this.matchService.teamData[this.matchService.currentRoles['bat']].extras[
+      type
+    ] += run;
+
+    if (type !== 'b') this.currentBowler.extras[type] += run;
+  }
+
+  updateCurrentPatnership(runs: number, updateBalls: boolean = true) {
+    this.currentPatnership.runs += runs;
+    if (updateBalls) this.currentPatnership.balls += 1;
   }
 }

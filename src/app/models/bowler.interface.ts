@@ -4,4 +4,5 @@ export interface Bowler {
   overs: number;
   maidens: number;
   wickets: number;
+  extras: { [key: string]: number };
 }

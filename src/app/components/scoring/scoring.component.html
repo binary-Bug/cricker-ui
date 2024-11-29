@@ -1,36 +1,74 @@
 <div class="grid place-items-center" style="margin-top: 12px">
-  <div class="w-[100%] flex justify-between">
+  <div class="w-[100%] flex justify-between items-center">
     <div class="ml-4">
-      <h1 style="display: inline">
-        {{
-          matchService.teamData[this.matchService.currentRoles["bat"]]
-            .runsScored
-        }}
-        /
-        {{
-          matchService.teamData[this.matchService.currentRoles["bat"]]
-            .wicketsLost
-        }}
-      </h1>
       <h3 style="display: inline">
+        <b>
+          {{
+            matchService.teamData[this.matchService.currentRoles["bat"]]
+              .runsScored
+          }}
+          /
+          {{
+            matchService.teamData[this.matchService.currentRoles["bat"]]
+              .wicketsLost
+          }}
+        </b>
+      </h3>
+      <br />
+      <h5 style="display: inline">
         {{
           matchService.teamData[this.matchService.currentRoles["bat"]]
             .oversPlayed | number : "1.1-1"
         }}
         Overs
-      </h3>
+      </h5>
+    </div>
+    <div>
+      <h4
+        *ngIf="matchService.isSecondInning"
+        style="margin-bottom: 0; text-align: center"
+      >
+        <b style="color: green">56</b> from <b style="color: red">48</b>
+      </h4>
+      <h5 style="margin-bottom: 0">
+        Extras (W:{{
+          matchService.teamData[this.matchService.currentRoles["bat"]].extras[
+            "w"
+          ]
+        }}, NB:{{
+          matchService.teamData[this.matchService.currentRoles["bat"]].extras[
+            "nb"
+          ]
+        }}, LB:{{
+          matchService.teamData[this.matchService.currentRoles["bat"]].extras[
+            "lb"
+          ]
+        }}, B:{{
+          matchService.teamData[this.matchService.currentRoles["bat"]].extras[
+            "b"
+          ]
+        }})
+      </h5>
+      <h5 style="margin-bottom: 0; text-align: center">
+        Patnership: {{ liveMatchService.currentPatnership.runs }}({{
+          liveMatchService.currentPatnership.balls
+        }})
+      </h5>
     </div>
     <div class="mr-4">
-      <h1 style="display: inline">
+      <h5 style="margin-bottom: 0">
         CRR:
         {{
           matchService.teamData[this.matchService.currentRoles["bat"]].runRate
             | number : "1.1-2"
         }}
-      </h1>
-    </div>
-    <div *ngIf="matchService.isSecondInning">
-      <h1 style="display: inline">target: 68</h1>
+      </h5>
+      <h5 *ngIf="matchService.isSecondInning" style="margin-bottom: 0">
+        Target: 68
+      </h5>
+      <h5 *ngIf="matchService.isSecondInning" style="margin-bottom: 0">
+        RRR: 12.0
+      </h5>
     </div>
   </div>
   <br />
@@ -74,6 +112,16 @@
   <ng-container matColumnDef="balls">
     <th mat-header-cell *matHeaderCellDef>B</th>
     <td mat-cell *matCellDef="let element">{{ element.balls }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="4s">
+    <th mat-header-cell *matHeaderCellDef>4s</th>
+    <td mat-cell *matCellDef="let element">{{ element.fours }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="6s">
+    <th mat-header-cell *matHeaderCellDef>6s</th>
+    <td mat-cell *matCellDef="let element">{{ element.six }}</td>
   </ng-container>
 
   <ng-container matColumnDef="S/R">

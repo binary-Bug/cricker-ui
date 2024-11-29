@@ -35,7 +35,7 @@ export class ScoringComponent implements OnInit, OnDestroy {
   liveMatchService: LiveMatchService = inject(LiveMatchService);
   utilityService: UtilityService = inject(UtilityService);
   matchService: MatchService = inject(MatchService);
-  displayedColumns: string[] = ['nameBat', 'runs', 'balls', 'S/R'];
+  displayedColumns: string[] = ['nameBat', 'runs', 'balls', 'S/R', '4s', '6s'];
   displayedColumnsBowler: string[] = [
     'nameBowl',
     'runs',
@@ -48,11 +48,15 @@ export class ScoringComponent implements OnInit, OnDestroy {
       name: this.liveMatchService.striker.name + '*',
       runs: this.liveMatchService.striker.runs,
       balls: this.liveMatchService.striker.balls,
+      fours: this.liveMatchService.striker.fours,
+      six: this.liveMatchService.striker.six,
     },
     {
       name: this.liveMatchService.nonStriker.name,
       runs: this.liveMatchService.nonStriker.runs,
       balls: this.liveMatchService.nonStriker.balls,
+      fours: this.liveMatchService.nonStriker.fours,
+      six: this.liveMatchService.nonStriker.six,
     },
   ];
   ELEMENT_DATA_BOWLER: any[] = [
@@ -119,9 +123,13 @@ export class ScoringComponent implements OnInit, OnDestroy {
     this.ELEMENT_DATA_BATSMEN[0].balls = this.liveMatchService.striker.balls;
     this.ELEMENT_DATA_BATSMEN[0].name =
       this.liveMatchService.striker.name + '*';
+    this.ELEMENT_DATA_BATSMEN[0].fours = this.liveMatchService.striker.fours;
+    this.ELEMENT_DATA_BATSMEN[0].six = this.liveMatchService.striker.six;
     this.ELEMENT_DATA_BATSMEN[1].runs = this.liveMatchService.nonStriker.runs;
     this.ELEMENT_DATA_BATSMEN[1].balls = this.liveMatchService.nonStriker.balls;
     this.ELEMENT_DATA_BATSMEN[1].name = this.liveMatchService.nonStriker.name;
+    this.ELEMENT_DATA_BATSMEN[1].fours = this.liveMatchService.nonStriker.fours;
+    this.ELEMENT_DATA_BATSMEN[1].six = this.liveMatchService.nonStriker.six;
     if (isSwap) {
       this.swapSR();
     }
