@@ -152,17 +152,33 @@ export class ScoringActionsComponent {
 
       <div *ngIf="currentWicketOption" class="mt-4 grid place-items-center">
         <form class="example-form">
-          <mat-form-field class="example-full-width">
+          <mat-form-field *ngIf="currentWicketOption === 'Caught' || currentWicketOption === 'Stumped' || currentWicketOption === 'Run-out'" class="example-full-width">
             <mat-label>{{ label }}</mat-label>
             <input
               type="text"
               placeholder="Select Player"
               matInput
-              [formControl]="myControl"
+              [formControl]="actionPlayer"
               [matAutocomplete]="auto"
             />
             <mat-autocomplete #auto="matAutocomplete">
               @for (option of filteredOptions | async; track option) {
+              <mat-option [value]="option">{{ option }}</mat-option>
+              }
+            </mat-autocomplete>
+          </mat-form-field>
+            <mat-divider></mat-divider>
+          <mat-form-field class="example-full-width">
+            <mat-label>New Batsmen</mat-label>
+            <input
+              type="text"
+              placeholder="Select Player"
+              matInput
+              [formControl]="newBatsmen"
+              [matAutocomplete]="auto"
+            />
+            <mat-autocomplete #auto="matAutocomplete">
+              @for (option of filteredOptionsNewBatsmen | async; track option) {
               <mat-option [value]="option">{{ option }}</mat-option>
               }
             </mat-autocomplete>
@@ -173,7 +189,7 @@ export class ScoringActionsComponent {
 
     <mat-dialog-actions>
       <button mat-button (click)="onCancelClick()">Cancel</button>
-      <button mat-button color="primary" (click)="onOkClick()">Done</button>
+      <button mat-button [disabled]="isInvalid ? 'true' : null" color="primary" (click)="onOkClick()">Done</button>
     </mat-dialog-actions>
   `,
   standalone: true,
@@ -208,18 +224,54 @@ export class WicketDialog implements OnInit {
     { name: 'Run-out' },
   ];
 
-  myControl = new FormControl('', Validators.required);
-  options: string[] = ['One', 'Two', 'Three'];
+  actionPlayer = new FormControl('', Validators.required);
+  newBatsmen = new FormControl('', Validators.required);
+  options: string[] = ['Choli', 'Dhobhi', 'Brohit'];
   filteredOptions!: Observable<string[]>;
+  filteredOptionsNewBatsmen!: Observable<string[]>;
   label: string = '';
+  isInvalid : boolean = true;
 
   currentWicketOption: string = '';
 
   ngOnInit() {
-    this.filteredOptions = this.myControl.valueChanges.pipe(
+    this.filteredOptions = this.actionPlayer.valueChanges.pipe(
       startWith(''),
       map((value) => this._filter(value || ''))
     );
+
+    this.actionPlayer.valueChanges.subscribe((value)=>{
+      if(this.currentWicketOption === 'Caught' || this.currentWicketOption === 'Stumped' || this.currentWicketOption === 'Run-out'){
+        if(this.newBatsmen.value && this.newBatsmen.value?.length > 3){
+          if(value && value.length > 3) this.isInvalid = false;
+          else this.isInvalid = true;
+        }
+        else{
+          this.isInvalid = true;
+        }
+      }
+    })
+
+    this.filteredOptionsNewBatsmen = this.newBatsmen.valueChanges.pipe(
+      startWith(''),
+      map((value) => this._filter(value || ''))
+    );
+
+    this.newBatsmen.valueChanges.subscribe((value)=>{
+      if(this.currentWicketOption === 'Caught' || this.currentWicketOption === 'Stumped' || this.currentWicketOption === 'Run-out'){
+        if(this.actionPlayer.value && this.actionPlayer.value?.length > 3){
+          if(value && value.length > 3) this.isInvalid = false;
+          else this.isInvalid = true;
+        }
+        else{
+          this.isInvalid = true;
+        }
+      }
+      else{
+        if(value && value.length > 3) this.isInvalid = false;
+          else this.isInvalid = true;
+      }
+    })
   }
 
   private _filter(value: string): string[] {
@@ -241,20 +293,17 @@ export class WicketDialog implements OnInit {
   onWicketOptionSelected(selectedChip: MatChipListboxChange) {
     this.currentWicketOption = selectedChip.value;
     switch (this.currentWicketOption) {
-      case 'Bowled':
-        this.label = 'New Batsmen';
-        break;
-      case 'LBW':
-        this.label = 'New Batsmen';
-        break;
       case 'Caught':
         this.label = 'Caught By';
+        this.isInvalid = true;
         break;
       case 'Stumped':
         this.label = 'Stumped By';
+        this.isInvalid = true;
         break;
       case 'Run-out':
         this.label = 'Run out By';
+        this.isInvalid = true;
         break;
     }
   }
