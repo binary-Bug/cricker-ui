@@ -57,6 +57,7 @@ export class LiveMatchService {
       if (isByesChecked || isLBChecked) run = 0;
       this.striker.runs += run;
       this.swapStriker();
+      this.updatePlayerData();
     }
   }
 
@@ -65,7 +66,6 @@ export class LiveMatchService {
     this.striker = this.nonStriker;
     this.nonStriker = temp;
     this.eventHandler.NotifyBatsmenSwappedEvent();
-    this.updatePlayerData();
   }
 
   updatePlayerData(): void {
@@ -97,7 +97,9 @@ export class LiveMatchService {
     run: number,
     isWideChecked: boolean,
     isNBChecked: boolean,
-    isByesChecked: boolean
+    isByesChecked: boolean,
+    isWicketBall: boolean,
+    wicketType: string | null
   ): void {
     if (!isByesChecked) this.currentBowler.runs += run;
 
@@ -105,6 +107,10 @@ export class LiveMatchService {
       this.currentBowler.overs = +parseFloat(
         this.currentBowler.overs + 0.1 + ''
       ).toFixed(1);
+    }
+
+    if (isWicketBall && wicketType && wicketType !== 'Run-out') {
+      this.currentBowler.wickets += 1;
     }
 
     if (
@@ -165,6 +171,34 @@ export class LiveMatchService {
         this.eventHandler.NotifyUpdateOverViewGridEvent(false);
       }
 
+      let isWicketBall: boolean = false;
+      if (
+        this.matchService.teamData[this.matchService.currentRoles['bat']]
+          .oversPlayedData[this.currentOverNumber][this.currentBowlNumber]
+          .class === 'wicket'
+      ) {
+        isWicketBall = true;
+      }
+
+      //storing striker, non striker and bowler name temporarily to display it in ui before the first ball is bowled after undo
+      let tempStrikerName: string = '';
+      let tempNonStikerName: string = '';
+      let tempBowlerName: string = '';
+      if (this.currentBowlNumber === 0 && this.currentOverNumber === 0) {
+        tempStrikerName =
+          this.matchService.teamData[this.matchService.currentRoles['bat']]
+            .oversPlayedData[this.currentOverNumber][this.currentBowlNumber]
+            .striker.name;
+        tempNonStikerName =
+          this.matchService.teamData[this.matchService.currentRoles['bat']]
+            .oversPlayedData[this.currentOverNumber][this.currentBowlNumber]
+            .nonStriker.name;
+        tempBowlerName =
+          this.matchService.teamData[this.matchService.currentRoles['bat']]
+            .oversPlayedData[this.currentOverNumber][this.currentBowlNumber]
+            .currentBowler.name;
+      }
+
       this.matchService.teamData[
         this.matchService.currentRoles['bat']
       ].oversPlayedData[this.currentOverNumber][this.currentBowlNumber] =
@@ -184,10 +218,27 @@ export class LiveMatchService {
         } else {
           this.previousBowlNumber = 0;
           this.currentBowlNumber = 0;
+
           this.matchService.teamData[
             this.matchService.currentRoles['bat']
           ].oversPlayedData[this.currentOverNumber][this.currentBowlNumber] =
             new BALL_DATA();
+
+          this.matchService.teamData[
+            this.matchService.currentRoles['bat']
+          ].oversPlayedData[this.currentOverNumber][
+            this.currentBowlNumber
+          ].striker.name = tempStrikerName;
+          this.matchService.teamData[
+            this.matchService.currentRoles['bat']
+          ].oversPlayedData[this.currentOverNumber][
+            this.currentBowlNumber
+          ].nonStriker.name = tempNonStikerName;
+          this.matchService.teamData[
+            this.matchService.currentRoles['bat']
+          ].oversPlayedData[this.currentOverNumber][
+            this.currentBowlNumber
+          ].currentBowler.name = tempBowlerName;
         }
       }
 
@@ -224,6 +275,15 @@ export class LiveMatchService {
           .currentPatnership,
       };
 
+      if (isWicketBall) {
+        this.matchService.undoPlayerReferenceForWicket(
+          this.striker.name,
+          this.matchService.teamData[this.matchService.currentRoles['bat']]
+            .oversPlayedData[this.currentOverNumber][this.previousBowlNumber]
+            .striker.name
+        );
+      }
+
       this.striker = {
         ...this.matchService.teamData[this.matchService.currentRoles['bat']]
           .oversPlayedData[this.currentOverNumber][this.previousBowlNumber]
@@ -248,8 +308,21 @@ export class LiveMatchService {
           .currentBowler.extras,
       };
 
+      this.matchService.updatePlayerReference(
+        this.striker,
+        this.nonStriker,
+        this.currentBowler
+      );
+
       this.eventHandler.NotifyUndoEvent();
     }
+    console.log(
+      this.matchService.teamData[this.matchService.currentRoles['bat']].Batsmens
+    );
+
+    console.log(
+      this.matchService.teamData[this.matchService.currentRoles['ball']].Bowlers
+    );
   }
 
   updateOversPlayed(): void {
@@ -279,6 +352,8 @@ export class LiveMatchService {
           this.matchService.teamData[this.matchService.currentRoles['bat']]
             .oversPlayed
         ) + 1;
+
+      this.swapStriker();
     }
   }
 
@@ -342,7 +417,11 @@ export class LiveMatchService {
       run;
   }
 
-  updateBallDataRuns(run: string, isExtra: boolean): void {
+  updateBallDataRuns(
+    run: string,
+    isExtra: boolean,
+    isWicketBall: boolean
+  ): void {
     this.matchService.teamData[
       this.matchService.currentRoles['bat']
     ].oversPlayedData[this.currentOverNumber][
@@ -354,6 +433,28 @@ export class LiveMatchService {
     this.matchService.teamData[
       this.matchService.currentRoles['bat']
     ].runsScored += +run;
+
+    // adding wicket if wicket option is selected
+    if (isWicketBall) {
+      this.matchService.teamData[
+        this.matchService.currentRoles['bat']
+      ].oversPlayedData[this.currentOverNumber][
+        this.currentBowlNumber
+      ].wicketsLost += 1;
+
+      this.matchService.teamData[
+        this.matchService.currentRoles['bat']
+      ].wicketsLost += 1;
+    } else {
+      this.matchService.teamData[
+        this.matchService.currentRoles['bat']
+      ].oversPlayedData[this.currentOverNumber][
+        this.currentBowlNumber
+      ].wicketsLost =
+        this.matchService.teamData[
+          this.matchService.currentRoles['bat']
+        ].wicketsLost;
+    }
 
     this.matchService.teamData[
       this.matchService.currentRoles['bat']
@@ -388,8 +489,35 @@ export class LiveMatchService {
     if (type !== 'b') this.currentBowler.extras[type] += run;
   }
 
-  updateCurrentPatnership(runs: number, updateBalls: boolean = true) {
+  updateCurrentPatnership(runs: number, updateBalls: boolean = true): void {
     this.currentPatnership.runs += runs;
     if (updateBalls) this.currentPatnership.balls += 1;
+  }
+
+  resetCurrentPatnership(): void {
+    this.currentPatnership.runs = 0;
+    this.currentPatnership.balls = 0;
+  }
+
+  updateOnFieldBatsmen(oldBatsmenName: string, newBatsmenName: string): void {
+    if (oldBatsmenName === this.striker.name) {
+      this.striker = {
+        name: newBatsmenName,
+        runs: 0,
+        balls: 0,
+        fours: 0,
+        six: 0,
+      };
+      this.matchService.addBatsmenToTeam(this.striker, oldBatsmenName);
+    } else {
+      this.nonStriker = {
+        name: newBatsmenName,
+        runs: 0,
+        balls: 0,
+        fours: 0,
+        six: 0,
+      };
+      this.matchService.addBatsmenToTeam(this.nonStriker, oldBatsmenName);
+    }
   }
 }

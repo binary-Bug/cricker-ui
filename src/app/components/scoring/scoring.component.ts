@@ -71,6 +71,8 @@ export class ScoringComponent implements OnInit, OnDestroy {
   dataSourceBatsmen = this.ELEMENT_DATA_BATSMEN;
   dataSourceBowler = this.ELEMENT_DATA_BOWLER;
 
+  overCompleted: boolean = true;
+
   ngOnInit(): void {
     this.calculateSR();
     this.calculateEco();
@@ -80,11 +82,30 @@ export class ScoringComponent implements OnInit, OnDestroy {
         this.calculateSR();
         this.reAssignBowlerData();
         this.calculateEco();
+
+        if (
+          this.matchService.teamData[this.matchService.currentRoles['bat']]
+            .oversPlayed -
+            Math.trunc(
+              this.matchService.teamData[this.matchService.currentRoles['bat']]
+                .oversPlayed
+            ) ===
+          0
+        ) {
+          this.overCompleted = true;
+        } else {
+          this.overCompleted = false;
+        }
       }),
 
       this.eventHandler.BatsmenSwapEvent$().subscribe(() => {
         this.reAssignBatsmenData(true);
       }),
+
+      this.eventHandler.UpdateOnFieldBatsmenEvent$().subscribe(() => {
+        this.reAssignBatsmenData();
+        this.calculateSR();
+      }), // updating on-field batsmen name with new batsmen when a wicket falls
 
       this.eventHandler
         .UpdateOverViewGridEvent$()

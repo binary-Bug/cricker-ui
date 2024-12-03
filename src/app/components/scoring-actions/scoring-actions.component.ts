@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, Inject, inject, OnInit } from '@angular/core';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -17,7 +17,9 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 import {
+  MAT_DIALOG_DATA,
   MatDialog,
   MatDialogActions,
   MatDialogContent,
@@ -45,15 +47,93 @@ export class ScoringActionsComponent {
   isLBChecked: boolean = false;
   isByesChecked: boolean = false;
   isWicketChecked: boolean = false;
+  wicketDialogRef!: MatDialogRef<WicketDialog>;
 
   addRun(run: string, color: string): void {
-    if (this.isWicketChecked)
-      this.dialog.open(WicketDialog, {
+    this.liveMatchService.updateOverData();
+
+    if (this.isWicketChecked) {
+      this.wicketDialogRef = this.dialog.open(WicketDialog, {
+        data: {
+          isExtraChecked:
+            this.isWideChecked || this.isNBChecked || this.isLBChecked,
+          isByeChecked: this.isByesChecked || +run > 0,
+        },
         maxWidth: '100vw',
         width: '100vw',
       });
+
+      this.wicketDialogRef.afterClosed().subscribe((data) => {
+        if (data) {
+          console.log(data);
+          this.checkForExtras_And_AddRun(
+            run,
+            color,
+            true,
+            data.wicketType,
+            data.selectedBatsmen,
+            data.newBatsmen
+          );
+          this.liveMatchService.resetCurrentPatnership();
+        } else {
+          this.unCheckExtras();
+        }
+      });
+    } else {
+      this.checkForExtras_And_AddRun(run, color, false, null, null, null);
+    }
+
+    console.log(
+      this.matchService.teamData[this.matchService.currentRoles['bat']].Batsmens
+    );
+
+    console.log(
+      this.matchService.teamData[this.matchService.currentRoles['ball']].Bowlers
+    );
+  }
+
+  updateBallDataCSS(run: string, color: string): void {
+    if (this.isWideChecked) {
+      if (!this.isWicketChecked)
+        this.liveMatchService.updateBallDataCSS(run + 'wd', 'extra');
+      this.liveMatchService.addExtra('w', +run);
+      this.liveMatchService.updateCurrentPatnership(+run, false);
+    } else if (this.isLBChecked) {
+      if (!this.isWicketChecked)
+        this.liveMatchService.updateBallDataCSS(run + ' LB', 'run');
+      this.liveMatchService.addExtra('lb', +run);
+      this.liveMatchService.updateCurrentPatnership(+run);
+    } else if (this.isByesChecked) {
+      if (!this.isWicketChecked)
+        this.liveMatchService.updateBallDataCSS(run + ' B', 'run');
+      this.liveMatchService.addExtra('b', +run);
+      this.liveMatchService.updateCurrentPatnership(+run);
+    } else if (this.isNBChecked) {
+      if (!this.isWicketChecked)
+        this.liveMatchService.updateBallDataCSS(run + 'nb', 'extra');
+      this.liveMatchService.addExtra('nb', +run);
+      this.liveMatchService.updateCurrentPatnership(+run);
+    } else {
+      if (!this.isWicketChecked)
+        this.liveMatchService.updateBallDataCSS(run, color);
+      this.liveMatchService.updateCurrentPatnership(+run);
+    }
+
+    let runLabel: string = run;
+    if (+run === 0) runLabel = '';
+    if (this.isWicketChecked)
+      this.liveMatchService.updateBallDataCSS(runLabel + 'W', 'wicket');
+  }
+
+  checkForExtras_And_AddRun(
+    run: string,
+    color: string,
+    isWicketBall: boolean,
+    wicketType: string | null,
+    selectedBatsmen: string | null,
+    newBatsmen: string | null
+  ): void {
     let isExtra: boolean = false;
-    this.liveMatchService.updateOverData();
 
     if (this.isWideChecked || this.isNBChecked) {
       run = +run + 1 + '';
@@ -66,12 +146,14 @@ export class ScoringActionsComponent {
 
     this.updateBallDataCSS(run, color);
 
-    this.liveMatchService.updateBallDataRuns(run, isExtra);
+    this.liveMatchService.updateBallDataRuns(run, isExtra, isWicketBall);
     this.liveMatchService.updateBowlerData(
       +run,
       this.isWideChecked,
       this.isNBChecked,
-      this.isByesChecked
+      this.isByesChecked,
+      isWicketBall,
+      wicketType
     );
 
     if (!this.isWideChecked)
@@ -83,6 +165,15 @@ export class ScoringActionsComponent {
       );
     else this.liveMatchService.updatePlayerData();
 
+    if (isWicketBall) {
+      this.liveMatchService.updateOnFieldBatsmen(
+        selectedBatsmen + '',
+        newBatsmen + ''
+      );
+      this.eventHandler.NotifyUpdateOnFieldBatsmenEvent();
+      this.liveMatchService.updatePlayerData();
+    }
+
     this.liveMatchService.updateBallNumber();
 
     if (!this.isWideChecked && !this.isNBChecked)
@@ -91,29 +182,6 @@ export class ScoringActionsComponent {
     this.matchService.calculateCurrentRunRate();
     this.eventHandler.NotifyRunAddedEvent();
     this.unCheckExtras();
-  }
-
-  updateBallDataCSS(run: string, color: string): void {
-    if (this.isWideChecked) {
-      this.liveMatchService.updateBallDataCSS(run + 'wd', 'extra');
-      this.liveMatchService.addExtra('w', +run);
-      this.liveMatchService.updateCurrentPatnership(+run, false);
-    } else if (this.isLBChecked) {
-      this.liveMatchService.updateBallDataCSS(run + ' LB', 'run');
-      this.liveMatchService.addExtra('lb', +run);
-      this.liveMatchService.updateCurrentPatnership(+run);
-    } else if (this.isByesChecked) {
-      this.liveMatchService.updateBallDataCSS(run + ' B', 'run');
-      this.liveMatchService.addExtra('b', +run);
-      this.liveMatchService.updateCurrentPatnership(+run);
-    } else if (this.isNBChecked) {
-      this.liveMatchService.updateBallDataCSS(run + 'nb', 'extra');
-      this.liveMatchService.addExtra('nb', +run);
-      this.liveMatchService.updateCurrentPatnership(+run);
-    } else {
-      this.liveMatchService.updateBallDataCSS(run, color);
-      this.liveMatchService.updateCurrentPatnership(+run);
-    }
   }
 
   unCheckExtras(): void {
@@ -125,6 +193,11 @@ export class ScoringActionsComponent {
   }
 }
 
+export interface DialogData {
+  isExtraChecked: boolean;
+  isByeChecked: boolean;
+}
+
 @Component({
   selector: 'wicket-dialog',
   template: `
@@ -132,17 +205,21 @@ export class ScoringActionsComponent {
 
     <mat-dialog-content>
       <div class="grid place-items-center">
-        <mat-radio-group style="width: 100%;">
+        <mat-radio-group [(ngModel)]="selectedBatsmen" style="width: 100%;">
           <div class="flex justify-between">
             <div>
-              <mat-radio-button color="primary" value="1">{{
-                liveMatchService.striker.name
-              }}</mat-radio-button>
+              <mat-radio-button
+                color="primary"
+                [value]="liveMatchService.striker.name"
+                >{{ liveMatchService.striker.name }}</mat-radio-button
+              >
             </div>
             <div>
-              <mat-radio-button color="primary" value="2">{{
-                liveMatchService.nonStriker.name
-              }}</mat-radio-button>
+              <mat-radio-button
+                color="primary"
+                [value]="liveMatchService.nonStriker.name"
+                >{{ liveMatchService.nonStriker.name }}</mat-radio-button
+              >
             </div>
           </div>
         </mat-radio-group>
@@ -185,6 +262,17 @@ export class ScoringActionsComponent {
               <mat-option [value]="option">{{ option }}</mat-option>
               }
             </mat-autocomplete>
+          </mat-form-field>
+          <mat-divider></mat-divider>
+          <mat-form-field
+            *ngIf="currentWicketOption === 'Run-out'"
+            class="example-full-width"
+          >
+            <mat-label>Run out At</mat-label>
+            <mat-select [(value)]="selectedEnd">
+              <mat-option value="striker">Striker</mat-option>
+              <mat-option value="nonStriker">Non-Striker</mat-option>
+            </mat-select>
           </mat-form-field>
           <mat-divider></mat-divider>
           <mat-form-field class="example-full-width">
@@ -233,13 +321,15 @@ export class ScoringActionsComponent {
     MatAutocompleteModule,
     MatInputModule,
     MatFormFieldModule,
+    MatSelectModule,
     AsyncPipe,
   ],
 })
 export class WicketDialog implements OnInit {
   constructor(
     public dialogRef: MatDialogRef<WicketDialog>,
-    public liveMatchService: LiveMatchService
+    public liveMatchService: LiveMatchService,
+    @Inject(MAT_DIALOG_DATA) public data: DialogData
   ) {}
 
   availableWicketOptions: { name: string }[] = [
@@ -259,8 +349,16 @@ export class WicketDialog implements OnInit {
   isInvalid: boolean = true;
 
   currentWicketOption: string = '';
+  selectedBatsmen: string = '';
+  selectedEnd: string = '';
 
   ngOnInit() {
+    if (this.data.isExtraChecked) {
+      this.availableWicketOptions = [{ name: 'Stumped' }, { name: 'Run-out' }];
+    } else if (this.data.isByeChecked) {
+      this.availableWicketOptions = [{ name: 'Run-out' }];
+    }
+
     this.filteredOptions = this.actionPlayer.valueChanges.pipe(
       startWith(''),
       map((value) => this._filter(value || ''))
@@ -318,7 +416,14 @@ export class WicketDialog implements OnInit {
   }
 
   onOkClick(): void {
-    this.dialogRef.close('Done');
+    this.dialogRef.close({
+      action: 'Done',
+      selectedBatsmen: this.selectedBatsmen,
+      wicketType: this.currentWicketOption,
+      newBatsmen: this.newBatsmen.value,
+      actionPlayer: this.actionPlayer.value,
+      selectedEnd: this.selectedEnd,
+    });
   }
 
   onWicketOptionSelected(selectedChip: MatChipListboxChange) {

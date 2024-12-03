@@ -38,4 +38,13 @@ export class EventHandlerService {
   NotifyUpdateOverViewGridEvent(isRemove: boolean): void {
     this._updateOverViewGridSubj.next(isRemove);
   }
+
+  // Update On-Field Batsmen Event
+  private _updateOnFieldBatsmenSubj = new Subject<void>();
+  UpdateOnFieldBatsmenEvent$(): Observable<any> {
+    return this._updateOnFieldBatsmenSubj.asObservable();
+  }
+  NotifyUpdateOnFieldBatsmenEvent(): void {
+    this._updateOnFieldBatsmenSubj.next();
+  }
 }
