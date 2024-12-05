@@ -13,8 +13,22 @@ export class LiveMatchService {
 
   eventHandler: EventHandlerService = inject(EventHandlerService);
 
-  striker: Batsmen = { name: '', runs: 0, balls: 0, fours: 0, six: 0 };
-  nonStriker: Batsmen = { name: '', runs: 0, balls: 0, fours: 0, six: 0 };
+  striker: Batsmen = {
+    name: '',
+    runs: 0,
+    balls: 0,
+    fours: 0,
+    six: 0,
+    status: 'Not Out',
+  };
+  nonStriker: Batsmen = {
+    name: '',
+    runs: 0,
+    balls: 0,
+    fours: 0,
+    six: 0,
+    status: 'Not Out',
+  };
   currentBowler: Bowler = {
     name: '',
     runs: 0,
@@ -316,13 +330,6 @@ export class LiveMatchService {
 
       this.eventHandler.NotifyUndoEvent();
     }
-    console.log(
-      this.matchService.teamData[this.matchService.currentRoles['bat']].Batsmens
-    );
-
-    console.log(
-      this.matchService.teamData[this.matchService.currentRoles['ball']].Bowlers
-    );
   }
 
   updateOversPlayed(): void {
@@ -507,6 +514,7 @@ export class LiveMatchService {
         balls: 0,
         fours: 0,
         six: 0,
+        status: 'Not Out',
       };
       this.matchService.addBatsmenToTeam(this.striker, oldBatsmenName);
     } else {
@@ -516,8 +524,19 @@ export class LiveMatchService {
         balls: 0,
         fours: 0,
         six: 0,
+        status: 'Not Out',
       };
       this.matchService.addBatsmenToTeam(this.nonStriker, oldBatsmenName);
+    }
+  }
+
+  updateBatsmenEnd(newBatsmenName: string, selectedEnd: string): void {
+    if (selectedEnd === 'nonStriker') {
+      if (newBatsmenName === this.nonStriker.name) return;
+      else this.swapStriker();
+    } else {
+      if (newBatsmenName === this.striker.name) return;
+      else this.swapStriker();
     }
   }
 }

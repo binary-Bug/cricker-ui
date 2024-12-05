@@ -10,8 +10,22 @@ export class BALL_DATA {
   wicketsLost: number = 0;
   extras: { [key: string]: number } = { w: 0, nb: 0, lb: 0, b: 0 };
   currentPatnership: { runs: number; balls: number } = { runs: 0, balls: 0 };
-  striker: Batsmen = { name: '', runs: 0, balls: 0, fours: 0, six: 0 };
-  nonStriker: Batsmen = { name: '', runs: 0, balls: 0, fours: 0, six: 0 };
+  striker: Batsmen = {
+    name: '',
+    runs: 0,
+    balls: 0,
+    fours: 0,
+    six: 0,
+    status: 'Not Out',
+  };
+  nonStriker: Batsmen = {
+    name: '',
+    runs: 0,
+    balls: 0,
+    fours: 0,
+    six: 0,
+    status: 'Not Out',
+  };
   currentBowler: Bowler = {
     name: '',
     runs: 0,

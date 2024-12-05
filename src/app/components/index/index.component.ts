@@ -1,8 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
-import { addDoc, collection, Firestore } from '@angular/fire/firestore';
 import { MatButtonModule } from '@angular/material/button';
-import { getDocs, query } from '@firebase/firestore';
 import { MatInputModule } from '@angular/material/input';
 import {
   FormControl,
@@ -29,7 +27,6 @@ import { Router } from '@angular/router';
   styleUrl: './index.component.css',
 })
 export class IndexComponent implements OnInit {
-  firestore = inject(Firestore);
   roomService = inject(RoomService);
   router = inject(Router);
   isCreateRoomClicked: boolean = false;
@@ -40,20 +37,14 @@ export class IndexComponent implements OnInit {
   roomId = new FormControl('', [Validators.required]);
 
   ngOnInit() {
-    this.getRooms().then((val) => {
+    this.roomService.getRooms().then((val) => {
       this.id = val.length + 1;
     });
   }
 
-  async getRooms() {
-    return (await getDocs(query(collection(this.firestore, 'room')))).docs.map(
-      (robots) => robots.data()
-    );
-  }
-
   toggleCreateRoom() {
     this.isCreateRoomClicked = !this.isCreateRoomClicked;
-    this.getRooms().then((val) => {
+    this.roomService.getRooms().then((val) => {
       this.id = val.length + 1;
     });
   }
@@ -63,19 +54,11 @@ export class IndexComponent implements OnInit {
   }
 
   async createRoom() {
-    await addDoc(collection(this.firestore, 'room'), {
-      roomId: this.id,
-      adminCode: this.code,
-    });
-    this.roomService.currentRoom = {
-      roomId: this.id,
-      adminCode: this.code,
-    };
-    this.router.navigateByUrl('room');
+    this.roomService.createRoom(this.id, this.code);
   }
 
   joinRoom() {
-    this.getRooms().then((rooms) => {
+    this.roomService.getRooms().then((rooms) => {
       var room = rooms.find((room) => {
         return room['roomId'] === this.roomId.value;
       });

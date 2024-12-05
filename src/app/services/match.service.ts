@@ -148,6 +148,47 @@ export class MatchService {
     });
   }
 
+  updateBatsmenStatus(
+    batsmenName: string,
+    bowlerName: string,
+    wicketType: string,
+    actionPlayer: string
+  ): void {
+    let index = this.teamData[this.currentRoles['bat']].Batsmens.findIndex(
+      (batsmen) => {
+        return batsmen.name === batsmenName;
+      }
+    );
+
+    switch (wicketType) {
+      case 'Bowled': {
+        this.teamData[this.currentRoles['bat']].Batsmens[index].status =
+          'b ' + bowlerName;
+        break;
+      }
+      case 'LBW': {
+        this.teamData[this.currentRoles['bat']].Batsmens[index].status =
+          'lbw ' + bowlerName;
+        break;
+      }
+      case 'Caught': {
+        this.teamData[this.currentRoles['bat']].Batsmens[index].status =
+          'c ' + actionPlayer + ' b ' + bowlerName;
+        break;
+      }
+      case 'Stumped': {
+        this.teamData[this.currentRoles['bat']].Batsmens[index].status =
+          'st ✝' + actionPlayer + ' b ' + bowlerName;
+        break;
+      }
+      case 'Run-out': {
+        this.teamData[this.currentRoles['bat']].Batsmens[index].status =
+          'runout (' + actionPlayer + ')';
+        break;
+      }
+    }
+  }
+
   setCurrentRoles(): void {
     if (!this.isSecondInning) {
       if (this.tossWinner === 'team1') {

@@ -4,4 +4,5 @@ export interface Batsmen {
   balls: number;
   fours: number;
   six: number;
+  status: string;
 }

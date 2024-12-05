@@ -65,7 +65,6 @@ export class ScoringActionsComponent {
 
       this.wicketDialogRef.afterClosed().subscribe((data) => {
         if (data) {
-          console.log(data);
           this.checkForExtras_And_AddRun(
             run,
             color,
@@ -75,6 +74,16 @@ export class ScoringActionsComponent {
             data.newBatsmen
           );
           this.liveMatchService.resetCurrentPatnership();
+          this.matchService.updateBatsmenStatus(
+            data.selectedBatsmen,
+            this.liveMatchService.currentBowler.name,
+            data.wicketType,
+            data.actionPlayer
+          );
+          this.liveMatchService.updateBatsmenEnd(
+            data.newBatsmen,
+            data.selectedEnd
+          );
         } else {
           this.unCheckExtras();
         }
@@ -82,14 +91,6 @@ export class ScoringActionsComponent {
     } else {
       this.checkForExtras_And_AddRun(run, color, false, null, null, null);
     }
-
-    console.log(
-      this.matchService.teamData[this.matchService.currentRoles['bat']].Batsmens
-    );
-
-    console.log(
-      this.matchService.teamData[this.matchService.currentRoles['ball']].Bowlers
-    );
   }
 
   updateBallDataCSS(run: string, color: string): void {
