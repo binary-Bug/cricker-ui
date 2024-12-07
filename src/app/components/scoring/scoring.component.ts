@@ -1,4 +1,5 @@
 import {
+  ChangeDetectorRef,
   Component,
   ElementRef,
   inject,
@@ -29,6 +30,7 @@ import { UtilityService } from '../../services/utility.service';
   styleUrl: './scoring.component.css',
 })
 export class ScoringComponent implements OnInit, OnDestroy {
+  private changeDetector: ChangeDetectorRef = inject(ChangeDetectorRef);
   @ViewChild('overView') overView: ElementRef<HTMLDivElement> | undefined;
   subscriptions: Subscription[] = [];
   eventHandler: EventHandlerService = inject(EventHandlerService);
@@ -95,6 +97,7 @@ export class ScoringComponent implements OnInit, OnDestroy {
           this.overCompleted = true;
         } else {
           this.overCompleted = false;
+          this.changeDetector.detectChanges();
         }
       }),
 

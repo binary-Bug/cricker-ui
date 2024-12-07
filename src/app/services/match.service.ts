@@ -89,6 +89,11 @@ export class MatchService {
 
   addBowlerToTeam(bowler: Bowler): void {
     this.teamData[this.currentRoles['ball']].Bowlers.push(bowler);
+    this.teamData[this.currentRoles['ball']].currBowlerIndex = this.teamData[
+      this.currentRoles['ball']
+    ].Bowlers.findIndex((bwl) => {
+      return bwl.name === bowler.name;
+    });
   }
 
   addFielderToTeam(fielder: Fielder): void {
@@ -114,7 +119,14 @@ export class MatchService {
       this.teamData[this.currentRoles['bat']].Batsmens[nsi] = striker;
     }
 
-    this.teamData[this.currentRoles['ball']].Bowlers[bi] = bowler;
+    this.teamData[this.currentRoles['ball']].currBowlerIndex = this.teamData[
+      this.currentRoles['ball']
+    ].Bowlers.findIndex((localBowler) => {
+      return localBowler.name === bowler.name;
+    });
+    this.teamData[this.currentRoles['ball']].Bowlers[
+      this.teamData[this.currentRoles['ball']].currBowlerIndex
+    ] = bowler;
   }
 
   undoPlayerReferenceForWicket(

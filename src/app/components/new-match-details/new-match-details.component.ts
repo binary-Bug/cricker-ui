@@ -116,7 +116,9 @@ export class OnFieldPlayerDetailsDialog implements OnInit {
     public dialogRef: MatDialogRef<OnFieldPlayerDetailsDialog>,
     private liveMatchService: LiveMatchService,
     private matchService: MatchService
-  ) {}
+  ) {
+    dialogRef.disableClose = true;
+  }
 
   striker = new FormControl('', [Validators.required]);
   nonStriker = new FormControl('', [Validators.required]);

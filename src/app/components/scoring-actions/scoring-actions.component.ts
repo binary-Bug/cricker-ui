@@ -28,6 +28,7 @@ import {
 } from '@angular/material/dialog';
 import { map, Observable, startWith } from 'rxjs';
 import { AsyncPipe, CommonModule } from '@angular/common';
+import { Bowler } from '../../models/bowler.interface';
 
 @Component({
   selector: 'app-scoring-actions',
@@ -84,12 +85,68 @@ export class ScoringActionsComponent {
             data.newBatsmen,
             data.selectedEnd
           );
+          this.checkForOverCompletion();
         } else {
           this.unCheckExtras();
         }
       });
     } else {
       this.checkForExtras_And_AddRun(run, color, false, null, null, null);
+      this.checkForOverCompletion();
+    }
+  }
+
+  checkForOverCompletion(): void {
+    if (
+      this.matchService.teamData[this.matchService.currentRoles['bat']]
+        .oversPlayed -
+        Math.trunc(
+          this.matchService.teamData[this.matchService.currentRoles['bat']]
+            .oversPlayed
+        ) ===
+      0
+    ) {
+      this.liveMatchService.swapStriker();
+      let newBowlerDialog = this.dialog.open(NewBowlerDialog);
+      newBowlerDialog.afterClosed().subscribe((data) => {
+        let bi: number = -1;
+        let bowlerData: Bowler | undefined = this.matchService.teamData[
+          this.matchService.currentRoles['ball']
+        ].Bowlers.find((bowler, index) => {
+          if (bowler.name === data) {
+            bi = index;
+            return true;
+          }
+          return false;
+        });
+        if (bowlerData) {
+          this.matchService.teamData[
+            this.matchService.currentRoles['ball']
+          ].currBowlerIndex = bi;
+          this.liveMatchService.currentBowler = bowlerData;
+          this.liveMatchService.bowlerRunsBeforeStart =
+            this.liveMatchService.currentBowler.runs;
+        } else {
+          this.liveMatchService.currentBowler = {
+            name: data,
+            overs: 0,
+            maidens: 0,
+            runs: 0,
+            wickets: 0,
+            extras: { w: 0, nb: 0, lb: 0 },
+          };
+          this.matchService.addBowlerToTeam(
+            this.liveMatchService.currentBowler
+          );
+          this.liveMatchService.bowlerRunsBeforeStart =
+            this.liveMatchService.currentBowler.runs;
+        }
+
+        this.eventHandler.NotifyRunAddedEvent();
+        this.liveMatchService.updatePlayerData(
+          this.liveMatchService.currentOverNumber
+        );
+      });
     }
   }
 
@@ -164,7 +221,10 @@ export class ScoringActionsComponent {
         this.isByesChecked,
         this.isLBChecked
       );
-    else this.liveMatchService.updatePlayerData();
+    else {
+      if ((+run - 1) % 2 !== 0) this.liveMatchService.swapStriker();
+      this.liveMatchService.updatePlayerData();
+    }
 
     if (isWicketBall) {
       this.liveMatchService.updateOnFieldBatsmen(
@@ -331,7 +391,9 @@ export class WicketDialog implements OnInit {
     public dialogRef: MatDialogRef<WicketDialog>,
     public liveMatchService: LiveMatchService,
     @Inject(MAT_DIALOG_DATA) public data: DialogData
-  ) {}
+  ) {
+    dialogRef.disableClose = true;
+  }
 
   availableWicketOptions: { name: string }[] = [
     { name: 'Bowled' },
@@ -443,5 +505,94 @@ export class WicketDialog implements OnInit {
         this.isInvalid = true;
         break;
     }
+  }
+}
+
+@Component({
+  selector: 'new-bowler-dialog',
+  template: `<h2 mat-dialog-title>Select Bowler</h2>
+    <mat-dialog-content>
+      <mat-form-field class="example-full-width">
+        <mat-label>New Bowler</mat-label>
+        <input
+          type="text"
+          placeholder="Select Player"
+          matInput
+          [formControl]="newBowler"
+          [matAutocomplete]="auto"
+        />
+        <mat-autocomplete #auto="matAutocomplete">
+          @for (option of filteredOptions | async; track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
+          }
+        </mat-autocomplete>
+      </mat-form-field>
+    </mat-dialog-content>
+    <mat-dialog-actions>
+      <button mat-button (click)="onCancelClick()">Cancel</button>
+      <button mat-button color="primary" (click)="onOkClick()" cdkFocusInitial>
+        Done
+      </button>
+    </mat-dialog-actions>`,
+  standalone: true,
+  imports: [
+    MatFormFieldModule,
+    MatInputModule,
+    FormsModule,
+    MatButtonModule,
+    MatDialogTitle,
+    MatDialogContent,
+    MatDialogActions,
+    ReactiveFormsModule,
+    MatAutocompleteModule,
+    AsyncPipe,
+  ],
+})
+export class NewBowlerDialog implements OnInit {
+  constructor(
+    public dialogRef: MatDialogRef<NewBowlerDialog>,
+    private matchService: MatchService,
+    private liveMatchService: LiveMatchService
+  ) {
+    dialogRef.disableClose = true;
+  }
+
+  options: string[] = [];
+  filteredOptions!: Observable<string[]>;
+
+  newBowler = new FormControl('', Validators.required);
+
+  ngOnInit(): void {
+    this.filteredOptions = this.newBowler.valueChanges.pipe(
+      startWith(''),
+      map((value) => this._filter(value || ''))
+    );
+
+    this.options.push(
+      ...this.matchService.teamData[
+        this.matchService.currentRoles['ball']
+      ].Bowlers.map((bowler) => {
+        return bowler.name === this.liveMatchService.currentBowler.name
+          ? ''
+          : bowler.name;
+      })
+    );
+
+    this.options = this.options.filter((option) => option.length > 1);
+  }
+
+  onOkClick(): void {
+    this.dialogRef.close(this.newBowler.value);
+  }
+  onCancelClick(): void {
+    this.dialogRef.close();
+  }
+
+  private _filter(value: string): string[] {
+    const filterValue = value.toLowerCase();
+
+    return this.options.filter((option) =>
+      option.toLowerCase().includes(filterValue)
+    );
   }
 }

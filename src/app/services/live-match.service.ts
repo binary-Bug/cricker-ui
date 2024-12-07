@@ -82,29 +82,32 @@ export class LiveMatchService {
     this.eventHandler.NotifyBatsmenSwappedEvent();
   }
 
-  updatePlayerData(): void {
-    this.matchService.teamData[
-      this.matchService.currentRoles['bat']
-    ].oversPlayedData[this.currentOverNumber][this.currentBowlNumber].striker =
-      { ...this.striker };
+  updatePlayerData(overNumber: number = -1): void {
+    let con = this.currentOverNumber;
+    let cbn = this.currentBowlNumber;
+
+    if (overNumber > -1) {
+      con = overNumber;
+      cbn = 5;
+    }
 
     this.matchService.teamData[
       this.matchService.currentRoles['bat']
-    ].oversPlayedData[this.currentOverNumber][
-      this.currentBowlNumber
-    ].nonStriker = { ...this.nonStriker };
+    ].oversPlayedData[con][cbn].striker = { ...this.striker };
 
     this.matchService.teamData[
       this.matchService.currentRoles['bat']
-    ].oversPlayedData[this.currentOverNumber][
-      this.currentBowlNumber
-    ].currentBowler = { ...this.currentBowler };
+    ].oversPlayedData[con][cbn].nonStriker = { ...this.nonStriker };
 
     this.matchService.teamData[
       this.matchService.currentRoles['bat']
-    ].oversPlayedData[this.currentOverNumber][
-      this.currentBowlNumber
-    ].currentBowler.extras = { ...this.currentBowler.extras };
+    ].oversPlayedData[con][cbn].currentBowler = { ...this.currentBowler };
+
+    this.matchService.teamData[
+      this.matchService.currentRoles['bat']
+    ].oversPlayedData[con][cbn].currentBowler.extras = {
+      ...this.currentBowler.extras,
+    };
   }
 
   updateBowlerData(
@@ -135,7 +138,6 @@ export class LiveMatchService {
       this.currentBowler.overs = Math.trunc(this.currentBowler.overs) + 1;
       if (this.currentBowler.runs - this.bowlerRunsBeforeStart === 0)
         this.currentBowler.maidens += 1;
-      this.bowlerRunsBeforeStart = this.currentBowler.runs;
     }
   }
 
@@ -201,12 +203,10 @@ export class LiveMatchService {
       if (this.currentBowlNumber === 0 && this.currentOverNumber === 0) {
         tempStrikerName =
           this.matchService.teamData[this.matchService.currentRoles['bat']]
-            .oversPlayedData[this.currentOverNumber][this.currentBowlNumber]
-            .striker.name;
+            .Batsmens[0].name;
         tempNonStikerName =
           this.matchService.teamData[this.matchService.currentRoles['bat']]
-            .oversPlayedData[this.currentOverNumber][this.currentBowlNumber]
-            .nonStriker.name;
+            .Batsmens[1].name;
         tempBowlerName =
           this.matchService.teamData[this.matchService.currentRoles['bat']]
             .oversPlayedData[this.currentOverNumber][this.currentBowlNumber]
@@ -221,11 +221,17 @@ export class LiveMatchService {
       this.previousBowlNumber -= 1;
 
       if (this.currentBowlNumber === 0) {
-        this.previousBowlNumber = 5;
-        this.currentBowlNumber = 6;
+        this.currentBowlNumber =
+          this.matchService.teamData[
+            this.matchService.currentRoles['bat']
+          ].oversPlayedData[this.currentOverNumber].length;
 
         if (this.currentOverNumber > 0) {
           this.currentOverNumber -= 1;
+          this.previousBowlNumber =
+            this.matchService.teamData[this.matchService.currentRoles['bat']]
+              .oversPlayedData[this.currentOverNumber].length - 1;
+
           this.matchService.teamData[
             this.matchService.currentRoles['bat']
           ].oversPlayedData.pop();
@@ -329,6 +335,14 @@ export class LiveMatchService {
       );
 
       this.eventHandler.NotifyUndoEvent();
+
+      this.totalBallsinCurrentOver = 6;
+      this.eventHandler.NotifyUpdateOverViewGridEvent(true);
+      this.totalBallsinCurrentOver =
+        this.matchService.teamData[
+          this.matchService.currentRoles['bat']
+        ].oversPlayedData[this.currentOverNumber].length;
+      this.eventHandler.NotifyUpdateOverViewGridEvent(false);
     }
   }
 
@@ -359,8 +373,6 @@ export class LiveMatchService {
           this.matchService.teamData[this.matchService.currentRoles['bat']]
             .oversPlayed
         ) + 1;
-
-      this.swapStriker();
     }
   }
 
