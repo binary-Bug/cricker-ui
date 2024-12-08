@@ -96,8 +96,38 @@ export class MatchService {
     });
   }
 
-  addFielderToTeam(fielder: Fielder): void {
-    this.teamData[this.currentRoles['ball']].Fielders.push(fielder);
+  addOrUpdateFielderToTeam(
+    fielder: Fielder | undefined,
+    name: string,
+    cCount: number,
+    sCount: number,
+    roCount: number
+  ): void {
+    if (
+      fielder &&
+      this.teamData[this.currentRoles['ball']].Fielders.includes(fielder)
+    ) {
+      this.teamData[this.currentRoles['ball']].Fielders[
+        this.teamData[this.currentRoles['ball']].Fielders.findIndex(
+          (player) => {
+            return player.name === fielder.name;
+          }
+        )
+      ] = {
+        name: fielder.name,
+        catches: fielder.catches + cCount,
+        stumpOuts: fielder.stumpOuts + sCount,
+        runOuts: fielder.runOuts + roCount,
+      };
+    } else {
+      let fielderToAdd: Fielder = {
+        name: name,
+        catches: cCount,
+        stumpOuts: sCount,
+        runOuts: roCount,
+      };
+      this.teamData[this.currentRoles['ball']].Fielders.push(fielderToAdd);
+    }
   }
 
   updatePlayerReference(
@@ -183,19 +213,51 @@ export class MatchService {
           'lbw ' + bowlerName;
         break;
       }
+      case 'Retire': {
+        this.teamData[this.currentRoles['bat']].Batsmens[index].status =
+          'retired';
+        break;
+      }
       case 'Caught': {
         this.teamData[this.currentRoles['bat']].Batsmens[index].status =
           'c ' + actionPlayer + ' b ' + bowlerName;
+        this.addOrUpdateFielderToTeam(
+          this.teamData[this.currentRoles['ball']].Fielders.find((player) => {
+            return player.name === actionPlayer;
+          }),
+          actionPlayer,
+          1,
+          0,
+          0
+        );
         break;
       }
       case 'Stumped': {
         this.teamData[this.currentRoles['bat']].Batsmens[index].status =
           'st ✝' + actionPlayer + ' b ' + bowlerName;
+        this.addOrUpdateFielderToTeam(
+          this.teamData[this.currentRoles['ball']].Fielders.find((player) => {
+            return player.name === actionPlayer;
+          }),
+          actionPlayer,
+          0,
+          1,
+          0
+        );
         break;
       }
       case 'Run-out': {
         this.teamData[this.currentRoles['bat']].Batsmens[index].status =
           'runout (' + actionPlayer + ')';
+        this.addOrUpdateFielderToTeam(
+          this.teamData[this.currentRoles['ball']].Fielders.find((player) => {
+            return player.name === actionPlayer;
+          }),
+          actionPlayer,
+          0,
+          0,
+          1
+        );
         break;
       }
     }

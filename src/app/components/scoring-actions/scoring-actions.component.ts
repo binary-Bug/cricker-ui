@@ -252,6 +252,17 @@ export class ScoringActionsComponent {
     this.isByesChecked = false;
     this.isWicketChecked = false;
   }
+
+  retireBatsmen(): void {
+    let dialogRef = this.dialog.open(RetireBatsmenDialog);
+    dialogRef.afterClosed().subscribe((data) => {
+      if (data) {
+        this.liveMatchService.updateOnFieldBatsmen(data.old, data.new);
+        this.eventHandler.NotifyRunAddedEvent();
+        this.matchService.updateBatsmenStatus(data.old, '', 'Retire', '');
+      }
+    });
+  }
 }
 
 export interface DialogData {
@@ -583,6 +594,123 @@ export class NewBowlerDialog implements OnInit {
 
   onOkClick(): void {
     this.dialogRef.close(this.newBowler.value);
+  }
+  onCancelClick(): void {
+    this.dialogRef.close();
+  }
+
+  private _filter(value: string): string[] {
+    const filterValue = value.toLowerCase();
+
+    return this.options.filter((option) =>
+      option.toLowerCase().includes(filterValue)
+    );
+  }
+}
+
+@Component({
+  selector: 'retire-batsmen-dialog',
+  template: `<h2 mat-dialog-title>Select Batsmen</h2>
+    <mat-dialog-content>
+      <div class="grid place-items-center">
+        <mat-radio-group [(ngModel)]="selectedBatsmen" style="width: 100%;">
+          <div class="flex justify-between">
+            <div>
+              <mat-radio-button
+                color="primary"
+                [value]="liveMatchService.striker.name"
+                >{{ liveMatchService.striker.name }}</mat-radio-button
+              >
+            </div>
+            <div>
+              <mat-radio-button
+                color="primary"
+                [value]="liveMatchService.nonStriker.name"
+                >{{ liveMatchService.nonStriker.name }}</mat-radio-button
+              >
+            </div>
+          </div>
+        </mat-radio-group>
+      </div>
+      <mat-divider></mat-divider>
+      <mat-form-field class="example-full-width">
+        <mat-label>New Batsmen</mat-label>
+        <input
+          type="text"
+          placeholder="Select Player"
+          matInput
+          [formControl]="newBatsmen"
+          [matAutocomplete]="auto"
+        />
+        <mat-autocomplete #auto="matAutocomplete">
+          @for (option of filteredOptions | async; track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
+          }
+        </mat-autocomplete>
+      </mat-form-field>
+    </mat-dialog-content>
+    <mat-dialog-actions>
+      <button mat-button (click)="onCancelClick()">Cancel</button>
+      <button mat-button color="primary" (click)="onOkClick()" cdkFocusInitial>
+        Done
+      </button>
+    </mat-dialog-actions>`,
+  standalone: true,
+  imports: [
+    MatFormFieldModule,
+    MatInputModule,
+    FormsModule,
+    MatButtonModule,
+    MatDialogTitle,
+    MatDialogContent,
+    MatDialogActions,
+    ReactiveFormsModule,
+    MatAutocompleteModule,
+    MatRadioModule,
+    MatDividerModule,
+    AsyncPipe,
+  ],
+})
+export class RetireBatsmenDialog implements OnInit {
+  constructor(
+    public dialogRef: MatDialogRef<NewBowlerDialog>,
+    private matchService: MatchService,
+    public liveMatchService: LiveMatchService
+  ) {
+    dialogRef.disableClose = true;
+  }
+
+  options: string[] = [];
+  filteredOptions!: Observable<string[]>;
+
+  newBatsmen = new FormControl('', Validators.required);
+  selectedBatsmen: string = '';
+
+  ngOnInit(): void {
+    this.filteredOptions = this.newBatsmen.valueChanges.pipe(
+      startWith(''),
+      map((value) => this._filter(value || ''))
+    );
+
+    this.options.push(
+      ...this.matchService.teamData[
+        this.matchService.currentRoles['bat']
+      ].Batsmens.map((batsmen) => {
+        return batsmen.name === this.liveMatchService.striker.name ||
+          batsmen.name === this.liveMatchService.nonStriker.name
+          ? ''
+          : batsmen.name;
+      })
+    );
+
+    this.options = this.options.filter((option) => option.length > 1);
+  }
+
+  onOkClick(): void {
+    this.dialogRef.close({
+      old: this.selectedBatsmen,
+      new: this.newBatsmen.value,
+    });
   }
   onCancelClick(): void {
     this.dialogRef.close();
