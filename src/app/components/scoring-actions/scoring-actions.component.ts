@@ -106,48 +106,29 @@ export class ScoringActionsComponent {
         ) ===
       0
     ) {
-      this.liveMatchService.swapStriker();
-      let newBowlerDialog = this.dialog.open(NewBowlerDialog);
-      newBowlerDialog.afterClosed().subscribe((data) => {
-        let bi: number = -1;
-        let bowlerData: Bowler | undefined = this.matchService.teamData[
-          this.matchService.currentRoles['ball']
-        ].Bowlers.find((bowler, index) => {
-          if (bowler.name === data) {
-            bi = index;
-            return true;
-          }
-          return false;
+      if (
+        Math.trunc(
+          this.matchService.teamData[this.matchService.currentRoles['bat']]
+            .oversPlayed
+        ) === this.matchService.totalOvers
+      ) {
+        //end innings
+        console.log('end innings');
+      } else {
+        this.liveMatchService.swapStriker();
+        let newBowlerDialog = this.dialog.open(NewBowlerDialog);
+        newBowlerDialog.afterClosed().subscribe((data) => {
+          this.liveMatchService.updateOnFieldBowler(data);
         });
-        if (bowlerData) {
-          this.matchService.teamData[
-            this.matchService.currentRoles['ball']
-          ].currBowlerIndex = bi;
-          this.liveMatchService.currentBowler = bowlerData;
-          this.liveMatchService.bowlerRunsBeforeStart =
-            this.liveMatchService.currentBowler.runs;
-        } else {
-          this.liveMatchService.currentBowler = {
-            name: data,
-            overs: 0,
-            maidens: 0,
-            runs: 0,
-            wickets: 0,
-            extras: { w: 0, nb: 0, lb: 0 },
-          };
-          this.matchService.addBowlerToTeam(
-            this.liveMatchService.currentBowler
-          );
-          this.liveMatchService.bowlerRunsBeforeStart =
-            this.liveMatchService.currentBowler.runs;
-        }
-
-        this.eventHandler.NotifyRunAddedEvent();
-        this.liveMatchService.updatePlayerData(
-          this.liveMatchService.currentOverNumber
-        );
-      });
+      }
     }
+  }
+
+  changeBowler(): void {
+    let newBowlerDialog = this.dialog.open(NewBowlerDialog);
+    newBowlerDialog.afterClosed().subscribe((data) => {
+      this.liveMatchService.updateOnFieldBowler(data);
+    });
   }
 
   updateBallDataCSS(run: string, color: string): void {

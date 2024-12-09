@@ -551,4 +551,38 @@ export class LiveMatchService {
       else this.swapStriker();
     }
   }
+
+  updateOnFieldBowler(data: any): void {
+    let bi: number = -1;
+    let bowlerData: Bowler | undefined = this.matchService.teamData[
+      this.matchService.currentRoles['ball']
+    ].Bowlers.find((bowler, index) => {
+      if (bowler.name === data) {
+        bi = index;
+        return true;
+      }
+      return false;
+    });
+    if (bowlerData) {
+      this.matchService.teamData[
+        this.matchService.currentRoles['ball']
+      ].currBowlerIndex = bi;
+      this.currentBowler = bowlerData;
+      this.bowlerRunsBeforeStart = this.currentBowler.runs;
+    } else {
+      this.currentBowler = {
+        name: data,
+        overs: 0,
+        maidens: 0,
+        runs: 0,
+        wickets: 0,
+        extras: { w: 0, nb: 0, lb: 0 },
+      };
+      this.matchService.addBowlerToTeam(this.currentBowler);
+      this.bowlerRunsBeforeStart = this.currentBowler.runs;
+    }
+
+    this.eventHandler.NotifyRunAddedEvent();
+    this.updatePlayerData(this.currentOverNumber);
+  }
 }
