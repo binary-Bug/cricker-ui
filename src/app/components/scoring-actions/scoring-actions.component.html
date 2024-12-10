@@ -186,7 +186,12 @@
 
   <mat-grid-tile
     ><div class="example-button-row smallText">
-      <button color="accent" mat-raised-button style="width: 10em; height: 6em">
+      <button
+        (click)="endInnings()"
+        color="accent"
+        mat-raised-button
+        style="width: 10em; height: 6em"
+      >
         End Innings
       </button>
     </div></mat-grid-tile

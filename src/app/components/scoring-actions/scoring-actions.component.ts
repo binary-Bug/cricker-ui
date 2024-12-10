@@ -5,16 +5,12 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { LiveMatchService } from '../../services/live-match.service';
 import { MatchService } from '../../services/match.service';
 import { EventHandlerService } from '../../services/event-handler.service';
-import {
-  FormsModule
-} from '@angular/forms';
-import {
-  MatDialog,
-  MatDialogRef,
-} from '@angular/material/dialog';
+import { FormsModule } from '@angular/forms';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { WicketDialog } from '../dailogs/wicket.dialog';
 import { NewBowlerDialog } from '../dailogs/new-bowler.dialog';
 import { RetireBatsmenDialog } from '../dailogs/retire-batsmen.dialog';
+import { EndInningsDialog } from '../dailogs/end-innings.dialog';
 
 @Component({
   selector: 'app-scoring-actions',
@@ -40,6 +36,13 @@ export class ScoringActionsComponent {
     this.liveMatchService.updateOverData();
 
     if (this.isWicketChecked) {
+      // if (
+      //   this.matchService.teamData[this.matchService.currentRoles['bat']]
+      //     .wicketsLost ===
+      //   this.matchService.totalPlayers! - 1
+      // ) {
+      //   this.dialog.open(EndInningsDialog);
+      // }
       this.wicketDialogRef = this.dialog.open(WicketDialog, {
         data: {
           isExtraChecked:
@@ -98,7 +101,7 @@ export class ScoringActionsComponent {
             .oversPlayed
         ) === this.matchService.totalOvers
       ) {
-        //end innings
+        this.dialog.open(EndInningsDialog);
         console.log('end innings');
       } else {
         this.liveMatchService.swapStriker();
@@ -229,5 +232,9 @@ export class ScoringActionsComponent {
         this.matchService.updateBatsmenStatus(data.old, '', 'Retire', '');
       }
     });
+  }
+
+  endInnings(): void {
+    this.dialog.open(EndInningsDialog);
   }
 }
