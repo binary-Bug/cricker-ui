@@ -36,13 +36,6 @@ export class ScoringActionsComponent {
     this.liveMatchService.updateOverData();
 
     if (this.isWicketChecked) {
-      // if (
-      //   this.matchService.teamData[this.matchService.currentRoles['bat']]
-      //     .wicketsLost ===
-      //   this.matchService.totalPlayers! - 1
-      // ) {
-      //   this.dialog.open(EndInningsDialog);
-      // }
       this.wicketDialogRef = this.dialog.open(WicketDialog, {
         data: {
           isExtraChecked:
@@ -78,6 +71,13 @@ export class ScoringActionsComponent {
         } else {
           this.unCheckExtras();
         }
+        if (
+        this.matchService.teamData[this.matchService.currentRoles['bat']]
+          .wicketsLost ===
+        this.matchService.totalPlayers! - 1
+      ) {
+        this.dialog.open(EndInningsDialog);
+      }
       });
     } else {
       this.checkForExtras_And_AddRun(run, color, false, null, null, null);

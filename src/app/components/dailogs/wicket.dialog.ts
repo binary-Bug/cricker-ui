@@ -12,6 +12,7 @@ import { MatRadioModule } from "@angular/material/radio";
 import { MatSelectModule } from "@angular/material/select";
 import { Observable, startWith, map } from "rxjs";
 import { LiveMatchService } from "../../services/live-match.service";
+import { MatchService } from "../../services/match.service";
 
 export interface DialogData {
     isExtraChecked: boolean;
@@ -95,7 +96,9 @@ export interface DialogData {
               </mat-select>
             </mat-form-field>
             <mat-divider></mat-divider>
-            <mat-form-field class="example-full-width">
+            <mat-form-field *ngIf="this.matchService.teamData[this.matchService.currentRoles['bat']]
+          .wicketsLost !==
+        this.matchService.totalPlayers! - 2" class="example-full-width">
               <mat-label>New Batsmen</mat-label>
               <input
                 type="text"
@@ -150,6 +153,7 @@ export interface DialogData {
     constructor(
       public dialogRef: MatDialogRef<WicketDialog>,
       public liveMatchService: LiveMatchService,
+      public matchService: MatchService
     ) {
       dialogRef.disableClose = true;
      this.data = inject<DialogData>(MAT_DIALOG_DATA);
@@ -164,7 +168,7 @@ export interface DialogData {
     ];
   
     actionPlayer = new FormControl('', Validators.required);
-    newBatsmen = new FormControl('', Validators.required);
+    newBatsmen = new FormControl('none', Validators.required);
     options: string[] = ['Choli', 'Dhobhi', 'Brohit'];
     filteredOptions!: Observable<string[]>;
     filteredOptionsNewBatsmen!: Observable<string[]>;
@@ -181,6 +185,12 @@ export interface DialogData {
       } else if (this.data.isByeChecked) {
         this.availableWicketOptions = [{ name: 'Run-out' }];
       }
+
+      if(this.matchService.teamData[this.matchService.currentRoles['bat']]
+          .wicketsLost ===
+        this.matchService.totalPlayers! - 2){
+          this.isInvalid = false;
+        }
   
       this.filteredOptions = this.actionPlayer.valueChanges.pipe(
         startWith(''),
@@ -264,6 +274,13 @@ export interface DialogData {
           this.label = 'Run out By';
           this.isInvalid = true;
           break;
+        default:
+          if(this.matchService.teamData[this.matchService.currentRoles['bat']]
+          .wicketsLost ===
+          this.matchService.totalPlayers! - 2){
+          this.isInvalid = false;
+        }
+        break;
       }
     }
   }

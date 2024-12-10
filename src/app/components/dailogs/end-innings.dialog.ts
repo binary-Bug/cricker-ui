@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import {
   FormsModule,
   ReactiveFormsModule,
@@ -13,6 +13,7 @@ import {
   MatDialogContent,
   MatDialogActions,
   MatDialogRef,
+  MAT_DIALOG_DATA,
 } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -79,12 +80,14 @@ import { MatchService } from '../../services/match.service';
   ],
 })
 export class EndInningsDialog implements OnInit {
+  data: any;
   constructor(
     public dialogRef: MatDialogRef<EndInningsDialog>,
     public matchService: MatchService,
     public liveMatchService: LiveMatchService
   ) {
     dialogRef.disableClose = true;
+    this.data = inject<any>(MAT_DIALOG_DATA);
   }
 
   totalOvers = this.matchService.totalOvers;
