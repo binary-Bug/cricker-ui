@@ -88,6 +88,7 @@ export class EndInningsDialog implements OnInit {
   ) {
     dialogRef.disableClose = true;
     this.data = inject<any>(MAT_DIALOG_DATA);
+    this.selectedType = this.data?.value;
   }
 
   totalOvers = this.matchService.totalOvers;

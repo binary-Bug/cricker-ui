@@ -67,17 +67,18 @@ export class ScoringActionsComponent {
             data.newBatsmen,
             data.selectedEnd
           );
-          this.checkForOverCompletion();
+          if (
+            this.matchService.teamData[this.matchService.currentRoles['bat']]
+              .wicketsLost ===
+            this.matchService.totalPlayers! - 1
+          ) {
+            this.dialog.open(EndInningsDialog,{data:{value:'allOut'}});
+          }
+          else
+            this.checkForOverCompletion();
         } else {
           this.unCheckExtras();
         }
-        if (
-        this.matchService.teamData[this.matchService.currentRoles['bat']]
-          .wicketsLost ===
-        this.matchService.totalPlayers! - 1
-      ) {
-        this.dialog.open(EndInningsDialog);
-      }
       });
     } else {
       this.checkForExtras_And_AddRun(run, color, false, null, null, null);
@@ -101,8 +102,7 @@ export class ScoringActionsComponent {
             .oversPlayed
         ) === this.matchService.totalOvers
       ) {
-        this.dialog.open(EndInningsDialog);
-        console.log('end innings');
+          this.dialog.open(EndInningsDialog,{data:{value:'oversCompleted'}});
       } else {
         this.liveMatchService.swapStriker();
         let newBowlerDialog = this.dialog.open(NewBowlerDialog);
