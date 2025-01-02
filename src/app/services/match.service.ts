@@ -203,6 +203,11 @@ export class MatchService {
     );
 
     switch (wicketType) {
+      case 'Hit-Wicket': {
+        this.teamData[this.currentRoles['bat']].Batsmens[index].status =
+          'Hit-Wicket';
+        break;
+      }
       case 'Bowled': {
         this.teamData[this.currentRoles['bat']].Batsmens[index].status =
           'b ' + bowlerName;

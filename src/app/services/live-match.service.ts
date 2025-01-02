@@ -126,7 +126,12 @@ export class LiveMatchService {
       ).toFixed(1);
     }
 
-    if (isWicketBall && wicketType && wicketType !== 'Run-out') {
+    if (
+      isWicketBall &&
+      wicketType &&
+      wicketType !== 'Run-out' &&
+      wicketType !== 'Hit-Wicket'
+    ) {
       this.currentBowler.wickets += 1;
     }
 
