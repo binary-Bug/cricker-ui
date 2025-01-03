@@ -49,14 +49,15 @@ export class LiveMatchService {
     run: number,
     isNBChecked: boolean,
     isByesChecked: boolean,
-    isLBChecked: boolean
+    isLBChecked: boolean,
+    isPenaltyRun: boolean
   ): void {
     if (isNBChecked) run -= 1;
 
     this.striker.balls += 1;
 
     if (run % 2 === 0) {
-      if (isByesChecked || isLBChecked) run = 0;
+      if (isByesChecked || isLBChecked || isPenaltyRun) run = 0;
       this.striker.runs += run;
       switch (run) {
         case 4:
@@ -68,9 +69,9 @@ export class LiveMatchService {
       }
       this.updatePlayerData();
     } else {
-      if (isByesChecked || isLBChecked) run = 0;
+      if (isByesChecked || isLBChecked || isPenaltyRun) run = 0;
       this.striker.runs += run;
-      this.swapStriker();
+      if (!isPenaltyRun) this.swapStriker();
       this.updatePlayerData();
     }
   }
@@ -115,10 +116,11 @@ export class LiveMatchService {
     isWideChecked: boolean,
     isNBChecked: boolean,
     isByesChecked: boolean,
+    isPenaltyRun: boolean,
     isWicketBall: boolean,
     wicketType: string | null
   ): void {
-    if (!isByesChecked) this.currentBowler.runs += run;
+    if (!isByesChecked && !isPenaltyRun) this.currentBowler.runs += run;
 
     if (!isWideChecked && !isNBChecked) {
       this.currentBowler.overs = +parseFloat(

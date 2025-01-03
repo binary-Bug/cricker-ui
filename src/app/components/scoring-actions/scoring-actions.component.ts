@@ -30,6 +30,7 @@ export class ScoringActionsComponent {
   isNBChecked: boolean = false;
   isLBChecked: boolean = false;
   isByesChecked: boolean = false;
+  isPenaltyRun: boolean = false;
   isWicketChecked: boolean = false;
   wicketDialogRef!: MatDialogRef<WicketDialog>;
 
@@ -181,6 +182,7 @@ export class ScoringActionsComponent {
       this.isWideChecked,
       this.isNBChecked,
       this.isByesChecked,
+      this.isPenaltyRun,
       isWicketBall,
       wicketType
     );
@@ -190,7 +192,8 @@ export class ScoringActionsComponent {
         +run,
         this.isNBChecked,
         this.isByesChecked,
-        this.isLBChecked
+        this.isLBChecked,
+        this.isPenaltyRun
       );
     else {
       if ((+run - 1) % 2 !== 0) this.liveMatchService.swapStriker();
@@ -243,11 +246,12 @@ export class ScoringActionsComponent {
     let dialogRef = this.dialog.open(PenaltyRunsDialog);
     dialogRef.afterClosed().subscribe((data) => {
       if (data) {
+        this.isPenaltyRun = true;
         this.isByesChecked = true;
         this.addRun(data as string, 'run');
+        this.isPenaltyRun = false;
         this.isByesChecked = false;
       }
-      console.log(data);
     });
   }
 }
