@@ -11,6 +11,7 @@ import { WicketDialog } from '../dailogs/wicket.dialog';
 import { NewBowlerDialog } from '../dailogs/new-bowler.dialog';
 import { RetireBatsmenDialog } from '../dailogs/retire-batsmen.dialog';
 import { EndInningsDialog } from '../dailogs/end-innings.dialog';
+import { PenaltyRunsDialog } from '../dailogs/penalty-runs.dialog';
 
 @Component({
   selector: 'app-scoring-actions',
@@ -72,10 +73,8 @@ export class ScoringActionsComponent {
               .wicketsLost ===
             this.matchService.totalPlayers! - 1
           ) {
-            this.dialog.open(EndInningsDialog,{data:{value:'allOut'}});
-          }
-          else
-            this.checkForOverCompletion();
+            this.dialog.open(EndInningsDialog, { data: { value: 'allOut' } });
+          } else this.checkForOverCompletion();
         } else {
           this.unCheckExtras();
         }
@@ -102,7 +101,9 @@ export class ScoringActionsComponent {
             .oversPlayed
         ) === this.matchService.totalOvers
       ) {
-          this.dialog.open(EndInningsDialog,{data:{value:'oversCompleted'}});
+        this.dialog.open(EndInningsDialog, {
+          data: { value: 'oversCompleted' },
+        });
       } else {
         this.liveMatchService.swapStriker();
         let newBowlerDialog = this.dialog.open(NewBowlerDialog);
@@ -236,5 +237,17 @@ export class ScoringActionsComponent {
 
   endInnings(): void {
     this.dialog.open(EndInningsDialog);
+  }
+
+  penaltyRuns(): void {
+    let dialogRef = this.dialog.open(PenaltyRunsDialog);
+    dialogRef.afterClosed().subscribe((data) => {
+      if (data) {
+        this.isByesChecked = true;
+        this.addRun(data as string, 'run');
+        this.isByesChecked = false;
+      }
+      console.log(data);
+    });
   }
 }
