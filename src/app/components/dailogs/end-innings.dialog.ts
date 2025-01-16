@@ -30,7 +30,11 @@ import { MatchService } from '../../services/match.service';
     </h2>
     <mat-dialog-content>
       <div class="grid place-items-center">
-        <mat-radio-group [(ngModel)]="selectedType" style="width: 100%;">
+        <mat-radio-group
+          [disabled]="isAuto"
+          [(ngModel)]="selectedType"
+          style="width: 100%;"
+        >
           <div class="flex justify-between">
             <div>
               <mat-radio-button color="primary" value="allOut"
@@ -50,16 +54,22 @@ import { MatchService } from '../../services/match.service';
       <div class="grid place-items-center">
         <mat-form-field>
           <mat-label>Do you want to add more overs?</mat-label>
-          <input type="number" matInput [(ngModel)]="totalOvers" />
+          <input type="number" matInput [formControl]="totalOvers" />
         </mat-form-field>
         <mat-form-field>
           <mat-label>Do you want to add more players?</mat-label>
-          <input type="number" matInput [(ngModel)]="totalPlayers" />
+          <input type="number" matInput [formControl]="totalPlayers" />
         </mat-form-field>
       </div>
     </mat-dialog-content>
     <mat-dialog-actions>
-      <button mat-button (click)="onCancelClick()">Cancel</button>
+      <button
+        mat-button
+        [disabled]="canContinue ? null : 'true'"
+        (click)="onContinueClick()"
+      >
+        Continue Innings
+      </button>
       <button mat-button color="primary" (click)="onOkClick()" cdkFocusInitial>
         End Innings
       </button>
@@ -89,19 +99,40 @@ export class EndInningsDialog implements OnInit {
     dialogRef.disableClose = true;
     this.data = inject<any>(MAT_DIALOG_DATA);
     this.selectedType = this.data?.value;
+    if (this.data !== null) {
+      this.canContinue = false;
+      this.isAuto = true;
+    }
   }
 
-  totalOvers = this.matchService.totalOvers;
-  totalPlayers = this.matchService.totalPlayers;
+  totalOvers = new FormControl(this.matchService.totalOvers);
+  totalPlayers = new FormControl(this.matchService.totalPlayers);
 
   selectedType: string = '';
 
-  ngOnInit(): void {}
+  canContinue: boolean = true;
+  isAuto: boolean = false;
+
+  ngOnInit(): void {
+    this.totalOvers.valueChanges.subscribe((val) => {
+      if (val === this.matchService.totalOvers) this.canContinue = false;
+      else this.canContinue = true;
+    });
+
+    this.totalPlayers.valueChanges.subscribe((val) => {
+      if (val === this.matchService.totalPlayers) this.canContinue = false;
+      else this.canContinue = true;
+    });
+  }
 
   onOkClick(): void {
-    this.dialogRef.close();
+    this.dialogRef.close({ event: 'end' });
   }
-  onCancelClick(): void {
-    this.dialogRef.close();
+  onContinueClick(): void {
+    this.dialogRef.close({
+      event: 'continue',
+      overs: this.totalOvers.value,
+      players: this.totalPlayers.value,
+    });
   }
 }

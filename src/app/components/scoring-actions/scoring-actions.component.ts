@@ -74,7 +74,12 @@ export class ScoringActionsComponent {
               .wicketsLost ===
             this.matchService.totalPlayers! - 1
           ) {
-            this.dialog.open(EndInningsDialog, { data: { value: 'allOut' } });
+            let endInningsDialog = this.dialog.open(EndInningsDialog, {
+              data: { value: 'allOut' },
+            });
+            endInningsDialog.afterClosed().subscribe((data) => {
+              this.liveMatchService.handleEndInningsDialog(data);
+            });
           } else this.checkForOverCompletion();
         } else {
           this.unCheckExtras();
@@ -102,8 +107,12 @@ export class ScoringActionsComponent {
             .oversPlayed
         ) === this.matchService.totalOvers
       ) {
-        this.dialog.open(EndInningsDialog, {
+        let endInningsDialog = this.dialog.open(EndInningsDialog, {
           data: { value: 'oversCompleted' },
+        });
+
+        endInningsDialog.afterClosed().subscribe((data) => {
+          this.liveMatchService.handleEndInningsDialog(data);
         });
       } else {
         this.liveMatchService.swapStriker();
@@ -239,7 +248,11 @@ export class ScoringActionsComponent {
   }
 
   endInnings(): void {
-    this.dialog.open(EndInningsDialog);
+    let endInningsDialog = this.dialog.open(EndInningsDialog);
+
+    endInningsDialog.afterClosed().subscribe((data) => {
+      this.liveMatchService.handleEndInningsDialog(data);
+    });
   }
 
   penaltyRuns(): void {

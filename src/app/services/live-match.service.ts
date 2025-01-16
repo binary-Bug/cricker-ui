@@ -592,4 +592,21 @@ export class LiveMatchService {
     this.eventHandler.NotifyRunAddedEvent();
     this.updatePlayerData(this.currentOverNumber);
   }
+
+  handleEndInningsDialog(data: any): void {
+    if (data.event === 'end') {
+      console.log('end');
+    }
+    if (data.event === 'continue') {
+      console.log(data);
+      this.matchService.totalOvers = data.overs;
+      if (
+        this.matchService.totalPlayers &&
+        data.players > this.matchService.totalPlayers
+      ) {
+        this.matchService.totalPlayers = data.players;
+        console.log('new bat');
+      } else this.matchService.totalPlayers = data.players;
+    }
+  }
 }
