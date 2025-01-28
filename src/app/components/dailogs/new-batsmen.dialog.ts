@@ -22,16 +22,16 @@ import { LiveMatchService } from '../../services/live-match.service';
 import { MatchService } from '../../services/match.service';
 
 @Component({
-  selector: 'new-bowler-dialog',
-  template: `<h2 mat-dialog-title>Select Bowler</h2>
+  selector: 'new-batsmen-dialog',
+  template: `<h2 mat-dialog-title>Select Batsmen</h2>
     <mat-dialog-content>
       <mat-form-field class="example-full-width">
-        <mat-label>New Bowler</mat-label>
+        <mat-label>New Batsmen</mat-label>
         <input
           type="text"
           placeholder="Select Player"
           matInput
-          [formControl]="newBowler"
+          [formControl]="newBatsmen"
           [matAutocomplete]="auto"
         />
         <mat-autocomplete #auto="matAutocomplete">
@@ -67,9 +67,9 @@ import { MatchService } from '../../services/match.service';
     AsyncPipe,
   ],
 })
-export class NewBowlerDialog implements OnInit {
+export class NewBatsmenDialog implements OnInit {
   constructor(
-    public dialogRef: MatDialogRef<NewBowlerDialog>,
+    public dialogRef: MatDialogRef<NewBatsmenDialog>,
     private matchService: MatchService,
     private liveMatchService: LiveMatchService
   ) {
@@ -81,29 +81,17 @@ export class NewBowlerDialog implements OnInit {
   options: string[] = [];
   filteredOptions!: Observable<string[]>;
 
-  newBowler = new FormControl('', Validators.required);
+  newBatsmen = new FormControl('', Validators.required);
 
   ngOnInit(): void {
-    this.filteredOptions = this.newBowler.valueChanges.pipe(
+    this.filteredOptions = this.newBatsmen.valueChanges.pipe(
       startWith(''),
       map((value) => this._filter(value || ''))
     );
-
-    this.options.push(
-      ...this.matchService.teamData[
-        this.matchService.currentRoles['ball']
-      ].Bowlers.map((bowler) => {
-        return bowler.name === this.liveMatchService.currentBowler.name
-          ? ''
-          : bowler.name;
-      })
-    );
-
-    this.options = this.options.filter((option) => option.length > 0);
   }
 
   onOkClick(): void {
-    this.dialogRef.close(this.newBowler.value);
+    this.dialogRef.close(this.newBatsmen.value);
   }
   onCancelClick(): void {
     this.dialogRef.close();

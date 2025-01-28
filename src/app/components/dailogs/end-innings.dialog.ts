@@ -98,10 +98,10 @@ export class EndInningsDialog implements OnInit {
   ) {
     dialogRef.disableClose = true;
     this.data = inject<any>(MAT_DIALOG_DATA);
-    this.selectedType = this.data?.value;
     if (this.data !== null) {
       this.canContinue = false;
       this.isAuto = true;
+      this.selectedType = this.data.value;
     }
   }
 
@@ -123,6 +123,21 @@ export class EndInningsDialog implements OnInit {
       if (val === this.matchService.totalPlayers) this.canContinue = false;
       else this.canContinue = true;
     });
+
+    if (this.isAuto && this.selectedType) {
+      if (
+        this.selectedType === 'allOut' &&
+        this.matchService.teamData[this.matchService.currentRoles['bat']]
+          .oversPlayed < this.matchService.totalOvers!
+      ) {
+        this.totalOvers.disable();
+      } else if (
+        this.matchService.teamData[this.matchService.currentRoles['bat']]
+          .oversPlayed < this.matchService.totalOvers!
+      ) {
+        this.totalPlayers.disable();
+      }
+    }
   }
 
   onOkClick(): void {
@@ -131,6 +146,7 @@ export class EndInningsDialog implements OnInit {
   onContinueClick(): void {
     this.dialogRef.close({
       event: 'continue',
+      isAuto: this.isAuto,
       overs: this.totalOvers.value,
       players: this.totalPlayers.value,
     });

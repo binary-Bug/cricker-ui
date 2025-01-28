@@ -4,6 +4,10 @@ import { Batsmen } from '../models/batsmen.interface';
 import { Bowler } from '../models/bowler.interface';
 import { BALL_DATA } from '../models/ball_data.class';
 import { EventHandlerService } from './event-handler.service';
+import { NewBowlerDialog } from '../components/dailogs/new-bowler.dialog';
+import { MatDialog } from '@angular/material/dialog';
+import { NewBatsmenDialog } from '../components/dailogs/new-batsmen.dialog';
+import { map } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -12,6 +16,7 @@ export class LiveMatchService {
   constructor(private matchService: MatchService) {}
 
   eventHandler: EventHandlerService = inject(EventHandlerService);
+  dialog: MatDialog = inject(MatDialog);
 
   striker: Batsmen = {
     name: '',
@@ -535,7 +540,8 @@ export class LiveMatchService {
         six: 0,
         status: 'Not Out',
       };
-      this.matchService.addBatsmenToTeam(this.striker, oldBatsmenName);
+      if (newBatsmenName !== 'none')
+        this.matchService.addBatsmenToTeam(this.striker, oldBatsmenName);
     } else {
       this.nonStriker = {
         name: newBatsmenName,
@@ -545,7 +551,8 @@ export class LiveMatchService {
         six: 0,
         status: 'Not Out',
       };
-      this.matchService.addBatsmenToTeam(this.nonStriker, oldBatsmenName);
+      if (newBatsmenName !== 'none')
+        this.matchService.addBatsmenToTeam(this.nonStriker, oldBatsmenName);
     }
   }
 
@@ -593,20 +600,91 @@ export class LiveMatchService {
     this.updatePlayerData(this.currentOverNumber);
   }
 
+  pipeDialogs(): void {
+    this.dialog
+      .open(NewBatsmenDialog, {
+        data: { isAuto: true },
+      })
+      .afterClosed()
+      .pipe(
+        map((batsmenName) => {
+          this.updateOnFieldBatsmen('none', batsmenName);
+          this.eventHandler.NotifyUpdateOnFieldBatsmenEvent();
+          return this.dialog
+            .open(NewBowlerDialog, {
+              data: { isAuto: true },
+            })
+            .afterClosed();
+        })
+      )
+      .subscribe((NewBowlerObs$) => {
+        NewBowlerObs$.subscribe((bowler) => {
+          this.updateOnFieldBowler(bowler);
+        });
+      });
+  }
+
   handleEndInningsDialog(data: any): void {
     if (data.event === 'end') {
       console.log('end');
     }
-    if (data.event === 'continue') {
-      console.log(data);
-      this.matchService.totalOvers = data.overs;
+    if (data.event === 'continue' && data.isAuto === true) {
       if (
+        this.matchService.totalPlayers &&
+        data.players > this.matchService.totalPlayers &&
+        this.matchService.totalOvers &&
+        data.overs > this.matchService.totalOvers
+      ) {
+        this.swapStriker();
+        this.matchService.totalOvers = data.overs;
+        this.matchService.totalPlayers = data.players;
+        this.pipeDialogs();
+      } else if (
         this.matchService.totalPlayers &&
         data.players > this.matchService.totalPlayers
       ) {
         this.matchService.totalPlayers = data.players;
-        console.log('new bat');
-      } else this.matchService.totalPlayers = data.players;
+        if (
+          this.matchService.teamData[this.matchService.currentRoles['bat']]
+            .oversPlayed -
+            Math.trunc(
+              this.matchService.teamData[this.matchService.currentRoles['bat']]
+                .oversPlayed
+            ) ===
+          0
+        ) {
+          this.swapStriker();
+          // pipe dialogs
+          this.pipeDialogs();
+        } else {
+          let newBatsmenDialog = this.dialog.open(NewBatsmenDialog, {
+            data: { isAuto: true },
+          });
+          newBatsmenDialog.afterClosed().subscribe((data: string) => {
+            if (data && data.length > 0) {
+              this.updateOnFieldBatsmen('none', data);
+              this.eventHandler.NotifyUpdateOnFieldBatsmenEvent();
+              this.updatePlayerData();
+            }
+          });
+        }
+      } else if (
+        this.matchService.totalOvers &&
+        data.overs > this.matchService.totalOvers
+      ) {
+        this.swapStriker();
+        this.matchService.totalOvers = data.overs;
+        console.log('new bowler');
+        let newBowlerDialog = this.dialog.open(NewBowlerDialog, {
+          data: { isAuto: true },
+        });
+        newBowlerDialog.afterClosed().subscribe((data: string) => {
+          if (data && data.length > 0) this.updateOnFieldBowler(data);
+        });
+      }
+    } else {
+      this.matchService.totalOvers = data.overs;
+      this.matchService.totalPlayers = data.players;
     }
   }
 }

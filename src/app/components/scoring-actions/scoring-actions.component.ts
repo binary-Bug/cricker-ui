@@ -116,18 +116,24 @@ export class ScoringActionsComponent {
         });
       } else {
         this.liveMatchService.swapStriker();
-        let newBowlerDialog = this.dialog.open(NewBowlerDialog);
-        newBowlerDialog.afterClosed().subscribe((data) => {
-          this.liveMatchService.updateOnFieldBowler(data);
+        let newBowlerDialog = this.dialog.open(NewBowlerDialog, {
+          data: { isAuto: true },
+        });
+        newBowlerDialog.afterClosed().subscribe((data: string) => {
+          if (data && data.length > 0)
+            this.liveMatchService.updateOnFieldBowler(data);
         });
       }
     }
   }
 
   changeBowler(): void {
-    let newBowlerDialog = this.dialog.open(NewBowlerDialog);
-    newBowlerDialog.afterClosed().subscribe((data) => {
-      this.liveMatchService.updateOnFieldBowler(data);
+    let newBowlerDialog = this.dialog.open(NewBowlerDialog, {
+      data: { isAuto: false },
+    });
+    newBowlerDialog.afterClosed().subscribe((data: string) => {
+      if (data && data.length > 0)
+        this.liveMatchService.updateOnFieldBowler(data);
     });
   }
 
