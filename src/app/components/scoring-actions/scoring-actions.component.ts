@@ -12,6 +12,7 @@ import { NewBowlerDialog } from '../dailogs/new-bowler.dialog';
 import { RetireBatsmenDialog } from '../dailogs/retire-batsmen.dialog';
 import { EndInningsDialog } from '../dailogs/end-innings.dialog';
 import { PenaltyRunsDialog } from '../dailogs/penalty-runs.dialog';
+import { MatchCompleteDialog } from '../dailogs/match-complete.dialog';
 
 @Component({
   selector: 'app-scoring-actions',
@@ -74,12 +75,17 @@ export class ScoringActionsComponent {
               .wicketsLost ===
             this.matchService.totalPlayers! - 1
           ) {
-            let endInningsDialog = this.dialog.open(EndInningsDialog, {
-              data: { value: 'allOut' },
-            });
-            endInningsDialog.afterClosed().subscribe((data) => {
-              this.liveMatchService.handleEndInningsDialog(data);
-            });
+            if (!this.matchService.isSecondInning) {
+              let endInningsDialog = this.dialog.open(EndInningsDialog, {
+                data: { value: 'allOut' },
+              });
+              endInningsDialog.afterClosed().subscribe((data) => {
+                this.liveMatchService.handleEndInningsDialog(data);
+              });
+            } else {
+              //open match complete dialog
+              this.dialog.open(MatchCompleteDialog);
+            }
           } else this.checkForOverCompletion();
         } else {
           this.unCheckExtras();
@@ -107,23 +113,37 @@ export class ScoringActionsComponent {
             .oversPlayed
         ) === this.matchService.totalOvers
       ) {
-        let endInningsDialog = this.dialog.open(EndInningsDialog, {
-          data: { value: 'oversCompleted' },
-        });
+        if (!this.matchService.isSecondInning) {
+          let endInningsDialog = this.dialog.open(EndInningsDialog, {
+            data: { value: 'oversCompleted' },
+          });
 
-        endInningsDialog.afterClosed().subscribe((data) => {
-          this.liveMatchService.handleEndInningsDialog(data);
-        });
+          endInningsDialog.afterClosed().subscribe((data) => {
+            this.liveMatchService.handleEndInningsDialog(data);
+          });
+        } else {
+          this.dialog.open(MatchCompleteDialog);
+          // match complete dialog
+        }
       } else {
         this.liveMatchService.swapStriker();
-        let newBowlerDialog = this.dialog.open(NewBowlerDialog, {
-          data: { isAuto: true },
-        });
-        newBowlerDialog.afterClosed().subscribe((data: string) => {
-          if (data && data.length > 0)
-            this.liveMatchService.updateOnFieldBowler(data);
-        });
+        // check for target chased
+        if (this.matchService.checkIfTargetChased())
+          this.dialog.open(MatchCompleteDialog);
+        else {
+          let newBowlerDialog = this.dialog.open(NewBowlerDialog, {
+            data: { isAuto: true },
+          });
+          newBowlerDialog.afterClosed().subscribe((data: string) => {
+            if (data && data.length > 0)
+              this.liveMatchService.updateOnFieldBowler(data);
+          });
+        }
       }
+    } else {
+      // check for target chased
+      if (this.matchService.checkIfTargetChased())
+        this.dialog.open(MatchCompleteDialog);
     }
   }
 
@@ -230,6 +250,8 @@ export class ScoringActionsComponent {
       this.liveMatchService.updateOversPlayed();
 
     this.matchService.calculateCurrentRunRate();
+    if (this.matchService.isSecondInning)
+      this.matchService.calculateSecondInningsTeamValues();
     this.eventHandler.NotifyRunAddedEvent();
     this.unCheckExtras();
   }

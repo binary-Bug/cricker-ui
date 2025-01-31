@@ -28,7 +28,14 @@
         *ngIf="matchService.isSecondInning"
         style="margin-bottom: 0; text-align: center"
       >
-        <b style="color: green">56</b> from <b style="color: red">48</b>
+        <b style="color: green">{{
+          matchService.teamData[this.matchService.currentRoles["bat"]]
+            .requiredRuns
+        }}</b>
+        from
+        <b style="color: red">{{
+          matchService.teamData[this.matchService.currentRoles["bat"]].ballsLeft
+        }}</b>
       </h4>
       <h5 style="margin-bottom: 0">
         Extras (W:{{
@@ -64,10 +71,19 @@
         }}
       </h5>
       <h5 *ngIf="matchService.isSecondInning" style="margin-bottom: 0">
-        Target: 68
+        <b
+          >Target:
+          {{
+            matchService.teamData[matchService.currentRoles["bat"]].targetRuns
+          }}</b
+        >
       </h5>
       <h5 *ngIf="matchService.isSecondInning" style="margin-bottom: 0">
-        RRR: 12.0
+        RRR:
+        {{
+          matchService.teamData[matchService.currentRoles["bat"]]
+            .requiredRunRate
+        }}
       </h5>
     </div>
   </div>

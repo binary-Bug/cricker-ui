@@ -6,15 +6,6 @@ import { Batsmen } from '../models/batsmen.interface';
 import { Bowler } from '../models/bowler.interface';
 import { Fielder } from '../models/fielder.interface';
 
-const OVER_DATA: BALL_DATA[] = [
-  new BALL_DATA(),
-  new BALL_DATA(),
-  new BALL_DATA(),
-  new BALL_DATA(),
-  new BALL_DATA(),
-  new BALL_DATA(),
-];
-
 @Injectable({
   providedIn: 'root',
 })
@@ -25,7 +16,7 @@ export class MatchService {
   tossResult: string | null = null;
   totalPlayers: number | null = null;
   totalOvers: number | null = null;
-  isSecondInning = false;
+  isSecondInning: boolean = false;
 
   team1Data: Team = {
     name: '',
@@ -34,7 +25,16 @@ export class MatchService {
     oversPlayed: 0,
     wicketsLost: 0,
     runRate: 0,
-    oversPlayedData: [OVER_DATA],
+    oversPlayedData: [
+      [
+        new BALL_DATA(),
+        new BALL_DATA(),
+        new BALL_DATA(),
+        new BALL_DATA(),
+        new BALL_DATA(),
+        new BALL_DATA(),
+      ],
+    ],
     extras: { w: 0, nb: 0, lb: 0, b: 0 },
     Batsmens: [],
     Bowlers: [],
@@ -51,7 +51,16 @@ export class MatchService {
     oversPlayed: 0,
     wicketsLost: 0,
     runRate: 0,
-    oversPlayedData: [OVER_DATA],
+    oversPlayedData: [
+      [
+        new BALL_DATA(),
+        new BALL_DATA(),
+        new BALL_DATA(),
+        new BALL_DATA(),
+        new BALL_DATA(),
+        new BALL_DATA(),
+      ],
+    ],
     extras: { w: 0, nb: 0, lb: 0, b: 0 },
     Batsmens: [],
     Bowlers: [],
@@ -294,7 +303,7 @@ export class MatchService {
     }
   }
 
-  calculateCurrentRunRate() {
+  calculateCurrentRunRate(): void {
     if (this.isSecondInning) {
       this.teamData['team2'].runRate =
         (this.teamData['team2'].runsScored /
@@ -306,5 +315,45 @@ export class MatchService {
           this.utilityService.ballplayed(this.teamData['team1'].oversPlayed)) *
         6;
     }
+  }
+
+  calculateSecondInningsTeamValues(): void {
+    // calculating target runs
+    this.teamData[this.currentRoles['bat']].targetRuns =
+      this.teamData[this.currentRoles['ball']].runsScored + 1;
+
+    // calculating required runs
+    this.teamData[this.currentRoles['bat']].requiredRuns =
+      this.teamData[this.currentRoles['bat']].targetRuns! -
+      this.teamData[this.currentRoles['bat']].runsScored;
+
+    // calculate balls left
+    this.teamData[this.currentRoles['bat']].ballsLeft =
+      this.totalOvers! * 6 -
+      this.utilityService.ballplayed(
+        this.teamData[this.currentRoles['bat']].oversPlayed
+      );
+
+    //assign totalBalls if ballsLeft is null
+    if (this.teamData[this.currentRoles['bat']].ballsLeft === null)
+      this.teamData[this.currentRoles['bat']].ballsLeft = this.totalOvers! * 6;
+    // calculate required run rate
+    this.teamData[this.currentRoles['bat']].requiredRunRate = +parseFloat(
+      this.teamData[this.currentRoles['bat']].requiredRuns! /
+        this.utilityService.oversLeft(
+          this.teamData[this.currentRoles['bat']].ballsLeft!
+        ) +
+        ''
+    ).toFixed(1);
+  }
+
+  checkIfTargetChased(): boolean {
+    if (
+      this.teamData[this.currentRoles['bat']].runsScored >=
+      this.teamData[this.currentRoles['bat']].targetRuns!
+    ) {
+      this.teamData[this.currentRoles['bat']].requiredRuns = 0;
+      return true;
+    } else return false;
   }
 }

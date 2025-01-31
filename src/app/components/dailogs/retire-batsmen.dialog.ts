@@ -92,9 +92,7 @@ export class RetireBatsmenDialog implements OnInit {
     public dialogRef: MatDialogRef<RetireBatsmenDialog>,
     private matchService: MatchService,
     public liveMatchService: LiveMatchService
-  ) {
-    dialogRef.disableClose = true;
-  }
+  ) {}
 
   options: string[] = [];
   filteredOptions!: Observable<string[]>;

@@ -16,7 +16,7 @@ import { MatInputModule } from '@angular/material/input';
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'admin-code-dialog',
+  selector: 'penalty-runs-dialog',
   template: `<h2 mat-dialog-title>Penalty Runs</h2>
     <mat-dialog-content>
       <p>Enter the runs for penalty</p>

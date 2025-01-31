@@ -131,17 +131,14 @@ export class EndInningsDialog implements OnInit {
           .oversPlayed < this.matchService.totalOvers!
       ) {
         this.totalOvers.disable();
-      } else if (
-        this.matchService.teamData[this.matchService.currentRoles['bat']]
-          .oversPlayed < this.matchService.totalOvers!
-      ) {
+      } else if (this.selectedType === 'oversCompleted') {
         this.totalPlayers.disable();
       }
     }
   }
 
   onOkClick(): void {
-    this.dialogRef.close({ event: 'end' });
+    this.dialogRef.close({ event: 'end', isAuto: this.isAuto });
   }
   onContinueClick(): void {
     this.dialogRef.close({

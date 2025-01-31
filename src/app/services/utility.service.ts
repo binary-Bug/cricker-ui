@@ -12,4 +12,12 @@ export class UtilityService {
     let completedOversBalls = Math.trunc(oversPlayed) * 6;
     return completedOversBalls + ballsInOver;
   }
+
+  oversLeft(ballsLeft: number): number {
+    let completedOvers = Math.trunc(ballsLeft / 6);
+    let ballsLeftInOver = ballsLeft - completedOvers * 6;
+    let multiplyConstant = +parseFloat(10 / 6 + '').toFixed(1);
+    ballsLeftInOver = Math.ceil(ballsLeftInOver * multiplyConstant);
+    return +(completedOvers + '.' + ballsLeftInOver);
+  }
 }

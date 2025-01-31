@@ -8,6 +8,7 @@ import { NewBowlerDialog } from '../components/dailogs/new-bowler.dialog';
 import { MatDialog } from '@angular/material/dialog';
 import { NewBatsmenDialog } from '../components/dailogs/new-batsmen.dialog';
 import { map } from 'rxjs';
+import { OnFieldPlayerDetailsDialog } from '../components/dailogs/on-field-player-detail.dialog';
 
 @Injectable({
   providedIn: 'root',
@@ -300,6 +301,8 @@ export class LiveMatchService {
         };
 
       this.matchService.calculateCurrentRunRate();
+      if (this.matchService.isSecondInning)
+        this.matchService.calculateSecondInningsTeamValues();
 
       this.currentPatnership = {
         ...this.matchService.teamData[this.matchService.currentRoles['bat']]
@@ -626,7 +629,19 @@ export class LiveMatchService {
 
   handleEndInningsDialog(data: any): void {
     if (data.event === 'end') {
-      console.log('end');
+      this.matchService.isSecondInning = true;
+      this.matchService.setCurrentRoles();
+      this.resetServiceData();
+      this.matchService.calculateSecondInningsTeamValues();
+      this.dialog
+        .open(OnFieldPlayerDetailsDialog, {
+          data: { isAuto: true },
+        })
+        .afterClosed()
+        .subscribe(() => {
+          this.eventHandler.NotifyRunAddedEvent();
+          this.updatePlayerData(this.currentOverNumber);
+        });
     }
     if (data.event === 'continue' && data.isAuto === true) {
       if (
@@ -674,7 +689,6 @@ export class LiveMatchService {
       ) {
         this.swapStriker();
         this.matchService.totalOvers = data.overs;
-        console.log('new bowler');
         let newBowlerDialog = this.dialog.open(NewBowlerDialog, {
           data: { isAuto: true },
         });
@@ -682,9 +696,44 @@ export class LiveMatchService {
           if (data && data.length > 0) this.updateOnFieldBowler(data);
         });
       }
-    } else {
+    }
+    if (data.event === 'continue' && data.isAuto === false) {
       this.matchService.totalOvers = data.overs;
       this.matchService.totalPlayers = data.players;
     }
+  }
+
+  resetServiceData(): void {
+    this.striker = {
+      name: '',
+      runs: 0,
+      balls: 0,
+      fours: 0,
+      six: 0,
+      status: 'Not Out',
+    };
+    this.nonStriker = {
+      name: '',
+      runs: 0,
+      balls: 0,
+      fours: 0,
+      six: 0,
+      status: 'Not Out',
+    };
+    this.currentBowler = {
+      name: '',
+      runs: 0,
+      overs: 0,
+      maidens: 0,
+      wickets: 0,
+      extras: { w: 0, nb: 0, lb: 0 },
+    };
+
+    this.currentBowlNumber = 0;
+    this.previousBowlNumber = 0;
+    this.totalBallsinCurrentOver = 6;
+    this.currentOverNumber = 0;
+    this.bowlerRunsBeforeStart = 0;
+    this.currentPatnership = { runs: 0, balls: 0 };
   }
 }

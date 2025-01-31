@@ -18,4 +18,8 @@ export interface Team {
   strikerIndex: number;
   nonStrikerIndex: number;
   currBowlerIndex: number;
+  targetRuns?: number;
+  requiredRuns?: number;
+  requiredRunRate?: number;
+  ballsLeft?: number;
 }

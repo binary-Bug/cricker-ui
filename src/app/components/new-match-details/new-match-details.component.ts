@@ -2,16 +2,10 @@ import { Component } from '@angular/core';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { CommonModule } from '@angular/common';
-import {
-  FormControl,
-  FormsModule,
-  ReactiveFormsModule,
-} from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
-import {
-  MatDialog,
-} from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { MatchService } from '../../services/match.service';
 import { OnFieldPlayerDetailsDialog } from '../dailogs/on-field-player-detail.dialog';
@@ -46,7 +40,9 @@ export class NewMatchDetailsComponent {
   totalOvers: number = 0;
 
   openCurrentPlayerDialog(): void {
-    const dialogRef = this.dialog.open(OnFieldPlayerDetailsDialog);
+    const dialogRef = this.dialog.open(OnFieldPlayerDetailsDialog, {
+      data: { isAuto: false },
+    });
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
