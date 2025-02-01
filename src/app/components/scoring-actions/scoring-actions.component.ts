@@ -295,4 +295,8 @@ export class ScoringActionsComponent {
       }
     });
   }
+
+  exitMatch(): void {
+    this.liveMatchService.exitMatch();
+  }
 }

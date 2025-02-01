@@ -356,4 +356,70 @@ export class MatchService {
       return true;
     } else return false;
   }
+
+  resetServiceData(): void {
+    this.tossWinner = null;
+    this.tossResult = null;
+    this.totalPlayers = null;
+    this.totalOvers = null;
+    this.isSecondInning = false;
+
+    this.team1Data = {
+      name: '',
+      captain: '',
+      runsScored: 0,
+      oversPlayed: 0,
+      wicketsLost: 0,
+      runRate: 0,
+      oversPlayedData: [
+        [
+          new BALL_DATA(),
+          new BALL_DATA(),
+          new BALL_DATA(),
+          new BALL_DATA(),
+          new BALL_DATA(),
+          new BALL_DATA(),
+        ],
+      ],
+      extras: { w: 0, nb: 0, lb: 0, b: 0 },
+      Batsmens: [],
+      Bowlers: [],
+      Fielders: [],
+      strikerIndex: 0,
+      nonStrikerIndex: 1,
+      currBowlerIndex: 0,
+    };
+
+    this.team2Data = {
+      name: '',
+      captain: '',
+      runsScored: 0,
+      oversPlayed: 0,
+      wicketsLost: 0,
+      runRate: 0,
+      oversPlayedData: [
+        [
+          new BALL_DATA(),
+          new BALL_DATA(),
+          new BALL_DATA(),
+          new BALL_DATA(),
+          new BALL_DATA(),
+          new BALL_DATA(),
+        ],
+      ],
+      extras: { w: 0, nb: 0, lb: 0, b: 0 },
+      Batsmens: [],
+      Bowlers: [],
+      Fielders: [],
+      strikerIndex: 0,
+      nonStrikerIndex: 1,
+      currBowlerIndex: 0,
+    };
+
+    this.teamData = {
+      team1: this.team1Data,
+      team2: this.team2Data,
+    };
+    this.currentRoles = { bat: 'team1', ball: 'team2' };
+  }
 }

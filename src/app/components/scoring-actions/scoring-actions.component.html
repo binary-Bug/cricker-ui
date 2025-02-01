@@ -199,7 +199,12 @@
   >
   <mat-grid-tile
     ><div class="example-button-row smallText">
-      <button color="warn" mat-raised-button style="width: 10em; height: 6em">
+      <button
+        (click)="exitMatch()"
+        color="warn"
+        mat-raised-button
+        style="width: 10em; height: 6em"
+      >
         Exit Match
       </button>
     </div></mat-grid-tile

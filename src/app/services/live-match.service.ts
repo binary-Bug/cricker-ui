@@ -9,6 +9,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { NewBatsmenDialog } from '../components/dailogs/new-batsmen.dialog';
 import { map } from 'rxjs';
 import { OnFieldPlayerDetailsDialog } from '../components/dailogs/on-field-player-detail.dialog';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
@@ -18,6 +19,7 @@ export class LiveMatchService {
 
   eventHandler: EventHandlerService = inject(EventHandlerService);
   dialog: MatDialog = inject(MatDialog);
+  router: Router = inject(Router);
 
   striker: Batsmen = {
     name: '',
@@ -629,6 +631,10 @@ export class LiveMatchService {
 
   handleEndInningsDialog(data: any): void {
     if (data.event === 'end') {
+      if (data.isAuto === false) {
+        if (data.overs) this.matchService.totalOvers = data.overs;
+        if (data.players) this.matchService.totalPlayers = data.players;
+      }
       this.matchService.isSecondInning = true;
       this.matchService.setCurrentRoles();
       this.resetServiceData();
@@ -701,6 +707,8 @@ export class LiveMatchService {
       this.matchService.totalOvers = data.overs;
       this.matchService.totalPlayers = data.players;
     }
+    if (this.matchService.isSecondInning)
+      this.matchService.calculateSecondInningsTeamValues();
   }
 
   resetServiceData(): void {
@@ -735,5 +743,11 @@ export class LiveMatchService {
     this.currentOverNumber = 0;
     this.bowlerRunsBeforeStart = 0;
     this.currentPatnership = { runs: 0, balls: 0 };
+  }
+
+  exitMatch(): void {
+    this.resetServiceData();
+    this.matchService.resetServiceData();
+    this.router.navigateByUrl('room');
   }
 }

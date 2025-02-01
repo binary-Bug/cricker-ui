@@ -15,6 +15,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { Component, OnInit } from '@angular/core';
 import { MatchService } from '../../services/match.service';
+import { LiveMatchService } from '../../services/live-match.service';
 
 @Component({
   selector: 'match-complete-dialog',
@@ -45,7 +46,8 @@ import { MatchService } from '../../services/match.service';
 export class MatchCompleteDialog implements OnInit {
   constructor(
     public dialogRef: MatDialogRef<MatchCompleteDialog>,
-    private matchService: MatchService
+    private matchService: MatchService,
+    private liveMatchService: LiveMatchService
   ) {
     dialogRef.disableClose;
   }
@@ -106,6 +108,7 @@ export class MatchCompleteDialog implements OnInit {
   }
 
   exit(): void {
+    this.liveMatchService.exitMatch();
     this.dialogRef.close();
   }
   viewScorecard(): void {

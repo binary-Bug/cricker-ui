@@ -32,6 +32,7 @@ import { MatchService } from '../../services/match.service';
       <div class="grid place-items-center">
         <mat-radio-group
           [disabled]="isAuto"
+          (ngModelChange)="onTypeChange($event)"
           [(ngModel)]="selectedType"
           style="width: 100%;"
         >
@@ -115,12 +116,14 @@ export class EndInningsDialog implements OnInit {
 
   ngOnInit(): void {
     this.totalOvers.valueChanges.subscribe((val) => {
-      if (val === this.matchService.totalOvers) this.canContinue = false;
+      if (val === this.matchService.totalOvers && this.isAuto)
+        this.canContinue = false;
       else this.canContinue = true;
     });
 
     this.totalPlayers.valueChanges.subscribe((val) => {
-      if (val === this.matchService.totalPlayers) this.canContinue = false;
+      if (val === this.matchService.totalPlayers && this.isAuto)
+        this.canContinue = false;
       else this.canContinue = true;
     });
 
@@ -138,7 +141,25 @@ export class EndInningsDialog implements OnInit {
   }
 
   onOkClick(): void {
-    this.dialogRef.close({ event: 'end', isAuto: this.isAuto });
+    if (this.selectedType === 'oversCompleted')
+      this.dialogRef.close({
+        event: 'end',
+        isAuto: this.isAuto,
+        overs: Math.ceil(
+          this.matchService.teamData[this.matchService.currentRoles['bat']]
+            .oversPlayed
+        ),
+        players: null,
+      });
+    else
+      this.dialogRef.close({
+        event: 'end',
+        isAuto: this.isAuto,
+        overs: null,
+        players:
+          this.matchService.teamData[this.matchService.currentRoles['bat']]
+            .wicketsLost + 1,
+      });
   }
   onContinueClick(): void {
     this.dialogRef.close({
@@ -147,5 +168,12 @@ export class EndInningsDialog implements OnInit {
       overs: this.totalOvers.value,
       players: this.totalPlayers.value,
     });
+  }
+
+  onTypeChange(data: any): void {
+    if (this.isAuto === false && data !== null) {
+      this.totalPlayers.disable();
+      this.totalOvers.disable();
+    }
   }
 }
