@@ -73,7 +73,7 @@ export class ScoringComponent implements OnInit, OnDestroy {
   dataSourceBatsmen = this.ELEMENT_DATA_BATSMEN;
   dataSourceBowler = this.ELEMENT_DATA_BOWLER;
 
-  overCompleted: boolean = true;
+  overCompleted: boolean = false;
 
   ngOnInit(): void {
     this.calculateSR();
@@ -84,21 +84,7 @@ export class ScoringComponent implements OnInit, OnDestroy {
         this.calculateSR();
         this.reAssignBowlerData();
         this.calculateEco();
-
-        if (
-          this.matchService.teamData[this.matchService.currentRoles['bat']]
-            .oversPlayed -
-            Math.trunc(
-              this.matchService.teamData[this.matchService.currentRoles['bat']]
-                .oversPlayed
-            ) ===
-          0
-        ) {
-          this.overCompleted = true;
-        } else {
-          this.overCompleted = false;
-          this.changeDetector.detectChanges();
-        }
+        this.overCompleted = false;
       }),
 
       this.eventHandler.BatsmenSwapEvent$().subscribe(() => {
@@ -110,19 +96,29 @@ export class ScoringComponent implements OnInit, OnDestroy {
         this.calculateSR();
       }), // updating on-field batsmen name with new batsmen when a wicket falls
 
-      this.eventHandler
-        .UpdateOverViewGridEvent$()
-        .subscribe((isRemove: boolean) => {
-          if (isRemove) {
-            this.overView?.nativeElement.classList.remove(
-              'grid-cols-' + this.liveMatchService.totalBallsinCurrentOver
-            );
-          } else {
-            this.overView?.nativeElement.classList.add(
-              'grid-cols-' + this.liveMatchService.totalBallsinCurrentOver
-            );
-          }
-        })
+      this.eventHandler.UpdateOnFieldBowlerEvent$().subscribe(() => {
+        this.reAssignBowlerData();
+        this.calculateEco();
+      }),
+
+      // this.eventHandler
+      //   .UpdateOverViewGridEvent$()
+      //   .subscribe((isRemove: boolean) => {
+      //     // if (isRemove) {
+      //     //   this.overView?.nativeElement.classList.remove(
+      //     //     'grid-cols-' + this.liveMatchService.totalBallsinCurrentOver
+      //     //   );
+      //     // } else {
+      //     //   this.overView?.nativeElement.classList.add(
+      //     //     'grid-cols-' + this.liveMatchService.totalBallsinCurrentOver
+      //     //   );
+      //     // }
+      //   }),
+
+      this.eventHandler.OverCompleteEvent$().subscribe(() => {
+        this.overCompleted = true;
+        this.changeDetector.detectChanges();
+      })
     );
   }
 
@@ -130,12 +126,17 @@ export class ScoringComponent implements OnInit, OnDestroy {
     this.ELEMENT_DATA_BATSMEN.forEach((batsmen) => {
       batsmen['sr'] = (batsmen['runs'] / batsmen['balls']) * 100;
     });
+    this.liveMatchService.striker.strikeRate = this.ELEMENT_DATA_BATSMEN[0].sr;
+    this.liveMatchService.nonStriker.strikeRate =
+      this.ELEMENT_DATA_BATSMEN[1].sr;
   }
   public calculateEco(): void {
     this.ELEMENT_DATA_BOWLER.forEach((bowler) => {
       bowler['eco'] =
         (bowler['runs'] / this.utilityService.ballplayed(bowler['overs'])) * 6;
     });
+    this.liveMatchService.currentBowler.economy =
+      this.ELEMENT_DATA_BOWLER[0].eco;
   }
 
   openStat(player: string): void {

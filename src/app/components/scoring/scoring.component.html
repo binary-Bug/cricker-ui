@@ -88,7 +88,15 @@
     </div>
   </div>
   <br />
-  <div #overView *ngIf="!overCompleted" class="grid grid-cols-6 gap-2">
+  <div
+    #overView
+    *ngIf="!overCompleted"
+    [ngClass]="
+      'grid gap-2 grid-cols-' +
+      matchService.teamData[this.matchService.currentRoles['bat']]
+        .oversPlayedData[liveMatchService.currentOverNumber].length
+    "
+  >
     <ng-container
       *ngFor="
         let ball of matchService.teamData[this.matchService.currentRoles['bat']]

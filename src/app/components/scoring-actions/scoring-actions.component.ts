@@ -13,6 +13,7 @@ import { RetireBatsmenDialog } from '../dailogs/retire-batsmen.dialog';
 import { EndInningsDialog } from '../dailogs/end-innings.dialog';
 import { PenaltyRunsDialog } from '../dailogs/penalty-runs.dialog';
 import { MatchCompleteDialog } from '../dailogs/match-complete.dialog';
+import { SaveMatchService } from '../../services/save-match.service';
 
 @Component({
   selector: 'app-scoring-actions',
@@ -26,6 +27,7 @@ export class ScoringActionsComponent {
   liveMatchService: LiveMatchService = inject(LiveMatchService);
   matchService: MatchService = inject(MatchService);
   dialog: MatDialog = inject(MatDialog);
+  saveMatchService: SaveMatchService = inject(SaveMatchService);
 
   isWideChecked: boolean = false;
   isNBChecked: boolean = false;
@@ -85,15 +87,22 @@ export class ScoringActionsComponent {
             } else {
               //open match complete dialog
               this.dialog.open(MatchCompleteDialog);
+              this.saveMatchService.saveMatchData();
             }
-          } else this.checkForOverCompletion();
+          } else {
+            if (!this.isWideChecked && !this.isNBChecked)
+              this.checkForOverCompletion();
+          }
+          this.unCheckExtras();
         } else {
           this.unCheckExtras();
         }
       });
     } else {
       this.checkForExtras_And_AddRun(run, color, false, null, null, null);
-      this.checkForOverCompletion();
+      if (!this.isWideChecked && !this.isNBChecked)
+        this.checkForOverCompletion();
+      this.unCheckExtras();
     }
   }
 
@@ -123,14 +132,17 @@ export class ScoringActionsComponent {
           });
         } else {
           this.dialog.open(MatchCompleteDialog);
+          this.saveMatchService.saveMatchData();
           // match complete dialog
         }
       } else {
         this.liveMatchService.swapStriker();
         // check for target chased
-        if (this.matchService.checkIfTargetChased())
+        if (this.matchService.checkIfTargetChased()) {
           this.dialog.open(MatchCompleteDialog);
-        else {
+          this.saveMatchService.saveMatchData();
+        } else {
+          this.eventHandler.NotifyOverCompleteEvent();
           let newBowlerDialog = this.dialog.open(NewBowlerDialog, {
             data: { isAuto: true },
           });
@@ -142,8 +154,10 @@ export class ScoringActionsComponent {
       }
     } else {
       // check for target chased
-      if (this.matchService.checkIfTargetChased())
+      if (this.matchService.checkIfTargetChased()) {
         this.dialog.open(MatchCompleteDialog);
+        this.saveMatchService.saveMatchData();
+      }
     }
   }
 
@@ -203,9 +217,9 @@ export class ScoringActionsComponent {
     if (this.isWideChecked || this.isNBChecked) {
       run = +run + 1 + '';
       isExtra = true;
-      this.eventHandler.NotifyUpdateOverViewGridEvent(true);
+      //this.eventHandler.NotifyUpdateOverViewGridEvent(true);
       this.liveMatchService.totalBallsinCurrentOver += 1;
-      this.eventHandler.NotifyUpdateOverViewGridEvent(false);
+      //this.eventHandler.NotifyUpdateOverViewGridEvent(false);
       this.liveMatchService.addNewBalltoOversPlayedData();
     }
 
@@ -253,7 +267,6 @@ export class ScoringActionsComponent {
     if (this.matchService.isSecondInning)
       this.matchService.calculateSecondInningsTeamValues();
     this.eventHandler.NotifyRunAddedEvent();
-    this.unCheckExtras();
   }
 
   unCheckExtras(): void {

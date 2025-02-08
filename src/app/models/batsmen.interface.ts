@@ -5,4 +5,5 @@ export interface Batsmen {
   fours: number;
   six: number;
   status: string;
+  strikeRate?: number;
 }

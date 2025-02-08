@@ -1,0 +1,379 @@
+<mat-accordion>
+  <mat-expansion-panel class="headers-align">
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        {{ matchService.teamData[FIBattingTeamKey].name }}
+      </mat-panel-title>
+      <mat-panel-description>
+        <div>
+          <span>1st Innings</span>
+        </div>
+        <div>
+          <span>
+            {{ matchService.teamData[FIBattingTeamKey].runsScored }}/{{
+              matchService.teamData[FIBattingTeamKey].wicketsLost
+            }}
+          </span>
+        </div>
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <table
+      mat-table
+      #FIBatsmenTable
+      [dataSource]="fiDataSourceBatsmen"
+      class="mat-elevation-z8"
+      style="background-color: azure"
+    >
+      <ng-container matColumnDef="nameBat">
+        <th mat-header-cell *matHeaderCellDef>Batsmen</th>
+        <td (click)="openStat(element.name)" mat-cell *matCellDef="let element">
+          {{ element.name }} {{ "( " + element.status + " )" }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="runs">
+        <th mat-header-cell *matHeaderCellDef>R</th>
+        <td mat-cell *matCellDef="let element">{{ element.runs }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="balls">
+        <th mat-header-cell *matHeaderCellDef>B</th>
+        <td mat-cell *matCellDef="let element">{{ element.balls }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="4s">
+        <th mat-header-cell *matHeaderCellDef>4s</th>
+        <td mat-cell *matCellDef="let element">{{ element.fours }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="6s">
+        <th mat-header-cell *matHeaderCellDef>6s</th>
+        <td mat-cell *matCellDef="let element">{{ element.six }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="S/R">
+        <th mat-header-cell *matHeaderCellDef>S/R</th>
+        <td mat-cell *matCellDef="let element" style="font-weight: bold">
+          {{ element.strikeRate | number : "1.0-2" }}
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+
+    <h1></h1>
+    <div class="w-[100%] flex justify-between items-center">
+      <div class="ml-4">
+        <h3 style="display: inline">
+          <b>
+            {{ matchService.teamData[FIBattingTeamKey].runsScored }}
+            /
+            {{ matchService.teamData[FIBattingTeamKey].wicketsLost }}
+          </b>
+        </h3>
+        <br />
+        <h5 style="display: inline">
+          {{
+            matchService.teamData[FIBattingTeamKey].oversPlayed
+              | number : "1.1-1"
+          }}
+          Overs
+        </h5>
+      </div>
+      <div>
+        <h5 style="margin-bottom: 0">
+          Extras (W:{{ matchService.teamData[FIBattingTeamKey].extras["w"] }},
+          NB:{{ matchService.teamData[FIBattingTeamKey].extras["nb"] }}, LB:{{
+            matchService.teamData[FIBattingTeamKey].extras["lb"]
+          }}, B:{{ matchService.teamData[FIBattingTeamKey].extras["b"] }})
+        </h5>
+      </div>
+      <div class="mr-4">
+        <h5 style="margin-bottom: 0">
+          Run Rate:
+          {{
+            matchService.teamData[FIBattingTeamKey].runRate | number : "1.1-2"
+          }}
+        </h5>
+      </div>
+    </div>
+    <h1></h1>
+
+    <table
+      mat-table
+      #FIBowlerTable
+      [dataSource]="fiDataSourceBowler"
+      class="mat-elevation-z8"
+      style="background-color: rgb(250, 232, 232)"
+    >
+      <ng-container matColumnDef="nameBowl">
+        <th mat-header-cell *matHeaderCellDef>Bowler</th>
+        <td (click)="openStat(element.name)" mat-cell *matCellDef="let element">
+          {{ element.name }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="runs">
+        <th mat-header-cell *matHeaderCellDef>R</th>
+        <td mat-cell *matCellDef="let element">{{ element.runs }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="overs">
+        <th mat-header-cell *matHeaderCellDef>O</th>
+        <td mat-cell *matCellDef="let element">
+          {{ element.overs | number : "1.1-1" }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="wickets">
+        <th mat-header-cell *matHeaderCellDef>W</th>
+        <td mat-cell *matCellDef="let element">{{ element.wickets }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="eco">
+        <th mat-header-cell *matHeaderCellDef>Eco.</th>
+        <td mat-cell *matCellDef="let element">
+          {{ element.economy | number : "1.1-2" }}
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumnsBowler"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumnsBowler"></tr>
+    </table>
+  </mat-expansion-panel>
+  <div style="height: 1px; background-color: #0000001a"></div>
+  <mat-expansion-panel class="headers-align">
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        {{ matchService.teamData[SIBattingTeamKey].name }}
+      </mat-panel-title>
+      <mat-panel-description>
+        <div>
+          <span>2nd Innings</span>
+        </div>
+        <div>
+          <span>
+            {{ matchService.teamData[SIBattingTeamKey].runsScored }}/{{
+              matchService.teamData[SIBattingTeamKey].wicketsLost
+            }}
+          </span>
+        </div>
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <table
+      mat-table
+      #SIBatsmenTable
+      [dataSource]="siDataSourceBatsmen"
+      class="mat-elevation-z8"
+      style="background-color: rgb(250, 232, 232)"
+    >
+      <ng-container matColumnDef="nameBat">
+        <th mat-header-cell *matHeaderCellDef>Batsmen</th>
+        <td (click)="openStat(element.name)" mat-cell *matCellDef="let element">
+          {{ element.name }} {{ "( " + element.status + " )" }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="runs">
+        <th mat-header-cell *matHeaderCellDef>R</th>
+        <td mat-cell *matCellDef="let element">{{ element.runs }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="balls">
+        <th mat-header-cell *matHeaderCellDef>B</th>
+        <td mat-cell *matCellDef="let element">{{ element.balls }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="4s">
+        <th mat-header-cell *matHeaderCellDef>4s</th>
+        <td mat-cell *matCellDef="let element">{{ element.fours }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="6s">
+        <th mat-header-cell *matHeaderCellDef>6s</th>
+        <td mat-cell *matCellDef="let element">{{ element.six }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="S/R">
+        <th mat-header-cell *matHeaderCellDef>S/R</th>
+        <td mat-cell *matCellDef="let element" style="font-weight: bold">
+          {{ element.strikeRate | number : "1.0-2" }}
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+
+    <h1></h1>
+    <div class="w-[100%] flex justify-between items-center">
+      <div class="ml-4">
+        <h3 style="display: inline">
+          <b>
+            {{ matchService.teamData[SIBattingTeamKey].runsScored }}
+            /
+            {{ matchService.teamData[SIBattingTeamKey].wicketsLost }}
+          </b>
+        </h3>
+        <br />
+        <h5 style="display: inline">
+          {{
+            matchService.teamData[SIBattingTeamKey].oversPlayed
+              | number : "1.1-1"
+          }}
+          Overs
+        </h5>
+      </div>
+      <div>
+        <h5 style="margin-bottom: 0">
+          Extras (W:{{ matchService.teamData[SIBattingTeamKey].extras["w"] }},
+          NB:{{ matchService.teamData[SIBattingTeamKey].extras["nb"] }}, LB:{{
+            matchService.teamData[SIBattingTeamKey].extras["lb"]
+          }}, B:{{ matchService.teamData[SIBattingTeamKey].extras["b"] }})
+        </h5>
+      </div>
+      <div class="mr-4">
+        <h5 style="margin-bottom: 0">
+          Run Rate:
+          {{
+            matchService.teamData[SIBattingTeamKey].runRate | number : "1.1-2"
+          }}
+        </h5>
+      </div>
+    </div>
+    <h1></h1>
+
+    <table
+      mat-table
+      #SIBowlerTable
+      [dataSource]="siDataSourceBowler"
+      class="mat-elevation-z8"
+      style="background-color: azure"
+    >
+      <ng-container matColumnDef="nameBowl">
+        <th mat-header-cell *matHeaderCellDef>Bowler</th>
+        <td (click)="openStat(element.name)" mat-cell *matCellDef="let element">
+          {{ element.name }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="runs">
+        <th mat-header-cell *matHeaderCellDef>R</th>
+        <td mat-cell *matCellDef="let element">{{ element.runs }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="overs">
+        <th mat-header-cell *matHeaderCellDef>O</th>
+        <td mat-cell *matCellDef="let element">
+          {{ element.overs | number : "1.1-1" }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="wickets">
+        <th mat-header-cell *matHeaderCellDef>W</th>
+        <td mat-cell *matCellDef="let element">{{ element.wickets }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="eco">
+        <th mat-header-cell *matHeaderCellDef>Eco.</th>
+        <td mat-cell *matCellDef="let element">
+          {{ element.economy | number : "1.1-2" }}
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumnsBowler"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumnsBowler"></tr>
+    </table>
+  </mat-expansion-panel>
+  <div style="height: 1px; background-color: #0000001a"></div>
+  <mat-expansion-panel class="headers-align">
+    <mat-expansion-panel-header>
+      <mat-panel-title> Overs </mat-panel-title>
+      <mat-panel-description> </mat-panel-description>
+    </mat-expansion-panel-header>
+    <mat-tab-group>
+      <mat-tab label="{{ matchService.teamData[FIBattingTeamKey].name }}">
+        <div class="grid place-items-start">
+          <ng-container
+            *ngFor="
+              let over of matchService.teamData[FIBattingTeamKey]
+                .oversPlayedData;
+              index as i
+            "
+          >
+            <div
+              #overView
+              [ngClass]="'grid gap-2 grid-cols-' + (over.length + 1)"
+              style="margin-top: 15px; height: 50px; margin-right: 10px"
+            >
+              <span
+                style="
+                  align-content: center;
+                  height: 35px;
+                  font-weight: 500;
+                  color: black;
+                  font-size: medium;
+                "
+                >Over {{ i + 1 }}</span
+              >
+              <ng-container *ngFor="let ball of over">
+                <button
+                  class="{{ ball.class }}"
+                  mat-mini-fab
+                  matTooltip="Primary"
+                  color="primary"
+                  style="width: 35px; height: 35px"
+                  [disabled]="ball.hasBeenBowled ? null : 'true'"
+                >
+                  {{ ball.label }}
+                </button>
+              </ng-container>
+            </div>
+          </ng-container>
+        </div>
+      </mat-tab>
+      <mat-tab label="{{ matchService.teamData[SIBattingTeamKey].name }}">
+        <div class="grid place-items-start">
+          <ng-container
+            *ngFor="
+              let over of matchService.teamData[SIBattingTeamKey]
+                .oversPlayedData;
+              index as i
+            "
+          >
+            <div
+              #overView
+              [ngClass]="'grid gap-2 grid-cols-' + (over.length + 1)"
+              style="margin-top: 15px; height: 50px; margin-right: 10px"
+            >
+              <span
+                style="
+                  align-content: center;
+                  height: 35px;
+                  font-weight: 500;
+                  color: black;
+                  font-size: medium;
+                "
+                >Over {{ i + 1 }}</span
+              >
+              <ng-container *ngFor="let ball of over">
+                <button
+                  class="{{ ball.class }}"
+                  mat-mini-fab
+                  matTooltip="Primary"
+                  color="primary"
+                  style="width: 35px; height: 35px"
+                  [disabled]="ball.hasBeenBowled ? null : 'true'"
+                >
+                  {{ ball.label }}
+                </button>
+              </ng-container>
+            </div>
+          </ng-container>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-expansion-panel>
+  <div style="height: 1px; background-color: #0000003d"></div>
+</mat-accordion>

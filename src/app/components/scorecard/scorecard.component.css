@@ -1,0 +1,37 @@
+.headers-align .mat-expansion-panel-header-description {
+  justify-content: space-between;
+  align-items: center;
+  color: black;
+}
+.wicket {
+  background-color: red;
+}
+
+.four {
+  background-color: #0b9b67;
+  color: white;
+}
+
+.dot {
+  background-color: rgb(224, 224, 224);
+  color: black;
+}
+
+.run {
+  background-color: rgb(156, 155, 153);
+  color: black;
+}
+
+.six {
+  background-color: #f05129;
+  font-size: larger;
+}
+
+.extra {
+  background-color: #ffd740;
+  color: black;
+}
+
+.wicket {
+  background-color: rgb(216, 12, 12);
+}

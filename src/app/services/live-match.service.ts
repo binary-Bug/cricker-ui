@@ -194,12 +194,12 @@ export class LiveMatchService {
             .oversPlayed + ''
         ).toFixed(1);
       } else {
-        this.eventHandler.NotifyUpdateOverViewGridEvent(true);
+        //this.eventHandler.NotifyUpdateOverViewGridEvent(true);
         this.totalBallsinCurrentOver -= 1;
         this.matchService.teamData[
           this.matchService.currentRoles['bat']
         ].oversPlayedData[this.currentOverNumber].pop();
-        this.eventHandler.NotifyUpdateOverViewGridEvent(false);
+        //this.eventHandler.NotifyUpdateOverViewGridEvent(false);
       }
 
       let isWicketBall: boolean = false;
@@ -353,13 +353,13 @@ export class LiveMatchService {
 
       this.eventHandler.NotifyUndoEvent();
 
-      this.totalBallsinCurrentOver = 6;
-      this.eventHandler.NotifyUpdateOverViewGridEvent(true);
+      //this.totalBallsinCurrentOver = 6;
+      //this.eventHandler.NotifyUpdateOverViewGridEvent(true);
       this.totalBallsinCurrentOver =
         this.matchService.teamData[
           this.matchService.currentRoles['bat']
         ].oversPlayedData[this.currentOverNumber].length;
-      this.eventHandler.NotifyUpdateOverViewGridEvent(false);
+      //this.eventHandler.NotifyUpdateOverViewGridEvent(false);
     }
   }
 
@@ -411,26 +411,33 @@ export class LiveMatchService {
     ) {
       if (
         this.matchService.teamData[this.matchService.currentRoles['bat']]
-          .oversPlayed !== 0
-      )
-        this.currentOverNumber += 1;
-      if (this.currentOverNumber !== 0) {
-        let overData = [
-          new BALL_DATA(),
-          new BALL_DATA(),
-          new BALL_DATA(),
-          new BALL_DATA(),
-          new BALL_DATA(),
-          new BALL_DATA(),
-        ];
-        this.matchService.teamData[
-          this.matchService.currentRoles['bat']
-        ].oversPlayedData.push(overData);
-        this.currentBowlNumber = 0;
-        this.previousBowlNumber = 0;
-        this.eventHandler.NotifyUpdateOverViewGridEvent(true);
-        this.totalBallsinCurrentOver = 6;
-        this.eventHandler.NotifyUpdateOverViewGridEvent(false);
+          .oversPlayedData[this.currentOverNumber][
+          this.totalBallsinCurrentOver - 1
+        ].class !== 'none'
+      ) {
+        if (
+          this.matchService.teamData[this.matchService.currentRoles['bat']]
+            .oversPlayed !== 0
+        )
+          this.currentOverNumber += 1;
+        if (this.currentOverNumber !== 0) {
+          let overData = [
+            new BALL_DATA(),
+            new BALL_DATA(),
+            new BALL_DATA(),
+            new BALL_DATA(),
+            new BALL_DATA(),
+            new BALL_DATA(),
+          ];
+          this.matchService.teamData[
+            this.matchService.currentRoles['bat']
+          ].oversPlayedData.push(overData);
+          this.currentBowlNumber = 0;
+          this.previousBowlNumber = 0;
+          //this.eventHandler.NotifyUpdateOverViewGridEvent(true);
+          this.totalBallsinCurrentOver = 6;
+          //this.eventHandler.NotifyUpdateOverViewGridEvent(false);
+        }
       }
     }
   }
@@ -601,11 +608,12 @@ export class LiveMatchService {
       this.bowlerRunsBeforeStart = this.currentBowler.runs;
     }
 
-    this.eventHandler.NotifyRunAddedEvent();
+    this.eventHandler.NotifyUpdateOnFieldBowlerEvent();
     this.updatePlayerData(this.currentOverNumber);
   }
 
   pipeDialogs(): void {
+    this.eventHandler.NotifyOverCompleteEvent();
     this.dialog
       .open(NewBatsmenDialog, {
         data: { isAuto: true },
@@ -645,7 +653,9 @@ export class LiveMatchService {
         })
         .afterClosed()
         .subscribe(() => {
-          this.eventHandler.NotifyRunAddedEvent();
+          this.eventHandler.NotifyUpdateOnFieldBatsmenEvent();
+          this.eventHandler.NotifyUpdateOnFieldBowlerEvent();
+          this.eventHandler.OverCompleteEvent$();
           this.updatePlayerData(this.currentOverNumber);
         });
     }
@@ -695,6 +705,7 @@ export class LiveMatchService {
       ) {
         this.swapStriker();
         this.matchService.totalOvers = data.overs;
+        this.eventHandler.NotifyOverCompleteEvent();
         let newBowlerDialog = this.dialog.open(NewBowlerDialog, {
           data: { isAuto: true },
         });
