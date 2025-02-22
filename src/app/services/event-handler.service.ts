@@ -65,4 +65,22 @@ export class EventHandlerService {
   NotifyOverCompleteEvent(): void {
     this._overCompleteSubj.next();
   }
+
+  // Match Data Saved to Firebase Complete Event
+  private _macthSaveCompleteSubj = new Subject<string>();
+  MatchSaveCompleteEvent$(): Observable<string> {
+    return this._macthSaveCompleteSubj.asObservable();
+  }
+  NotifyMatchSaveCompleteEvent(matchId: string): void {
+    this._macthSaveCompleteSubj.next(matchId);
+  }
+
+  // Match Data Loaded from Firebase Complete Event
+  private _macthLoadCompleteSubj = new Subject<void>();
+  MatchLoadCompleteEvent$(): Observable<void> {
+    return this._macthLoadCompleteSubj.asObservable();
+  }
+  NotifyMatchLoadCompleteEvent(): void {
+    this._macthLoadCompleteSubj.next();
+  }
 }

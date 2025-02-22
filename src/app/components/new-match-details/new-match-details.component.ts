@@ -9,6 +9,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { MatchService } from '../../services/match.service';
 import { OnFieldPlayerDetailsDialog } from '../dailogs/on-field-player-detail.dialog';
+import { LiveMatchService } from '../../services/live-match.service';
 @Component({
   selector: 'app-new-match-details',
   standalone: true,
@@ -28,7 +29,8 @@ export class NewMatchDetailsComponent {
   constructor(
     public dialog: MatDialog,
     private router: Router,
-    private matchService: MatchService
+    private matchService: MatchService,
+    private liveMatchService: LiveMatchService
   ) {}
   team1Name: string = '';
   team2Name: string = '';
@@ -55,6 +57,12 @@ export class NewMatchDetailsComponent {
         this.matchService.totalPlayers = this.totalPlayers;
         this.matchService.totalOvers = this.totalOvers;
         this.matchService.setCurrentRoles();
+        this.matchService.addBatsmenToTeam(this.liveMatchService.striker, null);
+        this.matchService.addBatsmenToTeam(
+          this.liveMatchService.nonStriker,
+          null
+        );
+        this.matchService.addBowlerToTeam(this.liveMatchService.currentBowler);
         this.router.navigateByUrl('live');
       }
     });

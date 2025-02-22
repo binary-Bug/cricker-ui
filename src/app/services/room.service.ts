@@ -20,7 +20,7 @@ export class RoomService {
 
   async getRooms() {
     return (await getDocs(query(collection(this.firestore, 'room')))).docs.map(
-      (robots) => robots.data()
+      (rooms) => rooms.data()
     );
   }
 

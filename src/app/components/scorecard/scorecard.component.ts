@@ -3,6 +3,7 @@ import {
   Component,
   Input,
   OnChanges,
+  OnInit,
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
@@ -15,6 +16,9 @@ import { Bowler } from '../../models/bowler.interface';
 import { MatAccordion, MatExpansionModule } from '@angular/material/expansion';
 import { MatTabsModule } from '@angular/material/tabs';
 import { LiveMatchService } from '../../services/live-match.service';
+import { ActivatedRoute } from '@angular/router';
+import { LoadMatchService } from '../../services/load-match.service';
+import { EventHandlerService } from '../../services/event-handler.service';
 
 @Component({
   selector: 'app-scorecard',
@@ -30,10 +34,15 @@ import { LiveMatchService } from '../../services/live-match.service';
   templateUrl: './scorecard.component.html',
   styleUrl: './scorecard.component.css',
 })
-export class ScorecardComponent implements OnChanges, AfterContentChecked {
+export class ScorecardComponent
+  implements OnInit, OnChanges, AfterContentChecked
+{
   constructor(
     public matchService: MatchService,
-    public liveMatchService: LiveMatchService
+    public liveMatchService: LiveMatchService,
+    private route: ActivatedRoute,
+    private loadMatchService: LoadMatchService,
+    private eventHandlerService: EventHandlerService
   ) {}
 
   @Input('isActive') isActive!: boolean;
@@ -43,6 +52,7 @@ export class ScorecardComponent implements OnChanges, AfterContentChecked {
   @ViewChild('SIBowlerTable') SIBowlerTable!: MatTable<Bowler>;
 
   _isActive: boolean = false;
+  isLoad: boolean = false;
   FIBattingTeamKey: string = this.matchService.currentRoles['bat'];
   SIBattingTeamKey: string = this.matchService.currentRoles['ball'];
   fiDataSourceBatsmen =
@@ -57,8 +67,8 @@ export class ScorecardComponent implements OnChanges, AfterContentChecked {
   displayedColumns: string[] = ['nameBat', 'runs', 'balls', 'S/R', '4s', '6s'];
   displayedColumnsBowler: string[] = [
     'nameBowl',
-    'runs',
     'overs',
+    'runs',
     'wickets',
     'eco',
   ];
@@ -72,6 +82,36 @@ export class ScorecardComponent implements OnChanges, AfterContentChecked {
     this.FIBowlerTable!.renderRows();
     this.SIBatsmenTable!.renderRows();
     this.SIBowlerTable!.renderRows();
+  }
+
+  populateDataFromMatchService(): void {
+    this.FIBattingTeamKey = this.matchService.currentRoles['bat'];
+    this.SIBattingTeamKey = this.matchService.currentRoles['ball'];
+
+    this.fiDataSourceBatsmen =
+      this.matchService.teamData[this.FIBattingTeamKey].Batsmens;
+    this.fiDataSourceBowler =
+      this.matchService.teamData[this.SIBattingTeamKey].Bowlers;
+    this.siDataSourceBatsmen =
+      this.matchService.teamData[this.SIBattingTeamKey].Batsmens;
+    this.siDataSourceBowler =
+      this.matchService.teamData[this.FIBattingTeamKey].Bowlers;
+  }
+
+  async ngOnInit(): Promise<void> {
+    this.route.url.subscribe((url) => {
+      if (url[0].path === 'match-details') {
+        this.route.queryParams.subscribe(async (qp) => {
+          this.isLoad = true;
+          console.log('loading');
+          await this.loadMatchService.loadMatch(qp['id']);
+          console.log('loaded');
+          this.eventHandlerService.NotifyMatchLoadCompleteEvent();
+          this.populateDataFromMatchService();
+        });
+      }
+    });
+    this.populateDataFromMatchService();
   }
 
   ngOnChanges(changes: SimpleChanges): void {

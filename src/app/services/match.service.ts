@@ -14,6 +14,8 @@ export class MatchService {
   utilityService: UtilityService = inject(UtilityService);
   tossWinner: string | null = null;
   tossResult: string | null = null;
+  matchResult: string | null = null;
+  matchDate: string | null = null;
   totalPlayers: number | null = null;
   totalOvers: number | null = null;
   isSecondInning: boolean = false;
@@ -277,7 +279,7 @@ export class MatchService {
     }
   }
 
-  setCurrentRoles(): void {
+  public setCurrentRoles(): void {
     if (!this.isSecondInning) {
       if (this.tossWinner === 'team1') {
         if (this.tossResult === 'bat') {
@@ -304,17 +306,12 @@ export class MatchService {
   }
 
   calculateCurrentRunRate(): void {
-    if (this.isSecondInning) {
-      this.teamData['team2'].runRate =
-        (this.teamData['team2'].runsScored /
-          this.utilityService.ballplayed(this.teamData['team2'].oversPlayed)) *
-        6;
-    } else {
-      this.teamData['team1'].runRate =
-        (this.teamData['team1'].runsScored /
-          this.utilityService.ballplayed(this.teamData['team1'].oversPlayed)) *
-        6;
-    }
+    this.teamData[this.currentRoles['bat']].runRate =
+      (this.teamData[this.currentRoles['bat']].runsScored /
+        this.utilityService.ballplayed(
+          this.teamData[this.currentRoles['bat']].oversPlayed
+        )) *
+      6;
   }
 
   calculateSecondInningsTeamValues(): void {
@@ -353,6 +350,7 @@ export class MatchService {
       this.teamData[this.currentRoles['bat']].targetRuns!
     ) {
       this.teamData[this.currentRoles['bat']].requiredRuns = 0;
+      this.teamData[this.currentRoles['bat']].requiredRunRate = 0;
       return true;
     } else return false;
   }

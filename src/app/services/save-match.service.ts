@@ -6,39 +6,40 @@ import {
   DocumentReference,
   Firestore,
   getDoc,
-  getDocs,
-  query,
 } from '@angular/fire/firestore';
 import { MatchService } from './match.service';
 import { BALL_DATA } from '../models/ball_data.class';
+import { EventHandlerService } from './event-handler.service';
+import { LoadMatchService } from './load-match.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SaveMatchService {
-  constructor(public matchService: MatchService) {}
+  constructor(
+    public matchService: MatchService,
+    private eventHandlerService: EventHandlerService,
+    private loadMatchService: LoadMatchService
+  ) {}
+
   firestore = inject(Firestore);
-  public async saveMatchData(): Promise<void> {
+
+  public async saveMatchData(matchResult: string): Promise<void> {
+    const date = new Date();
+    const dateWithoutTime = date.toLocaleDateString();
     let teamDataDTO = this.prepareTeamDataObject();
     await addDoc(collection(this.firestore, 'MatchData'), {
-      tossWiner: this.matchService.tossWinner,
+      tossWinner: this.matchService.tossWinner,
       tossResult: this.matchService.tossResult,
       totalOvers: this.matchService.totalOvers,
-      ttoalPlayers: this.matchService.totalPlayers,
+      totalPlayers: this.matchService.totalPlayers,
+      MatchResult: matchResult,
+      MatchDate: dateWithoutTime,
       teamData: teamDataDTO,
     }).then(async (matchRef) => {
-      const data = await this.getMatchData(matchRef);
-      //console.log(data?.['teamData']['team1']['oversPlayedData'][0]);
-      for (let key in data?.['teamData']['team1']['oversPlayedData'][0] as {
-        [key: number]: BALL_DATA;
-      }) {
-        //console.log(data?.['teamData']['team1']['oversPlayedData'][0][key]);
-      }
+      await this.loadMatchService.addMatch(matchRef);
+      this.eventHandlerService.NotifyMatchSaveCompleteEvent(matchRef.id);
     });
-  }
-
-  public async getMatchData(matchRef: DocumentReference) {
-    return (await getDoc(matchRef)).data();
   }
 
   private prepareTeamDataObject(): any {
@@ -54,22 +55,18 @@ export class SaveMatchService {
       teamObj,
       'team2'
     );
-    //console.log(teamObj);
     return teamObj;
   }
 
   private prepareOversPlayedObj(team: Team, teamObj: any, key: string) {
-    let ballDataObj: { [key: number]: BALL_DATA } = {};
     let overDTO: { [key: number]: BALL_DATA }[] = [];
     team.oversPlayedData.forEach((over) => {
+      let ballDataObj: { [key: number]: BALL_DATA } = {};
       over.forEach((ball, index) => {
         ballDataObj[index] = JSON.parse(JSON.stringify(ball));
       });
       overDTO.push(ballDataObj);
     });
     teamObj[key]['oversPlayedData'] = overDTO;
-    // for (key in ballDataObj) {
-    //   console.log(ballDataObj[key]);
-    // }
   }
 }

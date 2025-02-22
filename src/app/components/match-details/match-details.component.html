@@ -1,0 +1,57 @@
+<mat-tab-group>
+  <mat-tab label="Match Info"
+    ><div style="display: grid; justify-content: center">
+      <h2
+        class="infoHeader"
+        style="margin-bottom: 10px; margin-top: 10px; display: block"
+      >
+        <b>{{
+          matchService.teamData[matchService.currentRoles["bat"]].name
+        }}</b>
+        vs
+        <b>{{
+          matchService.teamData[matchService.currentRoles["ball"]].name
+        }}</b>
+      </h2>
+      <h2 class="infoHeader" style="color: forestgreen">
+        {{ matchService.matchResult }}
+      </h2>
+    </div>
+    <table *ngIf="isMatchLoaded" class="mat-elevation-z8">
+      <tr>
+        <td class="detailHeader">Toss Result</td>
+        <td>
+          {{ matchService.teamData[matchService.tossWinner + ""]["name"] }} won
+          the toss and elected to {{ matchService.tossResult }} first
+        </td>
+      </tr>
+      <tr>
+        <td class="detailHeader">Match Result</td>
+        <td>
+          {{ matchService.matchResult }}
+        </td>
+      </tr>
+      <tr>
+        <td class="detailHeader">Overs Played</td>
+        <td>
+          {{ matchService.totalOvers }}
+        </td>
+      </tr>
+      <tr>
+        <td class="detailHeader">Players per Team</td>
+        <td>
+          {{ matchService.totalPlayers }}
+        </td>
+      </tr>
+      <tr>
+        <td class="detailHeader">Match Date</td>
+        <td>
+          {{ matchService.matchDate }}
+        </td>
+      </tr>
+    </table>
+  </mat-tab>
+  <mat-tab label="Score Card">
+    <app-scorecard style="z-index: 2500"></app-scorecard>
+  </mat-tab>
+</mat-tab-group>

@@ -112,9 +112,6 @@ export class OnFieldPlayerDetailsDialog implements OnInit {
     this.liveMatchService.striker.name = this.striker.value + '';
     this.liveMatchService.nonStriker.name = this.nonStriker.value + '';
     this.liveMatchService.currentBowler.name = this.currentBowler.value + '';
-    this.matchService.addBatsmenToTeam(this.liveMatchService.striker, null);
-    this.matchService.addBatsmenToTeam(this.liveMatchService.nonStriker, null);
-    this.matchService.addBowlerToTeam(this.liveMatchService.currentBowler);
     this.dialogRef.close('Done');
   }
 }

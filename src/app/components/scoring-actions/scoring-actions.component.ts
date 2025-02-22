@@ -87,7 +87,7 @@ export class ScoringActionsComponent {
             } else {
               //open match complete dialog
               this.dialog.open(MatchCompleteDialog);
-              this.saveMatchService.saveMatchData();
+              //this.saveMatchService.saveMatchData();
             }
           } else {
             if (!this.isWideChecked && !this.isNBChecked)
@@ -132,7 +132,7 @@ export class ScoringActionsComponent {
           });
         } else {
           this.dialog.open(MatchCompleteDialog);
-          this.saveMatchService.saveMatchData();
+          //this.saveMatchService.saveMatchData();
           // match complete dialog
         }
       } else {
@@ -140,7 +140,7 @@ export class ScoringActionsComponent {
         // check for target chased
         if (this.matchService.checkIfTargetChased()) {
           this.dialog.open(MatchCompleteDialog);
-          this.saveMatchService.saveMatchData();
+          //this.saveMatchService.saveMatchData();
         } else {
           this.eventHandler.NotifyOverCompleteEvent();
           let newBowlerDialog = this.dialog.open(NewBowlerDialog, {
@@ -156,7 +156,7 @@ export class ScoringActionsComponent {
       // check for target chased
       if (this.matchService.checkIfTargetChased()) {
         this.dialog.open(MatchCompleteDialog);
-        this.saveMatchService.saveMatchData();
+        //this.saveMatchService.saveMatchData();
       }
     }
   }

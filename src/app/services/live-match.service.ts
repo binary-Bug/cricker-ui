@@ -653,6 +653,9 @@ export class LiveMatchService {
         })
         .afterClosed()
         .subscribe(() => {
+          this.matchService.addBatsmenToTeam(this.striker, null);
+          this.matchService.addBatsmenToTeam(this.nonStriker, null);
+          this.matchService.addBowlerToTeam(this.currentBowler);
           this.eventHandler.NotifyUpdateOnFieldBatsmenEvent();
           this.eventHandler.NotifyUpdateOnFieldBowlerEvent();
           this.eventHandler.OverCompleteEvent$();
@@ -756,9 +759,9 @@ export class LiveMatchService {
     this.currentPatnership = { runs: 0, balls: 0 };
   }
 
-  exitMatch(): void {
+  public exitMatch(shouldNavigate: boolean = true): void {
     this.resetServiceData();
     this.matchService.resetServiceData();
-    this.router.navigateByUrl('room');
+    if (shouldNavigate) this.router.navigateByUrl('room');
   }
 }

@@ -16,6 +16,9 @@ import { MatInputModule } from '@angular/material/input';
 import { Component, OnInit } from '@angular/core';
 import { MatchService } from '../../services/match.service';
 import { LiveMatchService } from '../../services/live-match.service';
+import { EventHandlerService } from '../../services/event-handler.service';
+import { Router } from '@angular/router';
+import { SaveMatchService } from '../../services/save-match.service';
 
 @Component({
   selector: 'match-complete-dialog',
@@ -24,7 +27,12 @@ import { LiveMatchService } from '../../services/live-match.service';
       <p>{{ matchResult }}</p>
     </mat-dialog-content>
     <mat-dialog-actions>
-      <button mat-button color="primary" (click)="viewScorecard()">
+      <button
+        [disabled]="IsMatchSaveComplete ? null : 'true'"
+        mat-button
+        color="primary"
+        (click)="viewScorecard()"
+      >
         View Scorecard
       </button>
       <button mat-button color="warn" (click)="exit()" cdkFocusInitial>
@@ -47,14 +55,21 @@ export class MatchCompleteDialog implements OnInit {
   constructor(
     public dialogRef: MatDialogRef<MatchCompleteDialog>,
     private matchService: MatchService,
-    private liveMatchService: LiveMatchService
+    private liveMatchService: LiveMatchService,
+    private eventHandlerService: EventHandlerService,
+    private router: Router,
+    private saveMatchService: SaveMatchService
   ) {
     dialogRef.disableClose;
   }
 
   matchResult: string = '';
+  IsMatchSaveComplete: boolean = false;
+  matchRefId: string = '';
 
   ngOnInit(): void {
+    this.saveMatchService.saveMatchData(this.checkMatchResult());
+
     let ele = document.getElementById('confetti');
     if (ele) {
       ele.style.zIndex = '1001';
@@ -69,6 +84,11 @@ export class MatchCompleteDialog implements OnInit {
     }, 2000);
 
     this.matchResult = this.checkMatchResult();
+
+    this.eventHandlerService.MatchSaveCompleteEvent$().subscribe((matchId) => {
+      this.matchRefId = matchId;
+      this.IsMatchSaveComplete = true;
+    });
   }
 
   checkMatchResult(): string {
@@ -112,6 +132,8 @@ export class MatchCompleteDialog implements OnInit {
     this.dialogRef.close();
   }
   viewScorecard(): void {
+    this.liveMatchService.exitMatch(false);
+    this.router.navigateByUrl('match-details?id=' + this.matchRefId);
     this.dialogRef.close();
   }
 }
