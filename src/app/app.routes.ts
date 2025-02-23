@@ -4,6 +4,7 @@ import { RoomComponent } from './components/room/room.component';
 import { LiveMatchDashboardComponent } from './components/live-match-dashboard/live-match-dashboard.component';
 import { NewMatchDetailsComponent } from './components/new-match-details/new-match-details.component';
 import { MatchDetailsComponent } from './components/match-details/match-details.component';
+import { MatchListComponent } from './components/match-list/match-list.component';
 
 export const routes: Routes = [
   { path: '', component: IndexComponent },
@@ -11,4 +12,5 @@ export const routes: Routes = [
   { path: 'live', component: LiveMatchDashboardComponent },
   { path: 'newMatchDetails', component: NewMatchDetailsComponent },
   { path: 'match-details', component: MatchDetailsComponent },
+  { path: 'allMatches', component: MatchListComponent },
 ];

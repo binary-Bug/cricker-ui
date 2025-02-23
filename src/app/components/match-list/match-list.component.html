@@ -1,0 +1,31 @@
+<h1 style="text-align: center; margin-top: 5px; margin-bottom: 5px">
+  All Matches
+</h1>
+
+<ng-container *ngFor="let match of matchesList">
+  <mat-card appearance="outlined">
+    <mat-card-header>
+      <mat-card-title style="display: flex; justify-content: space-between"
+        ><span style="margin-bottom: 0px; font-weight: 500">
+          {{ match.data["teamData"]["team1"]["name"] }}
+          vs
+          {{ match.data["teamData"]["team2"]["name"] }}
+        </span>
+        <span>{{ match.data["MatchDate"] }}</span></mat-card-title
+      >
+      <mat-card-subtitle style="color: forestgreen">{{
+        match.data["MatchResult"]
+      }}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-actions align="end">
+      <button
+        mat-mini-fab
+        color="accent"
+        (click)="router.navigateByUrl('match-details?id=' + match.id)"
+      >
+        <img src="assets/icon-external-link.png" style="width: 18px" />
+      </button>
+    </mat-card-actions>
+  </mat-card>
+  <br />
+</ng-container>
