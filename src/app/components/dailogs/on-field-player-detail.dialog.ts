@@ -20,7 +20,9 @@ import { MatchService } from '../../services/match.service';
 
 @Component({
   selector: 'on-field-player-detail-dialog',
-  template: `<h2 mat-dialog-title>New Match</h2>
+  template: `<h2 mat-dialog-title>
+      {{ data.isAuto ? '2nd Innings Details' : 'New Match' }}
+    </h2>
     <mat-dialog-content>
       <p>Enter on field Player details</p>
       <mat-form-field>

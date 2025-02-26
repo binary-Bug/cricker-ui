@@ -6,6 +6,7 @@ import {
   Firestore,
   getDoc,
   getDocs,
+  orderBy,
   query,
 } from '@angular/fire/firestore';
 import { LoadMatchDTO } from '../models/LoadMatchDTO.interface';
@@ -32,11 +33,16 @@ export class LoadMatchService {
   async getAllMatches(): Promise<LoadMatchDTO[]> {
     if (this.matches.length === 0) {
       let matchesObj: LoadMatchDTO[] = [];
-      (await getDocs(query(collection(this.firestore, 'MatchData')))).docs.map(
-        (m) => {
-          matchesObj.push({ id: m.id, data: m.data() });
-        }
-      );
+      (
+        await getDocs(
+          query(
+            collection(this.firestore, 'MatchData'),
+            orderBy('MatchDate', 'desc')
+          )
+        )
+      ).docs.map((m) => {
+        matchesObj.push({ id: m.id, data: m.data() });
+      });
       return new Promise<LoadMatchDTO[]>((resolve) => {
         resolve(matchesObj);
       });
@@ -79,7 +85,7 @@ export class LoadMatchService {
       id: matchRef.id,
       data: matchData as DocumentData,
     };
-    this.matches.push(matchObj);
+    this.matches.splice(0, 0, matchObj);
   }
 
   public mapOversPlayedData(): void {

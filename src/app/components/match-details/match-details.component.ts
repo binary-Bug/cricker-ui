@@ -5,18 +5,21 @@ import { MatchService } from '../../services/match.service';
 import { EventHandlerService } from '../../services/event-handler.service';
 import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { LiveMatchService } from '../../services/live-match.service';
 
 @Component({
   selector: 'app-match-details',
   standalone: true,
-  imports: [CommonModule, MatTabsModule, ScorecardComponent],
+  imports: [CommonModule, MatTabsModule, ScorecardComponent, MatButtonModule],
   templateUrl: './match-details.component.html',
   styleUrl: './match-details.component.css',
 })
 export class MatchDetailsComponent implements OnInit, OnDestroy {
   constructor(
     public matchService: MatchService,
-    private eventHandlerService: EventHandlerService
+    private eventHandlerService: EventHandlerService,
+    public liveMatchService: LiveMatchService
   ) {}
   private subscriptions: Subscription[] = [];
   public isMatchLoaded: boolean = false;

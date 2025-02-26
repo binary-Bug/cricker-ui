@@ -132,7 +132,7 @@ export class MatchCompleteDialog implements OnInit {
     this.dialogRef.close();
   }
   viewScorecard(): void {
-    this.liveMatchService.exitMatch(false);
+    this.liveMatchService.exitMatch('');
     this.router.navigateByUrl('match-details?id=' + this.matchRefId);
     this.dialogRef.close();
   }

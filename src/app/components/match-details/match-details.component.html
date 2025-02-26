@@ -50,6 +50,16 @@
         </td>
       </tr>
     </table>
+    <div style="justify-content: center; display: flex">
+      <button
+        mat-raised-button
+        class="mb-4 mt-4"
+        color="warn"
+        (click)="liveMatchService.exitMatch('allMatches')"
+      >
+        Exit
+      </button>
+    </div>
   </mat-tab>
   <mat-tab label="Score Card">
     <app-scorecard style="z-index: 2500"></app-scorecard>

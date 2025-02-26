@@ -10,6 +10,7 @@ import { NewBatsmenDialog } from '../components/dailogs/new-batsmen.dialog';
 import { map } from 'rxjs';
 import { OnFieldPlayerDetailsDialog } from '../components/dailogs/on-field-player-detail.dialog';
 import { Router } from '@angular/router';
+import { MatchCompleteDialog } from '../components/dailogs/match-complete.dialog';
 
 @Injectable({
   providedIn: 'root',
@@ -638,7 +639,10 @@ export class LiveMatchService {
   }
 
   handleEndInningsDialog(data: any): void {
-    if (data.event === 'end') {
+    if (data.event === 'end' && this.matchService.isSecondInning) {
+      this.dialog.open(MatchCompleteDialog);
+    }
+    if (data.event === 'end' && !this.matchService.isSecondInning) {
       if (data.isAuto === false) {
         if (data.overs) this.matchService.totalOvers = data.overs;
         if (data.players) this.matchService.totalPlayers = data.players;
@@ -759,9 +763,9 @@ export class LiveMatchService {
     this.currentPatnership = { runs: 0, balls: 0 };
   }
 
-  public exitMatch(shouldNavigate: boolean = true): void {
+  public exitMatch(navigateTo: string = 'room'): void {
     this.resetServiceData();
     this.matchService.resetServiceData();
-    if (shouldNavigate) this.router.navigateByUrl('room');
+    if (navigateTo.length > 0) this.router.navigateByUrl(navigateTo);
   }
 }
