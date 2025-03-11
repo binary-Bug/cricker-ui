@@ -39,4 +39,32 @@ export class MatchDetailsComponent implements OnInit, OnDestroy {
       sub.unsubscribe();
     });
   }
+
+  toggleTab(event: any): void {
+    this.handleOnToggleEvent(event.index);
+  }
+
+  handleOnToggleEvent(index: number): void {
+    if (index === 1) {
+      setTimeout(() => {
+        let ele = document.getElementById('mat-tab-content-scorecard');
+        if (ele) {
+          ele.style.display = 'initial';
+        }
+        let ele2 = document.getElementById('scorecardSpinner');
+        if (ele2) {
+          ele2.style.display = 'none';
+        }
+      }, 500);
+    } else {
+      let ele = document.getElementById('mat-tab-content-scorecard');
+      if (ele) {
+        ele.style.display = 'none';
+      }
+      let ele2 = document.getElementById('scorecardSpinner');
+      if (ele2) {
+        ele2.style.display = 'block';
+      }
+    }
+  }
 }

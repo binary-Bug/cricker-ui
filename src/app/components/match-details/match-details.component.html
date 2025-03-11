@@ -1,4 +1,4 @@
-<mat-tab-group>
+<mat-tab-group (selectedTabChange)="toggleTab($event)">
   <mat-tab label="Match Info"
     ><div style="display: grid; justify-content: center">
       <h2

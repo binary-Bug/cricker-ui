@@ -1,9 +1,14 @@
-<mat-accordion>
+<mat-spinner
+  id="scorecardSpinner"
+  diameter="50"
+  style="margin-top: 300px; margin-left: 175px"
+></mat-spinner>
+<mat-accordion id="mat-tab-content-scorecard" style="display: none">
   <mat-expansion-panel
     class="headers-align"
     [expanded]="!matchService.isSecondInning"
   >
-    <mat-expansion-panel-header>
+    <mat-expansion-panel-header (click)="oversPanelHeaderClicked(false)">
       <mat-panel-title>
         {{ matchService.teamData[FIBattingTeamKey].name }}
       </mat-panel-title>
@@ -150,7 +155,7 @@
     class="headers-align"
     [expanded]="matchService.isSecondInning"
   >
-    <mat-expansion-panel-header>
+    <mat-expansion-panel-header (click)="oversPanelHeaderClicked(false)">
       <mat-panel-title>
         {{ matchService.teamData[SIBattingTeamKey].name }}
       </mat-panel-title>
@@ -294,13 +299,22 @@
   </mat-expansion-panel>
   <div style="height: 1px; background-color: #0000001a"></div>
   <mat-expansion-panel class="headers-align">
-    <mat-expansion-panel-header>
+    <mat-expansion-panel-header (click)="oversPanelHeaderClicked(true)">
       <mat-panel-title> Overs </mat-panel-title>
       <mat-panel-description> </mat-panel-description>
     </mat-expansion-panel-header>
-    <mat-tab-group>
+    <mat-tab-group (selectedTabChange)="toggleTab($event)">
       <mat-tab label="{{ matchService.teamData[FIBattingTeamKey].name }}">
-        <div class="grid place-items-start pl-[10px]">
+        <mat-spinner
+          id="oversTab1Spinner"
+          diameter="30"
+          style="margin-left: 190px; margin-top: 130px"
+        ></mat-spinner>
+        <div
+          id="mat-tab-content-over-team1"
+          class="grid place-items-start pl-[10px]"
+          style="display: none"
+        >
           <ng-container
             *ngFor="
               let over of matchService.teamData[FIBattingTeamKey]
@@ -340,7 +354,16 @@
         </div>
       </mat-tab>
       <mat-tab label="{{ matchService.teamData[SIBattingTeamKey].name }}">
-        <div class="grid place-items-start pl-[10px]">
+        <mat-spinner
+          id="oversTab2Spinner"
+          diameter="30"
+          style="margin-left: 190px; margin-top: 130px"
+        ></mat-spinner>
+        <div
+          id="mat-tab-content-over-team2"
+          class="grid place-items-start pl-[10px]"
+          style="display: none"
+        >
           <ng-container
             *ngFor="
               let over of matchService.teamData[SIBattingTeamKey]

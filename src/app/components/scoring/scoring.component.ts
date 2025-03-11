@@ -32,6 +32,7 @@ import { UtilityService } from '../../services/utility.service';
 export class ScoringComponent implements OnInit, OnDestroy {
   private changeDetector: ChangeDetectorRef = inject(ChangeDetectorRef);
   @ViewChild('overView') overView: ElementRef<HTMLDivElement> | undefined;
+  trackByIndex = (index: number) => index;
   subscriptions: Subscription[] = [];
   eventHandler: EventHandlerService = inject(EventHandlerService);
   liveMatchService: LiveMatchService = inject(LiveMatchService);

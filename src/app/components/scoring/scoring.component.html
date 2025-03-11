@@ -104,7 +104,8 @@
     <ng-container
       *ngFor="
         let ball of matchService.teamData[this.matchService.currentRoles['bat']]
-          .oversPlayedData[liveMatchService.currentOverNumber]
+          .oversPlayedData[liveMatchService.currentOverNumber];
+        trackBy: trackByIndex
       "
     >
       <div>

@@ -19,6 +19,7 @@ import { LiveMatchService } from '../../services/live-match.service';
 import { ActivatedRoute } from '@angular/router';
 import { LoadMatchService } from '../../services/load-match.service';
 import { EventHandlerService } from '../../services/event-handler.service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-scorecard',
@@ -30,6 +31,7 @@ import { EventHandlerService } from '../../services/event-handler.service';
     MatAccordion,
     MatExpansionModule,
     MatTabsModule,
+    MatProgressSpinnerModule,
   ],
   templateUrl: './scorecard.component.html',
   styleUrl: './scorecard.component.css',
@@ -53,6 +55,7 @@ export class ScorecardComponent
 
   _isActive: boolean = false;
   isLoad: boolean = false;
+  isOversPanelExpanded: boolean = false;
   FIBattingTeamKey: string = this.matchService.currentRoles['bat'];
   SIBattingTeamKey: string = this.matchService.currentRoles['ball'];
   fiDataSourceBatsmen =
@@ -119,5 +122,120 @@ export class ScorecardComponent
   }
   ngAfterContentChecked(): void {
     if (this._isActive) this.renderTableData();
+  }
+  toggleTab(event: any): void {
+    this.handleOnToggleEvent(event.index);
+  }
+
+  oversPanelHeaderClicked(isOversPanel: boolean): void {
+    if (isOversPanel) {
+      this.isOversPanelExpanded = !this.isOversPanelExpanded;
+      if (this.isOversPanelExpanded) {
+        setTimeout(() => {
+          let ot1 = document.getElementById('mat-tab-content-over-team1');
+          if (ot1) {
+            ot1.style.display = 'grid';
+          }
+
+          let ot1spinner = document.getElementById('oversTab1Spinner');
+          if (ot1spinner) {
+            ot1spinner.style.display = 'none';
+          }
+
+          let ot2 = document.getElementById('mat-tab-content-over-team2');
+          if (ot2) {
+            ot2.style.display = 'grid';
+          }
+
+          let ot2spinner = document.getElementById('oversTab2Spinner');
+          if (ot2spinner) {
+            ot2spinner.style.display = 'none';
+          }
+        }, 600);
+      } else {
+        let ot1 = document.getElementById('mat-tab-content-over-team1');
+        if (ot1) {
+          ot1.style.display = 'none';
+        }
+        let ot1spinner = document.getElementById('oversTab1Spinner');
+        if (ot1spinner) {
+          ot1spinner.style.display = 'block';
+        }
+
+        let ot2 = document.getElementById('mat-tab-content-over-team2');
+        if (ot2) {
+          ot2.style.display = 'none';
+        }
+        let ot2spinner = document.getElementById('oversTab2Spinner');
+        if (ot2spinner) {
+          ot2spinner.style.display = 'block';
+        }
+      }
+    } else {
+      if (this.isOversPanelExpanded) {
+        this.isOversPanelExpanded = false;
+        let ot1 = document.getElementById('mat-tab-content-over-team1');
+        if (ot1) {
+          ot1.style.display = 'none';
+        }
+        let ot1spinner = document.getElementById('oversTab1Spinner');
+        if (ot1spinner) {
+          ot1spinner.style.display = 'block';
+        }
+
+        let ot2 = document.getElementById('mat-tab-content-over-team2');
+        if (ot2) {
+          ot2.style.display = 'none';
+        }
+        let ot2spinner = document.getElementById('oversTab2Spinner');
+        if (ot2spinner) {
+          ot2spinner.style.display = 'block';
+        }
+      }
+    }
+  }
+
+  handleOnToggleEvent(index: number): void {
+    if (index === 1) {
+      let ot1 = document.getElementById('mat-tab-content-over-team1');
+      if (ot1) {
+        ot1.style.display = 'none';
+      }
+      let ot1spinner = document.getElementById('oversTab1Spinner');
+      if (ot1spinner) {
+        ot1spinner.style.display = 'block';
+      }
+      setTimeout(() => {
+        let ot2 = document.getElementById('mat-tab-content-over-team2');
+        if (ot2) {
+          ot2.style.display = 'grid';
+        }
+
+        let ot2spinner = document.getElementById('oversTab2Spinner');
+        if (ot2spinner) {
+          ot2spinner.style.display = 'none';
+        }
+      }, 600);
+    } else {
+      let ot2 = document.getElementById('mat-tab-content-over-team2');
+      if (ot2) {
+        ot2.style.display = 'none';
+      }
+      let ot2spinner = document.getElementById('oversTab2Spinner');
+      if (ot2spinner) {
+        ot2spinner.style.display = 'block';
+      }
+      setTimeout(() => {
+        let ot1 = document.getElementById('mat-tab-content-over-team1');
+        if (ot1) {
+          ot1.style.display = 'grid';
+        }
+
+        let ot1spinner = document.getElementById('oversTab1Spinner');
+        if (ot1spinner) {
+          ot1spinner.style.display = 'none';
+        }
+      }, 600);
+    }
   }
 }
