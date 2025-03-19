@@ -1,0 +1,17 @@
+.stat-card-overview .mat-mdc-button-base {
+  border-radius: 20px;
+  width: 105px !important;
+  height: 105px !important;
+  background-color: rgb(224, 224, 224);
+  color: black;
+  margin-bottom: 30px;
+}
+
+.stat-card-role .mat-mdc-button-base {
+  border-radius: 30px;
+  width: 150px !important;
+  height: 150px !important;
+  background-color: #673ab7;
+  color: white;
+  margin-bottom: 30px;
+}

@@ -1,0 +1,40 @@
+<div
+  class="grid grid-cols-3 place-items-start gap-4"
+  style="height: 60px; padding-top: 10px; padding-left: 5px"
+>
+  <div>
+    <button mat-mini-fab color="primary" (click)="router.navigateByUrl('room')">
+      <img
+        src="https://img.icons8.com/?size=100&id=65a5j6IY0Vy2&format=png&color=FFFFFF"
+        style="width: 40px"
+      />
+    </button>
+  </div>
+
+  <div class="col-span-2">
+    <h1 style="text-align: center; margin-top: 5px; margin-bottom: 5px">
+      All Players
+    </h1>
+  </div>
+</div>
+
+<div *ngFor="let player of playerList | async">
+  <mat-card appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>{{ player.name }}</mat-card-title>
+      <mat-card-subtitle
+        >Matches Played: {{ player.matchesPlayed }}</mat-card-subtitle
+      >
+    </mat-card-header>
+    <mat-card-actions align="end">
+      <button
+        mat-button
+        color="primary"
+        (click)="router.navigateByUrl('player-details?name=' + player.name)"
+      >
+        View Stats
+      </button>
+    </mat-card-actions>
+  </mat-card>
+  <br />
+</div>

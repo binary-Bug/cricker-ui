@@ -13,12 +13,14 @@ import {
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatchService } from '../../services/match.service';
 import { LiveMatchService } from '../../services/live-match.service';
 import { EventHandlerService } from '../../services/event-handler.service';
 import { Router } from '@angular/router';
 import { SaveMatchService } from '../../services/save-match.service';
+import { PlayerService } from '../../services/player.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'match-complete-dialog',
@@ -51,14 +53,15 @@ import { SaveMatchService } from '../../services/save-match.service';
     ReactiveFormsModule,
   ],
 })
-export class MatchCompleteDialog implements OnInit {
+export class MatchCompleteDialog implements OnInit, OnDestroy {
   constructor(
     public dialogRef: MatDialogRef<MatchCompleteDialog>,
     private matchService: MatchService,
     private liveMatchService: LiveMatchService,
     private eventHandlerService: EventHandlerService,
     private router: Router,
-    private saveMatchService: SaveMatchService
+    private saveMatchService: SaveMatchService,
+    private playerService: PlayerService
   ) {
     dialogRef.disableClose;
   }
@@ -66,6 +69,7 @@ export class MatchCompleteDialog implements OnInit {
   matchResult: string = '';
   IsMatchSaveComplete: boolean = false;
   matchRefId: string = '';
+  subscriptions: Subscription[] = [];
 
   ngOnInit(): void {
     this.saveMatchService.saveMatchData(this.checkMatchResult());
@@ -85,10 +89,15 @@ export class MatchCompleteDialog implements OnInit {
 
     this.matchResult = this.checkMatchResult();
 
-    this.eventHandlerService.MatchSaveCompleteEvent$().subscribe((matchId) => {
-      this.matchRefId = matchId;
-      this.IsMatchSaveComplete = true;
-    });
+    this.subscriptions.push(
+      this.eventHandlerService
+        .MatchSaveCompleteEvent$()
+        .subscribe(async (matchId) => {
+          await this.playerService.savePlayerData(matchId, this.matchResult);
+          this.matchRefId = matchId;
+          this.IsMatchSaveComplete = true;
+        })
+    );
   }
 
   checkMatchResult(): string {
@@ -135,5 +144,9 @@ export class MatchCompleteDialog implements OnInit {
     this.liveMatchService.exitMatch('');
     this.router.navigateByUrl('match-details?id=' + this.matchRefId);
     this.dialogRef.close();
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 }

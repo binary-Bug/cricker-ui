@@ -5,12 +5,16 @@ import { LiveMatchDashboardComponent } from './components/live-match-dashboard/l
 import { NewMatchDetailsComponent } from './components/new-match-details/new-match-details.component';
 import { MatchDetailsComponent } from './components/match-details/match-details.component';
 import { MatchListComponent } from './components/match-list/match-list.component';
+import { PlayerListComponent } from './components/player-list/player-list.component';
+import { PlayerDetailsComponent } from './components/player-details/player-details.component';
 
 export const routes: Routes = [
   { path: '', component: IndexComponent },
   { path: 'room', component: RoomComponent },
   { path: 'live', component: LiveMatchDashboardComponent },
   { path: 'newMatchDetails', component: NewMatchDetailsComponent },
-  { path: 'match-details', component: MatchDetailsComponent },
   { path: 'allMatches', component: MatchListComponent },
+  { path: 'match-details', component: MatchDetailsComponent },
+  { path: 'allPlayers', component: PlayerListComponent },
+  { path: 'player-details', component: PlayerDetailsComponent },
 ];

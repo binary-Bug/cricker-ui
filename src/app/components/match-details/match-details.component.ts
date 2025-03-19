@@ -7,6 +7,7 @@ import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { LiveMatchService } from '../../services/live-match.service';
+import { PlayerService } from '../../services/player.service';
 
 @Component({
   selector: 'app-match-details',
@@ -19,7 +20,8 @@ export class MatchDetailsComponent implements OnInit, OnDestroy {
   constructor(
     public matchService: MatchService,
     private eventHandlerService: EventHandlerService,
-    public liveMatchService: LiveMatchService
+    public liveMatchService: LiveMatchService,
+    private playerService: PlayerService
   ) {}
   private subscriptions: Subscription[] = [];
   public isMatchLoaded: boolean = false;
@@ -30,6 +32,10 @@ export class MatchDetailsComponent implements OnInit, OnDestroy {
         this.eventHandlerService.MatchLoadCompleteEvent$().subscribe(() => {
           // match loaded
           this.isMatchLoaded = true;
+          // this.playerService.savePlayerData(
+          //   'bw7HeCxt2GDG5JF53cOD',
+          //   this.matchService.matchResult as string
+          // );
         })
       );
   }
