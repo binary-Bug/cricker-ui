@@ -102,20 +102,6 @@ export class ScoringComponent implements OnInit, OnDestroy {
         this.calculateEco();
       }),
 
-      // this.eventHandler
-      //   .UpdateOverViewGridEvent$()
-      //   .subscribe((isRemove: boolean) => {
-      //     // if (isRemove) {
-      //     //   this.overView?.nativeElement.classList.remove(
-      //     //     'grid-cols-' + this.liveMatchService.totalBallsinCurrentOver
-      //     //   );
-      //     // } else {
-      //     //   this.overView?.nativeElement.classList.add(
-      //     //     'grid-cols-' + this.liveMatchService.totalBallsinCurrentOver
-      //     //   );
-      //     // }
-      //   }),
-
       this.eventHandler.OverCompleteEvent$().subscribe(() => {
         this.overCompleted = true;
         this.changeDetector.detectChanges();

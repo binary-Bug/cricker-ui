@@ -37,7 +37,11 @@ export interface DialogData {
 
     <mat-dialog-content>
       <div class="grid place-items-center">
-        <mat-radio-group [(ngModel)]="selectedBatsmen" style="width: 100%;">
+        <mat-radio-group
+          [(ngModel)]="selectedBatsmen"
+          (ngModelChange)="radioSelected()"
+          style="width: 100%;"
+        >
           <div class="flex justify-between">
             <div>
               <mat-radio-button
@@ -95,7 +99,7 @@ export interface DialogData {
               }
             </mat-autocomplete>
           </mat-form-field>
-          <mat-divider></mat-divider>
+          <mat-divider *ngIf="currentWicketOption === 'Run-out'"></mat-divider>
           <mat-form-field
             *ngIf="currentWicketOption === 'Run-out'"
             class="example-full-width"
@@ -106,7 +110,13 @@ export interface DialogData {
               <mat-option value="nonStriker">Non-Striker</mat-option>
             </mat-select>
           </mat-form-field>
-          <mat-divider></mat-divider>
+          <mat-divider
+            *ngIf="
+              this.matchService.teamData[this.matchService.currentRoles['bat']]
+                .wicketsLost !==
+              this.matchService.totalPlayers! - 2
+            "
+          ></mat-divider>
           <mat-form-field
             *ngIf="
               this.matchService.teamData[this.matchService.currentRoles['bat']]
@@ -185,8 +195,8 @@ export class WicketDialog implements OnInit {
   ];
 
   actionPlayer = new FormControl('', Validators.required);
-  newBatsmen = new FormControl('none', Validators.required);
-  options: string[] = ['Choli', 'Dhobhi', 'Brohit'];
+  newBatsmen = new FormControl('', Validators.required);
+  options: string[] = [];
   filteredOptions!: Observable<string[]>;
   filteredOptionsNewBatsmen!: Observable<string[]>;
   label: string = '';
@@ -212,7 +222,7 @@ export class WicketDialog implements OnInit {
         .wicketsLost ===
       this.matchService.totalPlayers! - 2
     ) {
-      this.isInvalid = false;
+      this.newBatsmen.setValue('none');
     }
 
     this.filteredOptions = this.actionPlayer.valueChanges.pipe(
@@ -220,14 +230,19 @@ export class WicketDialog implements OnInit {
       map((value) => this._filter(value || ''))
     );
 
-    this.actionPlayer.valueChanges.subscribe((value) => {
+    this.actionPlayer.valueChanges.subscribe((actionPlayer) => {
       if (
         this.currentWicketOption === 'Caught' ||
         this.currentWicketOption === 'Stumped' ||
         this.currentWicketOption === 'Run-out'
       ) {
-        if (this.newBatsmen.value && this.newBatsmen.value?.length > 3) {
-          if (value && value.length > 3) this.isInvalid = false;
+        if (this.newBatsmen.value && this.newBatsmen.value?.length > 1) {
+          if (
+            actionPlayer &&
+            actionPlayer.length > 1 &&
+            this.selectedBatsmen.length > 1
+          )
+            this.isInvalid = false;
           else this.isInvalid = true;
         } else {
           this.isInvalid = true;
@@ -246,14 +261,16 @@ export class WicketDialog implements OnInit {
         this.currentWicketOption === 'Stumped' ||
         this.currentWicketOption === 'Run-out'
       ) {
-        if (this.actionPlayer.value && this.actionPlayer.value?.length > 3) {
-          if (value && value.length > 3) this.isInvalid = false;
+        if (this.actionPlayer.value && this.actionPlayer.value?.length > 1) {
+          if (value && value.length > 1 && this.selectedBatsmen.length > 1)
+            this.isInvalid = false;
           else this.isInvalid = true;
         } else {
           this.isInvalid = true;
         }
       } else {
-        if (value && value.length > 3) this.isInvalid = false;
+        if (value && value.length > 1 && this.selectedBatsmen.length > 1)
+          this.isInvalid = false;
         else this.isInvalid = true;
       }
     });
@@ -267,6 +284,32 @@ export class WicketDialog implements OnInit {
     );
   }
 
+  public radioSelected() {
+    if (
+      this.currentWicketOption === 'Caught' ||
+      this.currentWicketOption === 'Stumped' ||
+      this.currentWicketOption === 'Run-out'
+    ) {
+      if (
+        this.newBatsmen.value?.length &&
+        this.newBatsmen.value?.length > 1 &&
+        this.actionPlayer.value?.length &&
+        this.actionPlayer.value?.length > 1 &&
+        this.selectedBatsmen.length > 1
+      )
+        this.isInvalid = false;
+      else this.isInvalid = true;
+    } else {
+      if (
+        this.newBatsmen.value?.length &&
+        this.newBatsmen.value?.length > 1 &&
+        this.selectedBatsmen.length > 1
+      )
+        this.isInvalid = false;
+      else this.isInvalid = true;
+    }
+  }
+
   onCancelClick(): void {
     this.dialogRef.close();
   }
@@ -276,7 +319,10 @@ export class WicketDialog implements OnInit {
       action: 'Done',
       selectedBatsmen: this.selectedBatsmen,
       wicketType: this.currentWicketOption,
-      newBatsmen: this.newBatsmen.value,
+      newBatsmen:
+        this.newBatsmen.value?.length && this.newBatsmen.value?.length > 1
+          ? this.newBatsmen.value
+          : 'none',
       actionPlayer: this.actionPlayer.value,
       selectedEnd: this.selectedEnd,
     });
@@ -301,7 +347,8 @@ export class WicketDialog implements OnInit {
         if (
           this.matchService.teamData[this.matchService.currentRoles['bat']]
             .wicketsLost ===
-          this.matchService.totalPlayers! - 2
+            this.matchService.totalPlayers! - 2 &&
+          this.selectedBatsmen.length > 1
         ) {
           this.isInvalid = false;
         }

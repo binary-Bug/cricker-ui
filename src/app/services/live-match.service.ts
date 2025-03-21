@@ -68,6 +68,7 @@ export class LiveMatchService {
     if (run % 2 === 0) {
       if (isByesChecked || isLBChecked || isPenaltyRun) run = 0;
       this.striker.runs += run;
+      this.striker.strikeRate = (this.striker.runs / this.striker.balls) * 100;
       switch (run) {
         case 4:
           this.striker.fours += 1;
@@ -80,6 +81,7 @@ export class LiveMatchService {
     } else {
       if (isByesChecked || isLBChecked || isPenaltyRun) run = 0;
       this.striker.runs += run;
+      this.striker.strikeRate = (this.striker.runs / this.striker.balls) * 100;
       if (!isPenaltyRun) this.swapStriker();
       this.updatePlayerData();
     }

@@ -217,9 +217,7 @@ export class ScoringActionsComponent {
     if (this.isWideChecked || this.isNBChecked) {
       run = +run + 1 + '';
       isExtra = true;
-      //this.eventHandler.NotifyUpdateOverViewGridEvent(true);
       this.liveMatchService.totalBallsinCurrentOver += 1;
-      //this.eventHandler.NotifyUpdateOverViewGridEvent(false);
       this.liveMatchService.addNewBalltoOversPlayedData();
     }
 
