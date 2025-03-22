@@ -109,7 +109,6 @@ export class ScorecardComponent
           console.log('loading');
           await this.loadMatchService.loadMatch(qp['id']);
           console.log('loaded');
-          this.eventHandlerService.NotifyMatchLoadCompleteEvent();
           this.populateDataFromMatchService();
         });
       }

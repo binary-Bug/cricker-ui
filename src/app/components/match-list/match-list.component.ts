@@ -16,7 +16,7 @@ import { Router } from '@angular/router';
 export class MatchListComponent {
   public matchesList: LoadMatchDTO[] = [];
   constructor(
-    private loadMatchService: LoadMatchService,
+    public loadMatchService: LoadMatchService,
     public router: Router
   ) {
     loadMatchService.getAllMatches().then((matches) => {

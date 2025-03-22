@@ -32,21 +32,36 @@ export class PlayerService {
         resolve(this.players);
       });
     else {
-      (
-        await getDocs(
-          query(
-            collection(this.firestore, 'PlayerData'),
-            orderBy('matchesPlayed', 'desc')
+      if (this.matchService.matchMode === 'prod') {
+        (
+          await getDocs(
+            query(
+              collection(this.firestore, 'PlayerData'),
+              orderBy('matchesPlayed', 'desc')
+            )
           )
-        )
-      ).docs.map((player) => this.players.push(player.data() as Player));
-      return new Promise<Player[]>((resolve) => {
-        resolve(this.players);
-      });
+        ).docs.map((player) => this.players.push(player.data() as Player));
+        return new Promise<Player[]>((resolve) => {
+          resolve(this.players);
+        });
+      } else {
+        (
+          await getDocs(
+            query(
+              collection(this.firestore, 'Test_PlayerData'),
+              orderBy('matchesPlayed', 'desc')
+            )
+          )
+        ).docs.map((player) => this.players.push(player.data() as Player));
+        return new Promise<Player[]>((resolve) => {
+          resolve(this.players);
+        });
+      }
     }
   }
 
   async savePlayerData(matchId: string, matchResult: string): Promise<void> {
+    console.log('Saving Player Data');
     let winningTeamKey: string = matchResult.includes(
       this.matchService.teamData['team1'].name
     )
@@ -62,6 +77,7 @@ export class PlayerService {
     this.updatePlayerStats(parameter, matchId, winningTeamKey);
     await this.deleteExistingPlayerData();
     await this.updatePlayerDataInFirebase();
+    console.log('Player Data Saved Successfully');
   }
 
   updatePlayerStats(
@@ -196,15 +212,34 @@ export class PlayerService {
   }
 
   async deleteExistingPlayerData(): Promise<void> {
-    (await getDocs(query(collection(this.firestore, 'PlayerData')))).docs.map(
-      async (player) =>
-        await deleteDoc(doc(this.firestore, 'PlayerData/' + player.id))
-    );
+    if (this.matchService.matchMode === 'prod') {
+      (await getDocs(query(collection(this.firestore, 'PlayerData')))).docs.map(
+        async (player) =>
+          await deleteDoc(doc(this.firestore, 'PlayerData/' + player.id))
+      );
+    } else {
+      (
+        await getDocs(query(collection(this.firestore, 'Test_PlayerData')))
+      ).docs.map(
+        async (player) =>
+          await deleteDoc(doc(this.firestore, 'Test_PlayerData/' + player.id))
+      );
+    }
   }
 
   async updatePlayerDataInFirebase(): Promise<void> {
-    this.players.forEach(async (player) => {
-      await addDoc(collection(this.firestore, 'PlayerData'), player);
-    });
+    if (this.matchService.matchMode === 'prod') {
+      this.players.forEach(async (player) => {
+        await addDoc(collection(this.firestore, 'PlayerData'), {
+          ...player,
+        });
+      });
+    } else {
+      this.players.forEach(async (player) => {
+        await addDoc(collection(this.firestore, 'Test_PlayerData'), {
+          ...player,
+        });
+      });
+    }
   }
 }

@@ -19,7 +19,7 @@ export class MatchService {
   totalPlayers: number | null = null;
   totalOvers: number | null = null;
   isSecondInning: boolean = false;
-
+  matchMode: string | null = null;
   team1Data: Team = {
     name: '',
     captain: '',
@@ -361,6 +361,7 @@ export class MatchService {
     this.totalPlayers = null;
     this.totalOvers = null;
     this.isSecondInning = false;
+    this.matchMode = null;
 
     this.team1Data = {
       name: '',

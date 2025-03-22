@@ -1,12 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Team } from '../models/team.interface';
-import {
-  addDoc,
-  collection,
-  DocumentReference,
-  Firestore,
-  getDoc,
-} from '@angular/fire/firestore';
+import { addDoc, collection, Firestore } from '@angular/fire/firestore';
 import { MatchService } from './match.service';
 import { BALL_DATA } from '../models/ball_data.class';
 import { EventHandlerService } from './event-handler.service';
@@ -28,18 +22,35 @@ export class SaveMatchService {
     const date = new Date();
     const dateWithoutTime = date.toLocaleDateString();
     let teamDataDTO = this.prepareTeamDataObject();
-    await addDoc(collection(this.firestore, 'MatchData'), {
-      tossWinner: this.matchService.tossWinner,
-      tossResult: this.matchService.tossResult,
-      totalOvers: this.matchService.totalOvers,
-      totalPlayers: this.matchService.totalPlayers,
-      MatchResult: matchResult,
-      MatchDate: dateWithoutTime,
-      teamData: teamDataDTO,
-    }).then(async (matchRef) => {
-      await this.loadMatchService.addMatch(matchRef);
-      this.eventHandlerService.NotifyMatchSaveCompleteEvent(matchRef.id);
-    });
+    if (this.matchService.matchMode === 'prod') {
+      await addDoc(collection(this.firestore, 'MatchData'), {
+        tossWinner: this.matchService.tossWinner,
+        tossResult: this.matchService.tossResult,
+        totalOvers: this.matchService.totalOvers,
+        totalPlayers: this.matchService.totalPlayers,
+        MatchResult: matchResult,
+        MatchDate: dateWithoutTime,
+        FireBaseDate: date,
+        teamData: teamDataDTO,
+      }).then(async (matchRef) => {
+        //await this.loadMatchService.addMatch(matchRef);
+        this.eventHandlerService.NotifyMatchSaveCompleteEvent(matchRef.id);
+      });
+    } else {
+      await addDoc(collection(this.firestore, 'Test_MatchData'), {
+        tossWinner: this.matchService.tossWinner,
+        tossResult: this.matchService.tossResult,
+        totalOvers: this.matchService.totalOvers,
+        totalPlayers: this.matchService.totalPlayers,
+        MatchResult: matchResult,
+        MatchDate: dateWithoutTime,
+        FireBaseDate: date,
+        teamData: teamDataDTO,
+      }).then(async (matchRef) => {
+        //await this.loadMatchService.addMatch(matchRef);
+        this.eventHandlerService.NotifyMatchSaveCompleteEvent(matchRef.id);
+      });
+    }
   }
 
   private prepareTeamDataObject(): any {

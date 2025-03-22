@@ -21,6 +21,7 @@ import { Router } from '@angular/router';
 import { SaveMatchService } from '../../services/save-match.service';
 import { PlayerService } from '../../services/player.service';
 import { Subscription } from 'rxjs';
+import { LoadMatchService } from '../../services/load-match.service';
 
 @Component({
   selector: 'match-complete-dialog',
@@ -61,7 +62,8 @@ export class MatchCompleteDialog implements OnInit, OnDestroy {
     private eventHandlerService: EventHandlerService,
     private router: Router,
     private saveMatchService: SaveMatchService,
-    private playerService: PlayerService
+    private playerService: PlayerService,
+    private loadMatchService: LoadMatchService
   ) {
     dialogRef.disableClose;
   }
@@ -137,10 +139,16 @@ export class MatchCompleteDialog implements OnInit, OnDestroy {
   }
 
   exit(): void {
+    this.playerService.players = [];
+    this.loadMatchService.matches = [];
     this.liveMatchService.exitMatch();
     this.dialogRef.close();
   }
-  viewScorecard(): void {
+  async viewScorecard(): Promise<void> {
+    this.playerService.players = [];
+    await this.loadMatchService.getAllMatches().then((matches) => {
+      this.loadMatchService.matches = matches;
+    });
     this.liveMatchService.exitMatch('');
     this.router.navigateByUrl('match-details?id=' + this.matchRefId);
     this.dialogRef.close();

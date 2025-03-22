@@ -40,6 +40,7 @@ export class NewMatchDetailsComponent {
   tossResult = new FormControl('bat');
   totalPlayers: number = 0;
   totalOvers: number = 0;
+  mode = new FormControl('test');
 
   openCurrentPlayerDialog(): void {
     const dialogRef = this.dialog.open(OnFieldPlayerDetailsDialog, {
@@ -56,6 +57,7 @@ export class NewMatchDetailsComponent {
         this.matchService.tossWinner = this.tossWinner.value;
         this.matchService.totalPlayers = this.totalPlayers;
         this.matchService.totalOvers = this.totalOvers;
+        this.matchService.matchMode = this.mode.value;
         this.matchService.setCurrentRoles();
         this.matchService.addBatsmenToTeam(this.liveMatchService.striker, null);
         this.matchService.addBatsmenToTeam(
