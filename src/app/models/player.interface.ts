@@ -15,4 +15,12 @@ export interface Player {
   runOuts: number;
   stumpOuts: number;
   matchIds: string[];
+  bbi: BestBowling;
+  highestScore: number;
+  isNotOutHS: boolean;
+}
+
+export interface BestBowling {
+  wickets: number;
+  runs: number;
 }

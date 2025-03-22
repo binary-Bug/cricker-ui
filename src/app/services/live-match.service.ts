@@ -528,9 +528,14 @@ export class LiveMatchService {
   }
 
   addExtra(type: string, run: number) {
-    this.matchService.teamData[this.matchService.currentRoles['bat']].extras[
-      type
-    ] += run;
+    if (type !== 'nb')
+      this.matchService.teamData[this.matchService.currentRoles['bat']].extras[
+        type
+      ] += run;
+    else
+      this.matchService.teamData[this.matchService.currentRoles['bat']].extras[
+        type
+      ] += 1;
 
     if (type !== 'b') this.currentBowler.extras[type] += run;
   }

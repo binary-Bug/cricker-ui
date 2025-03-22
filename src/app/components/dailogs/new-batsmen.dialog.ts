@@ -20,6 +20,7 @@ import { MatInputModule } from '@angular/material/input';
 import { Observable, startWith, map } from 'rxjs';
 import { LiveMatchService } from '../../services/live-match.service';
 import { MatchService } from '../../services/match.service';
+import { PlayerService } from '../../services/player.service';
 
 @Component({
   selector: 'new-batsmen-dialog',
@@ -71,7 +72,8 @@ export class NewBatsmenDialog implements OnInit {
   constructor(
     public dialogRef: MatDialogRef<NewBatsmenDialog>,
     private matchService: MatchService,
-    private liveMatchService: LiveMatchService
+    private liveMatchService: LiveMatchService,
+    private playerService: PlayerService
   ) {
     dialogRef.disableClose = true;
     this.data = inject<any>(MAT_DIALOG_DATA);
@@ -84,6 +86,12 @@ export class NewBatsmenDialog implements OnInit {
   newBatsmen = new FormControl('', Validators.required);
 
   ngOnInit(): void {
+    this.playerService.getAllPlayers().then((players) => {
+      players.forEach((player) => {
+        this.options.push(player.name);
+      });
+    });
+
     this.filteredOptions = this.newBatsmen.valueChanges.pipe(
       startWith(''),
       map((value) => this._filter(value || ''))

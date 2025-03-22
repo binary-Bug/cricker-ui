@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { Player } from '../models/player.interface';
+import { BestBowling, Player } from '../models/player.interface';
 import {
   addDoc,
   collection,
@@ -14,6 +14,7 @@ import { MatchService } from './match.service';
 import { Batsmen } from '../models/batsmen.interface';
 import { Bowler } from '../models/bowler.interface';
 import { Fielder } from '../models/fielder.interface';
+import { UtilityService } from './utility.service';
 
 @Injectable({
   providedIn: 'root',
@@ -23,14 +24,7 @@ export class PlayerService {
 
   firestore = inject(Firestore);
   matchService = inject(MatchService);
-
-  constructor() {
-    this.init();
-  }
-
-  init(): void {
-    this.getAllPlayers();
-  }
+  utilityService = inject(UtilityService);
 
   async getAllPlayers(): Promise<Player[]> {
     if (this.players.length > 0)
@@ -125,13 +119,50 @@ export class PlayerService {
     playerSaveObj.ballsPlayed += playerData.balls;
     playerSaveObj.fours += playerData.fours;
     playerSaveObj.sixes += playerData.six;
+    playerSaveObj.highestScore =
+      playerSaveObj.highestScore !== undefined &&
+      playerSaveObj.highestScore !== null &&
+      playerSaveObj.highestScore >= playerData.runs
+        ? playerSaveObj.highestScore
+        : playerData.runs;
+    playerSaveObj.isNotOutHS =
+      playerSaveObj.highestScore === playerData.runs &&
+      playerData.status === 'Not Out'
+        ? true
+        : playerSaveObj.isNotOutHS;
   }
 
   updateBowlerStats(playerSaveObj: Player, playerData: Bowler): void {
+    //calculating best bowling data for bowler
+    let bestBowlingData: BestBowling;
+    if (playerSaveObj.bbi.wickets > playerData.wickets) {
+      bestBowlingData = playerSaveObj.bbi;
+    } else {
+      if (playerData.wickets > playerSaveObj.bbi.wickets) {
+        bestBowlingData = {
+          wickets: playerData.wickets,
+          runs: playerData.runs,
+        };
+      } else {
+        if (playerSaveObj.bbi.runs < playerData.runs) {
+          bestBowlingData = playerSaveObj.bbi;
+        } else {
+          bestBowlingData = {
+            wickets: playerData.wickets,
+            runs: playerData.runs,
+          };
+        }
+      }
+    }
+
     playerSaveObj.runsAgainst += playerData.runs;
-    playerSaveObj.overs += playerData.overs;
+    playerSaveObj.overs = this.utilityService.convertToOvers(
+      this.utilityService.ballplayed(playerData.overs) +
+        this.utilityService.ballplayed(playerSaveObj.overs)
+    );
     playerSaveObj.wickets += playerData.wickets;
     playerSaveObj.maidens += playerData.maidens;
+    playerSaveObj.bbi = bestBowlingData;
   }
 
   updateFielderStats(playerSaveObj: Player, playerData: Fielder): void {
@@ -158,6 +189,9 @@ export class PlayerService {
       runOuts: 0,
       stumpOuts: 0,
       matchIds: [],
+      bbi: { wickets: 0, runs: 0 },
+      highestScore: 0,
+      isNotOutHS: false,
     } as Player;
   }
 

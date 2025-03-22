@@ -24,6 +24,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { Observable, startWith, map } from 'rxjs';
 import { LiveMatchService } from '../../services/live-match.service';
 import { MatchService } from '../../services/match.service';
+import { PlayerService } from '../../services/player.service';
 
 export interface DialogData {
   isExtraChecked: boolean;
@@ -179,7 +180,8 @@ export class WicketDialog implements OnInit {
   constructor(
     public dialogRef: MatDialogRef<WicketDialog>,
     public liveMatchService: LiveMatchService,
-    public matchService: MatchService
+    public matchService: MatchService,
+    private playerService: PlayerService
   ) {
     dialogRef.disableClose = true;
     this.data = inject<DialogData>(MAT_DIALOG_DATA);
@@ -207,6 +209,12 @@ export class WicketDialog implements OnInit {
   selectedEnd: string = '';
 
   ngOnInit() {
+    this.playerService.getAllPlayers().then((players) => {
+      players.forEach((player) => {
+        this.options.push(player.name);
+      });
+    });
+
     if (this.data.isExtraChecked) {
       this.availableWicketOptions = [
         { name: 'Stumped' },

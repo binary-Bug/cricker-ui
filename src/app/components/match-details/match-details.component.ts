@@ -33,7 +33,7 @@ export class MatchDetailsComponent implements OnInit, OnDestroy {
           // match loaded
           this.isMatchLoaded = true;
           // this.playerService.savePlayerData(
-          //   'bw7HeCxt2GDG5JF53cOD',
+          //   'WItAdDq3YCJmKM1YlhaJ',
           //   this.matchService.matchResult as string
           // );
         })
