@@ -13,19 +13,51 @@
       </mat-form-field>
     </div>
     <div>
-      <mat-form-field>
+      <mat-form-field class="example-full-width">
         <mat-label>{{
           team1Name ? team1Name + " Captain" : "Team 1 Captain"
         }}</mat-label>
-        <input matInput [(ngModel)]="team1Captain" />
+        <input
+          type="text"
+          placeholder="Select Player"
+          matInput
+          [formControl]="team1Captain"
+          [matAutocomplete]="auto1"
+        />
+        <mat-autocomplete
+          #auto1="matAutocomplete"
+          (optionSelected)="
+            filteredOptionsCap1 = autoCompleteService._filter('', options)
+          "
+        >
+          @for (option of filteredOptionsCap1; track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
+          }
+        </mat-autocomplete>
       </mat-form-field>
     </div>
     <div>
-      <mat-form-field>
+      <mat-form-field class="example-full-width">
         <mat-label>{{
           team2Name ? team2Name + " Captain" : "Team 2 Captain"
         }}</mat-label>
-        <input matInput [(ngModel)]="team2Captain" />
+        <input
+          type="text"
+          placeholder="Select Player"
+          matInput
+          [formControl]="team2Captain"
+          [matAutocomplete]="auto2"
+        />
+        <mat-autocomplete
+          #auto2="matAutocomplete"
+          (optionSelected)="
+            filteredOptionsCap2 = autoCompleteService._filter('', options)
+          "
+        >
+          @for (option of filteredOptionsCap2; track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
+          }
+        </mat-autocomplete>
       </mat-form-field>
     </div>
     <div>
@@ -79,7 +111,7 @@
         </button>
       </div>
     </div>
-    <div>
+    <div *ngIf="!isProdEnv">
       <label>Mode: </label>
       <mat-radio-group [formControl]="mode">
         <mat-radio-button color="primary" value="test">Test</mat-radio-button>

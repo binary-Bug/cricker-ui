@@ -25,6 +25,7 @@ import { Observable, startWith, map } from 'rxjs';
 import { LiveMatchService } from '../../services/live-match.service';
 import { MatchService } from '../../services/match.service';
 import { PlayerService } from '../../services/player.service';
+import { AutoCompleteService } from '../../services/auto-complete.service';
 
 export interface DialogData {
   isExtraChecked: boolean;
@@ -92,10 +93,18 @@ export interface DialogData {
               placeholder="Select Player"
               matInput
               [formControl]="actionPlayer"
-              [matAutocomplete]="auto"
+              [matAutocomplete]="auto1"
             />
-            <mat-autocomplete #auto="matAutocomplete">
-              @for (option of filteredOptions | async; track option) {
+            <mat-autocomplete
+              #auto1="matAutocomplete"
+              (optionSelected)="
+                filteredOptionsActionPlayer = autoCompleteService._filter(
+                  '',
+                  options
+                )
+              "
+            >
+              @for (option of filteredOptionsActionPlayer; track option) {
               <mat-option [value]="option">{{ option }}</mat-option>
               }
             </mat-autocomplete>
@@ -132,10 +141,18 @@ export interface DialogData {
               placeholder="Select Player"
               matInput
               [formControl]="newBatsmen"
-              [matAutocomplete]="auto"
+              [matAutocomplete]="auto2"
             />
-            <mat-autocomplete #auto="matAutocomplete">
-              @for (option of filteredOptionsNewBatsmen | async; track option) {
+            <mat-autocomplete
+              #auto2="matAutocomplete"
+              (optionSelected)="
+                filteredOptionsNewBatsmen = autoCompleteService._filter(
+                  '',
+                  options
+                )
+              "
+            >
+              @for (option of filteredOptionsNewBatsmen; track option) {
               <mat-option [value]="option">{{ option }}</mat-option>
               }
             </mat-autocomplete>
@@ -172,7 +189,6 @@ export interface DialogData {
     MatInputModule,
     MatFormFieldModule,
     MatSelectModule,
-    AsyncPipe,
   ],
 })
 export class WicketDialog implements OnInit {
@@ -181,7 +197,8 @@ export class WicketDialog implements OnInit {
     public dialogRef: MatDialogRef<WicketDialog>,
     public liveMatchService: LiveMatchService,
     public matchService: MatchService,
-    private playerService: PlayerService
+    private playerService: PlayerService,
+    public autoCompleteService: AutoCompleteService
   ) {
     dialogRef.disableClose = true;
     this.data = inject<DialogData>(MAT_DIALOG_DATA);
@@ -199,8 +216,8 @@ export class WicketDialog implements OnInit {
   actionPlayer = new FormControl('', Validators.required);
   newBatsmen = new FormControl('', Validators.required);
   options: string[] = [];
-  filteredOptions!: Observable<string[]>;
-  filteredOptionsNewBatsmen!: Observable<string[]>;
+  filteredOptionsActionPlayer!: string[];
+  filteredOptionsNewBatsmen!: string[];
   label: string = '';
   isInvalid: boolean = true;
 
@@ -213,6 +230,11 @@ export class WicketDialog implements OnInit {
       players.forEach((player) => {
         this.options.push(player.name);
       });
+      this.options = this.autoCompleteService.populatePlayersArray(
+        this.options
+      );
+      this.actionPlayer.setValue('');
+      this.newBatsmen.setValue('');
     });
 
     if (this.data.isExtraChecked) {
@@ -233,10 +255,16 @@ export class WicketDialog implements OnInit {
       this.newBatsmen.setValue('none');
     }
 
-    this.filteredOptions = this.actionPlayer.valueChanges.pipe(
-      startWith(''),
-      map((value) => this._filter(value || ''))
-    );
+    this.actionPlayer.valueChanges
+      .pipe(
+        startWith(''),
+        map((value) =>
+          this.autoCompleteService._filter(value || '', this.options)
+        )
+      )
+      .subscribe((list) => {
+        this.filteredOptionsActionPlayer = list;
+      });
 
     this.actionPlayer.valueChanges.subscribe((actionPlayer) => {
       if (
@@ -258,10 +286,16 @@ export class WicketDialog implements OnInit {
       }
     });
 
-    this.filteredOptionsNewBatsmen = this.newBatsmen.valueChanges.pipe(
-      startWith(''),
-      map((value) => this._filter(value || ''))
-    );
+    this.newBatsmen.valueChanges
+      .pipe(
+        startWith(''),
+        map((value) =>
+          this.autoCompleteService._filter(value || '', this.options)
+        )
+      )
+      .subscribe((list) => {
+        this.filteredOptionsNewBatsmen = list;
+      });
 
     this.newBatsmen.valueChanges.subscribe((value) => {
       if (
@@ -282,14 +316,6 @@ export class WicketDialog implements OnInit {
         else this.isInvalid = true;
       }
     });
-  }
-
-  private _filter(value: string): string[] {
-    const filterValue = value.toLowerCase();
-
-    return this.options.filter((option) =>
-      option.toLowerCase().includes(filterValue)
-    );
   }
 
   public radioSelected() {
@@ -329,9 +355,9 @@ export class WicketDialog implements OnInit {
       wicketType: this.currentWicketOption,
       newBatsmen:
         this.newBatsmen.value?.length && this.newBatsmen.value?.length > 1
-          ? this.newBatsmen.value
+          ? (this.newBatsmen.value + '').trim()
           : 'none',
-      actionPlayer: this.actionPlayer.value,
+      actionPlayer: (this.actionPlayer.value + '').trim(),
       selectedEnd: this.selectedEnd,
     });
   }

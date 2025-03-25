@@ -1,5 +1,4 @@
-import { AsyncPipe } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import {
   FormsModule,
   ReactiveFormsModule,
@@ -20,6 +19,13 @@ import { MatInputModule } from '@angular/material/input';
 import { Observable, startWith, map } from 'rxjs';
 import { LiveMatchService } from '../../services/live-match.service';
 import { MatchService } from '../../services/match.service';
+import { PlayerService } from '../../services/player.service';
+import { AutoCompleteService } from '../../services/auto-complete.service';
+
+export interface PlayerGroup {
+  label: string;
+  names: string[];
+}
 
 @Component({
   selector: 'new-bowler-dialog',
@@ -34,9 +40,18 @@ import { MatchService } from '../../services/match.service';
           [formControl]="newBowler"
           [matAutocomplete]="auto"
         />
-        <mat-autocomplete #auto="matAutocomplete">
-          @for (option of filteredOptions | async; track option) {
-          <mat-option [value]="option">{{ option }}</mat-option>
+        <mat-autocomplete
+          #auto="matAutocomplete"
+          (optionSelected)="bowlerSelected()"
+          (closed)="closed()"
+          (opened)="opened()"
+        >
+          @for (group of filteredOptions; track group) {
+          <mat-optgroup style="font-weight: 500;" [label]="group.label">
+            @for (name of group.names; track name) {
+            <mat-option [value]="name">{{ name }}</mat-option>
+            }
+          </mat-optgroup>
           }
         </mat-autocomplete>
       </mat-form-field>
@@ -64,14 +79,15 @@ import { MatchService } from '../../services/match.service';
     MatDialogActions,
     ReactiveFormsModule,
     MatAutocompleteModule,
-    AsyncPipe,
   ],
 })
-export class NewBowlerDialog implements OnInit {
+export class NewBowlerDialog implements OnInit, OnDestroy {
   constructor(
     public dialogRef: MatDialogRef<NewBowlerDialog>,
     private matchService: MatchService,
-    private liveMatchService: LiveMatchService
+    private liveMatchService: LiveMatchService,
+    private playerService: PlayerService,
+    public autoCompleteService: AutoCompleteService
   ) {
     dialogRef.disableClose = true;
     this.data = inject<any>(MAT_DIALOG_DATA);
@@ -79,41 +95,101 @@ export class NewBowlerDialog implements OnInit {
 
   data: any;
   options: string[] = [];
-  filteredOptions!: Observable<string[]>;
+  filteredOptions: PlayerGroup[] = [
+    { label: 'This Match', names: [] },
+    { label: 'All Players', names: [] },
+  ];
 
   newBowler = new FormControl('', Validators.required);
 
   ngOnInit(): void {
-    this.filteredOptions = this.newBowler.valueChanges.pipe(
-      startWith(''),
-      map((value) => this._filter(value || ''))
-    );
+    this.playerService.getAllPlayers().then((players) => {
+      players.forEach((player) => {
+        this.options.push(player.name);
+      });
+      this.options = this.autoCompleteService.populatePlayersArray(
+        this.options
+      );
+      this.options = this.autoCompleteService._filter(
+        this.liveMatchService.currentBowler.name,
+        this.options,
+        true
+      );
+      this.newBowler.setValue('');
+    });
 
-    this.options.push(
-      ...this.matchService.teamData[
+    this.filteredOptions[0].names = this.autoCompleteService._filter(
+      this.liveMatchService.currentBowler.name,
+      this.matchService.teamData[
         this.matchService.currentRoles['ball']
-      ].Bowlers.map((bowler) => {
-        return bowler.name === this.liveMatchService.currentBowler.name
-          ? ''
-          : bowler.name;
-      })
+      ].Bowlers.map((bowler) => bowler.name),
+      true
     );
 
-    this.options = this.options.filter((option) => option.length > 0);
+    if (this.filteredOptions[0].names.length === 0) {
+      this.filteredOptions.splice(0, 1);
+    }
+
+    this.newBowler.valueChanges
+      .pipe(
+        startWith(''),
+        map((value) => {
+          if (this.filteredOptions.length === 2) {
+            this.filteredOptions[0].names = this.autoCompleteService._filter(
+              value || '',
+              this.autoCompleteService._filter(
+                this.liveMatchService.currentBowler.name,
+                this.matchService.teamData[
+                  this.matchService.currentRoles['ball']
+                ].Bowlers.map((bowler) => bowler.name),
+                true
+              )
+            );
+          }
+          return this.autoCompleteService._filter(value || '', this.options);
+        })
+      )
+      .subscribe((list) => {
+        this.filteredOptions[this.filteredOptions.length - 1].names = list;
+      });
+  }
+
+  public bowlerSelected(): void {
+    this.filteredOptions.forEach((group) => {
+      if (group.label !== 'This Match')
+        group.names = this.autoCompleteService._filter('', this.options);
+      else
+        group.names = this.autoCompleteService._filter(
+          this.liveMatchService.currentBowler.name,
+          this.matchService.teamData[
+            this.matchService.currentRoles['ball']
+          ].Bowlers.map((bowler) => bowler.name),
+          true
+        );
+    });
+  }
+
+  closed(): void {
+    document
+      .getElementsByClassName('cdk-overlay-connected-position-bounding-box')[0]
+      ?.classList.add('newBowlerDialogClass');
+  }
+  opened(): void {
+    document
+      .getElementsByClassName('cdk-overlay-connected-position-bounding-box')[0]
+      ?.classList.remove('newBowlerDialogClass');
   }
 
   onOkClick(): void {
-    this.dialogRef.close(this.newBowler.value);
+    this.dialogRef.close((this.newBowler.value + '').trim());
   }
   onCancelClick(): void {
     this.dialogRef.close();
   }
 
-  private _filter(value: string): string[] {
-    const filterValue = value.toLowerCase();
-
-    return this.options.filter((option) =>
-      option.toLowerCase().includes(filterValue)
-    );
+  ngOnDestroy(): void {
+    document
+      .getElementsByClassName('cdk-overlay-connected-position-bounding-box')[0]
+      ?.classList.remove('newBowlerDialogClass');
   }
 }

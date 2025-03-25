@@ -7,21 +7,27 @@ import { AdminCodeDialog } from '../dailogs/admin-code.dialog';
 import { LoadMatchService } from '../../services/load-match.service';
 import { PlayerService } from '../../services/player.service';
 import { MatchService } from '../../services/match.service';
+import { environment } from '../../../environments/environment';
+import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-room',
   standalone: true,
-  imports: [MatButtonModule],
+  imports: [CommonModule, MatButtonModule],
   templateUrl: './room.component.html',
   styleUrl: './room.component.css',
 })
 export class RoomComponent {
+  public isProdEnv: boolean = environment.isProdEnv;
+
   constructor(
     public dialog: MatDialog,
     private router: Router,
     private loadMatchService: LoadMatchService,
     private playerService: PlayerService,
     private matchService: MatchService
-  ) {}
+  ) {
+    if (environment.isProdEnv) matchService.matchMode = 'prod';
+  }
   roomService = inject(RoomService);
   openCodeDialog(): void {
     const dialogRef = this.dialog.open(AdminCodeDialog);

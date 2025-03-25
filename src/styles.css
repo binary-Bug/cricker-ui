@@ -31,3 +31,6 @@ body {
   color: purple;
   font-weight: 500;
 }
+.newBowlerDialogClass {
+  z-index: 0 !important;
+}

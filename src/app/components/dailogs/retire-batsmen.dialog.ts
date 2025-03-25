@@ -21,6 +21,8 @@ import { MatRadioModule } from '@angular/material/radio';
 import { Observable, startWith, map } from 'rxjs';
 import { LiveMatchService } from '../../services/live-match.service';
 import { MatchService } from '../../services/match.service';
+import { PlayerService } from '../../services/player.service';
+import { AutoCompleteService } from '../../services/auto-complete.service';
 
 @Component({
   selector: 'retire-batsmen-dialog',
@@ -57,8 +59,13 @@ import { MatchService } from '../../services/match.service';
             [formControl]="newBatsmen"
             [matAutocomplete]="auto"
           />
-          <mat-autocomplete #auto="matAutocomplete">
-            @for (option of filteredOptions | async; track option) {
+          <mat-autocomplete
+            #auto="matAutocomplete"
+            (optionSelected)="
+              filteredOptions = autoCompleteService._filter('', options)
+            "
+          >
+            @for (option of filteredOptions; track option) {
             <mat-option [value]="option">{{ option }}</mat-option>
             }
           </mat-autocomplete>
@@ -84,57 +91,53 @@ import { MatchService } from '../../services/match.service';
     MatAutocompleteModule,
     MatRadioModule,
     MatDividerModule,
-    AsyncPipe,
   ],
 })
 export class RetireBatsmenDialog implements OnInit {
   constructor(
     public dialogRef: MatDialogRef<RetireBatsmenDialog>,
     private matchService: MatchService,
-    public liveMatchService: LiveMatchService
+    public liveMatchService: LiveMatchService,
+    private playerService: PlayerService,
+    public autoCompleteService: AutoCompleteService
   ) {}
 
   options: string[] = [];
-  filteredOptions!: Observable<string[]>;
+  filteredOptions!: string[];
 
   newBatsmen = new FormControl('', Validators.required);
   selectedBatsmen: string = '';
 
   ngOnInit(): void {
-    this.filteredOptions = this.newBatsmen.valueChanges.pipe(
-      startWith(''),
-      map((value) => this._filter(value || ''))
-    );
+    this.playerService.getAllPlayers().then((players) => {
+      players.forEach((player) => {
+        this.options.push(player.name);
+      });
+      this.options = this.autoCompleteService.populatePlayersArray(
+        this.options
+      );
+      this.newBatsmen.setValue('');
+    });
 
-    this.options.push(
-      ...this.matchService.teamData[
-        this.matchService.currentRoles['bat']
-      ].Batsmens.map((batsmen) => {
-        return batsmen.name === this.liveMatchService.striker.name ||
-          batsmen.name === this.liveMatchService.nonStriker.name
-          ? ''
-          : batsmen.name;
-      })
-    );
-
-    this.options = this.options.filter((option) => option.length > 1);
+    this.newBatsmen.valueChanges
+      .pipe(
+        startWith(''),
+        map((value) =>
+          this.autoCompleteService._filter(value || '', this.options)
+        )
+      )
+      .subscribe((list) => {
+        this.filteredOptions = list;
+      });
   }
 
   onOkClick(): void {
     this.dialogRef.close({
       old: this.selectedBatsmen,
-      new: this.newBatsmen.value,
+      new: (this.newBatsmen.value + '').trim(),
     });
   }
   onCancelClick(): void {
     this.dialogRef.close();
-  }
-
-  private _filter(value: string): string[] {
-    const filterValue = value.toLowerCase();
-
-    return this.options.filter((option) =>
-      option.toLowerCase().includes(filterValue)
-    );
   }
 }

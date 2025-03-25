@@ -21,6 +21,7 @@ import { Observable, startWith, map } from 'rxjs';
 import { LiveMatchService } from '../../services/live-match.service';
 import { MatchService } from '../../services/match.service';
 import { PlayerService } from '../../services/player.service';
+import { AutoCompleteService } from '../../services/auto-complete.service';
 
 @Component({
   selector: 'new-batsmen-dialog',
@@ -35,8 +36,13 @@ import { PlayerService } from '../../services/player.service';
           [formControl]="newBatsmen"
           [matAutocomplete]="auto"
         />
-        <mat-autocomplete #auto="matAutocomplete">
-          @for (option of filteredOptions | async; track option) {
+        <mat-autocomplete
+          #auto="matAutocomplete"
+          (optionSelected)="
+            filteredOptions = autoCompleteService._filter('', options)
+          "
+        >
+          @for (option of filteredOptions; track option) {
           <mat-option [value]="option">{{ option }}</mat-option>
           }
         </mat-autocomplete>
@@ -65,7 +71,6 @@ import { PlayerService } from '../../services/player.service';
     MatDialogActions,
     ReactiveFormsModule,
     MatAutocompleteModule,
-    AsyncPipe,
   ],
 })
 export class NewBatsmenDialog implements OnInit {
@@ -73,7 +78,8 @@ export class NewBatsmenDialog implements OnInit {
     public dialogRef: MatDialogRef<NewBatsmenDialog>,
     private matchService: MatchService,
     private liveMatchService: LiveMatchService,
-    private playerService: PlayerService
+    private playerService: PlayerService,
+    public autoCompleteService: AutoCompleteService
   ) {
     dialogRef.disableClose = true;
     this.data = inject<any>(MAT_DIALOG_DATA);
@@ -81,7 +87,7 @@ export class NewBatsmenDialog implements OnInit {
 
   data: any;
   options: string[] = [];
-  filteredOptions!: Observable<string[]>;
+  filteredOptions!: string[];
 
   newBatsmen = new FormControl('', Validators.required);
 
@@ -90,26 +96,28 @@ export class NewBatsmenDialog implements OnInit {
       players.forEach((player) => {
         this.options.push(player.name);
       });
+      this.options = this.autoCompleteService.populatePlayersArray(
+        this.options
+      );
+      this.newBatsmen.setValue('');
     });
 
-    this.filteredOptions = this.newBatsmen.valueChanges.pipe(
-      startWith(''),
-      map((value) => this._filter(value || ''))
-    );
+    this.newBatsmen.valueChanges
+      .pipe(
+        startWith(''),
+        map((value) =>
+          this.autoCompleteService._filter(value || '', this.options)
+        )
+      )
+      .subscribe((list) => {
+        this.filteredOptions = list;
+      });
   }
 
   onOkClick(): void {
-    this.dialogRef.close(this.newBatsmen.value);
+    this.dialogRef.close((this.newBatsmen.value + '').trim());
   }
   onCancelClick(): void {
     this.dialogRef.close();
-  }
-
-  private _filter(value: string): string[] {
-    const filterValue = value.toLowerCase();
-
-    return this.options.filter((option) =>
-      option.toLowerCase().includes(filterValue)
-    );
   }
 }

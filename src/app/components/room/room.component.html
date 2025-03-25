@@ -37,7 +37,7 @@
         </button>
       </div>
 
-      <div>
+      <div *ngIf="!isProdEnv">
         <button
           mat-raised-button
           style="width: 10em; height: 6em"
@@ -47,7 +47,7 @@
         </button>
       </div>
 
-      <div>
+      <div *ngIf="!isProdEnv">
         <button
           mat-raised-button
           style="width: 10em; height: 6em"
@@ -57,7 +57,7 @@
         </button>
       </div>
 
-      <div>
+      <div *ngIf="!isProdEnv">
         <button
           mat-raised-button
           style="width: 10em; height: 6em"
