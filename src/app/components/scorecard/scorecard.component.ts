@@ -106,9 +106,7 @@ export class ScorecardComponent
       if (url[0].path === 'match-details') {
         this.route.queryParams.subscribe(async (qp) => {
           this.isLoad = true;
-          console.log('loading');
           await this.loadMatchService.loadMatch(qp['id']);
-          console.log('loaded');
           this.populateDataFromMatchService();
         });
       }

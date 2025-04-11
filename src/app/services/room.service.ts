@@ -15,7 +15,7 @@ export class RoomService {
   firestore = inject(Firestore);
   router = inject(Router);
 
-  currentRoom: any = {};
+  currentRoom: any = null;
   constructor() {}
 
   async getRooms() {

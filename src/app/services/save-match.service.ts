@@ -33,7 +33,6 @@ export class SaveMatchService {
         FireBaseDate: date,
         teamData: teamDataDTO,
       }).then(async (matchRef) => {
-        //await this.loadMatchService.addMatch(matchRef);
         this.eventHandlerService.NotifyMatchSaveCompleteEvent(matchRef.id);
       });
     } else {
@@ -47,7 +46,6 @@ export class SaveMatchService {
         FireBaseDate: date,
         teamData: teamDataDTO,
       }).then(async (matchRef) => {
-        //await this.loadMatchService.addMatch(matchRef);
         this.eventHandlerService.NotifyMatchSaveCompleteEvent(matchRef.id);
       });
     }

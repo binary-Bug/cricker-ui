@@ -9,7 +9,8 @@ import { PlayerListComponent } from './components/player-list/player-list.compon
 import { PlayerDetailsComponent } from './components/player-details/player-details.component';
 
 export const routes: Routes = [
-  { path: '', component: IndexComponent },
+  //{ path: '', component: IndexComponent },
+  { path: '', component: RoomComponent },
   { path: 'room', component: RoomComponent },
   { path: 'live', component: LiveMatchDashboardComponent },
   { path: 'newMatchDetails', component: NewMatchDetailsComponent },

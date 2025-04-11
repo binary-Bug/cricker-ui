@@ -1,7 +1,7 @@
 <div class="main grid justify-content-center">
   <div class="grid place-items-center">
     <div class="example-button-row grid place-items-center">
-      <div>
+      <div *ngIf="roomService.currentRoom !== null">
         <h1 class="text-6xl text-purple-800 font-mono">
           Current room id is {{ roomService.currentRoom.roomId }}
         </h1>
@@ -67,7 +67,7 @@
         </button>
       </div>
 
-      <div>
+      <div *ngIf="roomService.currentRoom !== null">
         <button
           mat-raised-button
           color="warn"

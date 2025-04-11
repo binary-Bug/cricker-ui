@@ -23,18 +23,10 @@ export class LoadMatchService {
     public matchService: MatchService,
     private eventHandlerService: EventHandlerService,
     private playerService: PlayerService
-  ) {
-    //this.Init();
-  }
+  ) {}
   firestore = inject(Firestore);
 
   matches: LoadMatchDTO[] = [];
-
-  Init(): void {
-    this.getAllMatches().then((matches) => {
-      this.matches = matches;
-    });
-  }
 
   async getAllMatches(): Promise<LoadMatchDTO[]> {
     if (this.matches.length === 0) {
@@ -95,22 +87,13 @@ export class LoadMatchService {
     ] as unknown as Team;
     this.mapOversPlayedData();
     this.matchService.setCurrentRoles();
-    console.log('load completed for {' + matchId + '} from service');
+    //console.log('load completed for {' + matchId + '} from service');
     this.eventHandlerService.NotifyMatchLoadCompleteEvent();
   }
 
   public async getMatchData(matchRef: DocumentReference) {
     return (await getDoc(matchRef)).data();
   }
-
-  // public async addMatch(matchRef: DocumentReference) {
-  //   const matchData = await this.getMatchData(matchRef);
-  //   let matchObj: LoadMatchDTO = {
-  //     id: matchRef.id,
-  //     data: matchData as DocumentData,
-  //   };
-  //   this.matches.splice(0, 0, matchObj);
-  // }
 
   public mapOversPlayedData(): void {
     let oversPlayedDataTeam1 =

@@ -361,7 +361,8 @@ export class MatchService {
     this.totalPlayers = null;
     this.totalOvers = null;
     this.isSecondInning = false;
-    this.matchMode = null;
+    let currentMatchMode = this.matchMode;
+    this.matchMode = currentMatchMode;
 
     this.team1Data = {
       name: '',
