@@ -1,9 +1,6 @@
 name: UI Status Check 🤠
 
 on:
-  push:
-    branches:
-      - "**"
   workflow_dispatch:
 
 jobs:
