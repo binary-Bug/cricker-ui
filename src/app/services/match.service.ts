@@ -194,11 +194,15 @@ export class MatchService {
       });
     }
 
-    this.teamData[this.currentRoles['bat']].Batsmens = this.teamData[
+    // remove the new bastmen who has been undoed from the batsmens list
+    let indexOfTheBatsmenToRemove = this.teamData[
       this.currentRoles['bat']
-    ].Batsmens.filter((batsmen) => {
-      return batsmen.name !== batsmenToReplace;
-    });
+    ].Batsmens.findIndex((batsmen) => batsmen.name === batsmenToReplace);
+
+    this.teamData[this.currentRoles['bat']].Batsmens.splice(
+      indexOfTheBatsmenToRemove,
+      1
+    );
   }
 
   updateBatsmenStatus(

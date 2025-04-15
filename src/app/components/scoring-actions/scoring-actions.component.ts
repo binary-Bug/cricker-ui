@@ -282,6 +282,9 @@ export class ScoringActionsComponent {
         this.liveMatchService.updateOnFieldBatsmen(data.old, data.new);
         this.eventHandler.NotifyRunAddedEvent();
         this.matchService.updateBatsmenStatus(data.old, '', 'Retire', '');
+        this.liveMatchService.Update_Was_Batsmen_Retired_Boolean_For_Current_And_Previous_Ball(
+          true
+        );
       }
     });
   }

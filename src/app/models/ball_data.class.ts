@@ -6,6 +6,7 @@ export class BALL_DATA {
   label: string = '-';
   hasBeenBowled: boolean = false;
   isExtra: boolean = false;
+  wasBatsmenRetired: boolean = false;
   currentRuns: number = 0;
   wicketsLost: number = 0;
   extras: { [key: string]: number } = { w: 0, nb: 0, lb: 0, b: 0 };

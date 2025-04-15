@@ -214,6 +214,11 @@ export class LiveMatchService {
         isWicketBall = true;
       }
 
+      let wasBatsmenRetired: boolean =
+        this.matchService.teamData[this.matchService.currentRoles['bat']]
+          .oversPlayedData[this.currentOverNumber][this.currentBowlNumber]
+          .wasBatsmenRetired;
+
       //storing striker, non striker and bowler name temporarily to display it in ui before the first ball is bowled after undo
       let tempStrikerName: string = '';
       let tempNonStikerName: string = '';
@@ -315,7 +320,7 @@ export class LiveMatchService {
           .currentPatnership,
       };
 
-      if (isWicketBall) {
+      if (isWicketBall || wasBatsmenRetired) {
         this.matchService.undoPlayerReferenceForWicket(
           this.striker.name,
           this.matchService.teamData[this.matchService.currentRoles['bat']]
@@ -551,28 +556,54 @@ export class LiveMatchService {
   }
 
   updateOnFieldBatsmen(oldBatsmenName: string, newBatsmenName: string): void {
+    let bi: number = -1;
+    let batsmenData: Batsmen | undefined = this.matchService.teamData[
+      this.matchService.currentRoles['bat']
+    ].Batsmens.find((batsmen, index) => {
+      if (batsmen.name === newBatsmenName) {
+        bi = index;
+        return true;
+      }
+      return false;
+    });
     if (oldBatsmenName === this.striker.name) {
-      this.striker = {
-        name: newBatsmenName,
-        runs: 0,
-        balls: 0,
-        fours: 0,
-        six: 0,
-        status: 'Not Out',
-      };
-      if (newBatsmenName !== 'none')
-        this.matchService.addBatsmenToTeam(this.striker, oldBatsmenName);
+      if (batsmenData) {
+        this.matchService.teamData[
+          this.matchService.currentRoles['bat']
+        ].strikerIndex = bi;
+        this.striker = batsmenData;
+        this.striker.status = 'Not Out';
+      } else {
+        this.striker = {
+          name: newBatsmenName,
+          runs: 0,
+          balls: 0,
+          fours: 0,
+          six: 0,
+          status: 'Not Out',
+        };
+        if (newBatsmenName !== 'none')
+          this.matchService.addBatsmenToTeam(this.striker, oldBatsmenName);
+      }
     } else {
-      this.nonStriker = {
-        name: newBatsmenName,
-        runs: 0,
-        balls: 0,
-        fours: 0,
-        six: 0,
-        status: 'Not Out',
-      };
-      if (newBatsmenName !== 'none')
-        this.matchService.addBatsmenToTeam(this.nonStriker, oldBatsmenName);
+      if (batsmenData) {
+        this.matchService.teamData[
+          this.matchService.currentRoles['bat']
+        ].nonStrikerIndex = bi;
+        this.nonStriker = batsmenData;
+        this.nonStriker.status = 'Not Out';
+      } else {
+        this.nonStriker = {
+          name: newBatsmenName,
+          runs: 0,
+          balls: 0,
+          fours: 0,
+          six: 0,
+          status: 'Not Out',
+        };
+        if (newBatsmenName !== 'none')
+          this.matchService.addBatsmenToTeam(this.nonStriker, oldBatsmenName);
+      }
     }
   }
 
@@ -734,6 +765,22 @@ export class LiveMatchService {
     }
     if (this.matchService.isSecondInning)
       this.matchService.calculateSecondInningsTeamValues();
+  }
+
+  public Update_Was_Batsmen_Retired_Boolean_For_Current_And_Previous_Ball(
+    value: boolean
+  ): void {
+    this.matchService.teamData[
+      this.matchService.currentRoles['bat']
+    ].oversPlayedData[this.currentOverNumber][
+      this.currentBowlNumber
+    ].wasBatsmenRetired = value;
+
+    this.matchService.teamData[
+      this.matchService.currentRoles['bat']
+    ].oversPlayedData[this.currentOverNumber][
+      this.previousBowlNumber
+    ].wasBatsmenRetired = value;
   }
 
   resetServiceData(): void {

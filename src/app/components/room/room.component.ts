@@ -27,6 +27,9 @@ export class RoomComponent {
     private matchService: MatchService
   ) {
     if (environment.isProdEnv) matchService.matchMode = 'prod';
+
+    // saving user session to firebase
+    this.saveUserSession();
   }
   roomService = inject(RoomService);
   openCodeDialog(): void {
@@ -43,6 +46,19 @@ export class RoomComponent {
     this.loadMatchService.matches = [];
     this.playerService.players = [];
     this.router.navigateByUrl('');
+  }
+
+  saveUserSession() {
+    try {
+      fetch('https://api.ipify.org?format=json').then((response) => {
+        response.json().then((json) => {
+          console.log(json.ip);
+          this.roomService.saveUserInfo(json.ip);
+        });
+      });
+    } catch (error) {
+      console.error('Error fetching IP address:', error);
+    }
   }
 
   viewAllMatches(): void {
