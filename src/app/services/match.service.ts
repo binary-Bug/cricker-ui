@@ -80,6 +80,11 @@ export class MatchService {
 
   addBatsmenToTeam(batsmen: Batsmen, oldBatsmenName: string | null): void {
     this.teamData[this.currentRoles['bat']].Batsmens.push(batsmen);
+    let indexOfNewBatsmen = this.teamData[
+      this.currentRoles['bat']
+    ].Batsmens.findIndex(
+      (bts) => bts.name.toLowerCase() === batsmen.name.toLowerCase()
+    );
 
     let si = this.teamData[this.currentRoles['bat']].strikerIndex;
     let nsi = this.teamData[this.currentRoles['bat']].nonStrikerIndex;
@@ -90,10 +95,12 @@ export class MatchService {
         oldBatsmenName
       ) {
         this.teamData[this.currentRoles['bat']].strikerIndex =
-          si > nsi ? si + 1 : nsi + 1;
+          indexOfNewBatsmen;
+        //si > nsi ? si + 1 : nsi + 1;
       } else {
         this.teamData[this.currentRoles['bat']].nonStrikerIndex =
-          si > nsi ? si + 1 : nsi + 1;
+          indexOfNewBatsmen;
+        //si > nsi ? si + 1 : nsi + 1;
       }
     }
   }
@@ -178,31 +185,45 @@ export class MatchService {
     let nsi = this.teamData[this.currentRoles['bat']].nonStrikerIndex;
 
     if (
-      this.teamData[this.currentRoles['bat']].Batsmens[si].name ===
-      batsmenToReplace
+      this.teamData[this.currentRoles['bat']].Batsmens[
+        si
+      ].name.toLowerCase() === batsmenToReplace
     ) {
       this.teamData[this.currentRoles['bat']].strikerIndex = this.teamData[
         this.currentRoles['bat']
       ].Batsmens.findIndex((batsmen) => {
-        return batsmen.name === batsmenToRefer;
+        return batsmen.name.toLowerCase() === batsmenToRefer;
       });
     } else {
       this.teamData[this.currentRoles['bat']].nonStrikerIndex = this.teamData[
         this.currentRoles['bat']
       ].Batsmens.findIndex((batsmen) => {
-        return batsmen.name === batsmenToRefer;
+        return batsmen.name.toLowerCase() === batsmenToRefer;
       });
     }
 
     // remove the new bastmen who has been undoed from the batsmens list
     let indexOfTheBatsmenToRemove = this.teamData[
       this.currentRoles['bat']
-    ].Batsmens.findIndex((batsmen) => batsmen.name === batsmenToReplace);
-
-    this.teamData[this.currentRoles['bat']].Batsmens.splice(
-      indexOfTheBatsmenToRemove,
-      1
+    ].Batsmens.findIndex(
+      (batsmen) => batsmen.name.toLowerCase() === batsmenToReplace
     );
+    if (
+      indexOfTheBatsmenToRemove + 1 ===
+        this.teamData[this.currentRoles['bat']].Batsmens.length &&
+      this.teamData[this.currentRoles['bat']].Batsmens[
+        indexOfTheBatsmenToRemove
+      ].status.toLowerCase() !== 'retired'
+    )
+      this.teamData[this.currentRoles['bat']].Batsmens.splice(
+        indexOfTheBatsmenToRemove,
+        1
+      );
+    else {
+      this.teamData[this.currentRoles['bat']].Batsmens[
+        indexOfTheBatsmenToRemove
+      ].status = 'Retired';
+    }
   }
 
   updateBatsmenStatus(

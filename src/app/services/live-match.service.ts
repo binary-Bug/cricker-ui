@@ -122,6 +122,19 @@ export class LiveMatchService {
     };
   }
 
+  updateBatsmenData(): void {
+    let con = this.currentOverNumber;
+    let pbn = this.previousBowlNumber;
+
+    this.matchService.teamData[
+      this.matchService.currentRoles['bat']
+    ].oversPlayedData[con][pbn].striker = { ...this.striker };
+
+    this.matchService.teamData[
+      this.matchService.currentRoles['bat']
+    ].oversPlayedData[con][pbn].nonStriker = { ...this.nonStriker };
+  }
+
   updateBowlerData(
     run: number,
     isWideChecked: boolean,
@@ -214,10 +227,7 @@ export class LiveMatchService {
         isWicketBall = true;
       }
 
-      let wasBatsmenRetired: boolean =
-        this.matchService.teamData[this.matchService.currentRoles['bat']]
-          .oversPlayedData[this.currentOverNumber][this.currentBowlNumber]
-          .wasBatsmenRetired;
+      let wasBatsmenRetired: boolean = false;
 
       //storing striker, non striker and bowler name temporarily to display it in ui before the first ball is bowled after undo
       let tempStrikerName: string = '';
@@ -320,12 +330,14 @@ export class LiveMatchService {
           .currentPatnership,
       };
 
+      wasBatsmenRetired = this.CheckIfBatsmenWasRetired();
+
       if (isWicketBall || wasBatsmenRetired) {
+        let batsmens: { batsmenToReplace: string; batsmenToRefer: string } =
+          this.determineBatsmensForUndo();
         this.matchService.undoPlayerReferenceForWicket(
-          this.striker.name,
-          this.matchService.teamData[this.matchService.currentRoles['bat']]
-            .oversPlayedData[this.currentOverNumber][this.previousBowlNumber]
-            .striker.name
+          batsmens.batsmenToReplace,
+          batsmens.batsmenToRefer
         );
       }
 
@@ -767,20 +779,112 @@ export class LiveMatchService {
       this.matchService.calculateSecondInningsTeamValues();
   }
 
-  public Update_Was_Batsmen_Retired_Boolean_For_Current_And_Previous_Ball(
-    value: boolean
-  ): void {
-    this.matchService.teamData[
-      this.matchService.currentRoles['bat']
-    ].oversPlayedData[this.currentOverNumber][
-      this.currentBowlNumber
-    ].wasBatsmenRetired = value;
+  public CheckIfBatsmenWasRetired(): boolean {
+    if (
+      this.matchService.teamData[
+        this.matchService.currentRoles['bat']
+      ].oversPlayedData[this.currentOverNumber][
+        this.previousBowlNumber
+      ].striker.name.toLowerCase() === this.striker.name.toLowerCase() ||
+      this.matchService.teamData[
+        this.matchService.currentRoles['bat']
+      ].oversPlayedData[this.currentOverNumber][
+        this.previousBowlNumber
+      ].nonStriker.name.toLowerCase() === this.striker.name.toLowerCase()
+    ) {
+      if (
+        this.matchService.teamData[
+          this.matchService.currentRoles['bat']
+        ].oversPlayedData[this.currentOverNumber][
+          this.previousBowlNumber
+        ].striker.name.toLowerCase() === this.nonStriker.name.toLowerCase() ||
+        this.matchService.teamData[
+          this.matchService.currentRoles['bat']
+        ].oversPlayedData[this.currentOverNumber][
+          this.previousBowlNumber
+        ].nonStriker.name.toLowerCase() === this.nonStriker.name.toLowerCase()
+      )
+        return false;
+      else return true;
+    } else return true;
+  }
 
-    this.matchService.teamData[
-      this.matchService.currentRoles['bat']
-    ].oversPlayedData[this.currentOverNumber][
-      this.previousBowlNumber
-    ].wasBatsmenRetired = value;
+  public determineBatsmensForUndo(): {
+    batsmenToReplace: string;
+    batsmenToRefer: string;
+  } {
+    let response: { batsmenToReplace: string; batsmenToRefer: string } = {
+      batsmenToRefer: '',
+      batsmenToReplace: '',
+    };
+
+    if (
+      this.matchService.teamData[
+        this.matchService.currentRoles['bat']
+      ].oversPlayedData[this.currentOverNumber][
+        this.previousBowlNumber
+      ].striker.name.toLowerCase() === this.striker.name.toLowerCase() ||
+      this.matchService.teamData[
+        this.matchService.currentRoles['bat']
+      ].oversPlayedData[this.currentOverNumber][
+        this.previousBowlNumber
+      ].nonStriker.name.toLowerCase() === this.striker.name.toLowerCase()
+    ) {
+      if (
+        this.matchService.teamData[
+          this.matchService.currentRoles['bat']
+        ].oversPlayedData[this.currentOverNumber][
+          this.previousBowlNumber
+        ].striker.name.toLowerCase() === this.nonStriker.name.toLowerCase() ||
+        this.matchService.teamData[
+          this.matchService.currentRoles['bat']
+        ].oversPlayedData[this.currentOverNumber][
+          this.previousBowlNumber
+        ].nonStriker.name.toLowerCase() === this.nonStriker.name.toLowerCase()
+      ) {
+        // not likely to happen since isWicketBall or WasRetired is True
+      } else {
+        response.batsmenToReplace = this.nonStriker.name.toLowerCase();
+        response.batsmenToRefer =
+          this.striker.name.toLowerCase() ===
+          this.matchService.teamData[
+            this.matchService.currentRoles['bat']
+          ].oversPlayedData[this.currentOverNumber][
+            this.previousBowlNumber
+          ].striker.name.toLowerCase()
+            ? this.matchService.teamData[
+                this.matchService.currentRoles['bat']
+              ].oversPlayedData[this.currentOverNumber][
+                this.previousBowlNumber
+              ].nonStriker.name.toLowerCase()
+            : this.matchService.teamData[
+                this.matchService.currentRoles['bat']
+              ].oversPlayedData[this.currentOverNumber][
+                this.previousBowlNumber
+              ].striker.name.toLowerCase();
+      }
+    } else {
+      response.batsmenToReplace = this.striker.name.toLowerCase();
+      response.batsmenToRefer =
+        this.nonStriker.name.toLowerCase() ===
+        this.matchService.teamData[
+          this.matchService.currentRoles['bat']
+        ].oversPlayedData[this.currentOverNumber][
+          this.previousBowlNumber
+        ].striker.name.toLowerCase()
+          ? this.matchService.teamData[
+              this.matchService.currentRoles['bat']
+            ].oversPlayedData[this.currentOverNumber][
+              this.previousBowlNumber
+            ].nonStriker.name.toLowerCase()
+          : this.matchService.teamData[
+              this.matchService.currentRoles['bat']
+            ].oversPlayedData[this.currentOverNumber][
+              this.previousBowlNumber
+            ].striker.name.toLowerCase();
+    }
+
+    return response;
   }
 
   resetServiceData(): void {
