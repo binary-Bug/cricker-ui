@@ -1,5 +1,5 @@
 name: Build and Deploy 🚀🚀
-run-name: ${{github.ref_name}} - ${{github.event.head_commit.message}}
+run-name: ${{github.ref_name}} branch Deployment - ${{github.event.head_commit.message}}
 
 on:
   push:
@@ -22,9 +22,9 @@ jobs:
           submodules: true
           lfs: false
       - name: Install OIDC Client from Core Package
-        run: npm install @actions/core@1.6.0 @actions/http-client
+        run: npm install @actions/core@1.11.1 @actions/http-client
       - name: Get Id Token
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         id: idtoken
         with:
           script: |
