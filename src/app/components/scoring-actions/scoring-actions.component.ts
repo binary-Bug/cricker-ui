@@ -168,6 +168,7 @@ export class ScoringActionsComponent {
     newBowlerDialog.afterClosed().subscribe((data: string) => {
       if (data && data.length > 0)
         this.liveMatchService.updateOnFieldBowler(data);
+      this.liveMatchService.updateBolwerDataInOversPlayed();
     });
   }
 

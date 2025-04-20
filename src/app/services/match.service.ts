@@ -155,7 +155,6 @@ export class MatchService {
   ): void {
     let si = this.teamData[this.currentRoles['bat']].strikerIndex;
     let nsi = this.teamData[this.currentRoles['bat']].nonStrikerIndex;
-    let bi = this.teamData[this.currentRoles['ball']].currBowlerIndex;
 
     if (
       this.teamData[this.currentRoles['bat']].Batsmens[si].name === striker.name
@@ -177,7 +176,7 @@ export class MatchService {
     ] = bowler;
   }
 
-  undoPlayerReferenceForWicket(
+  undoBatsmenPlayerReferenceForWicket(
     batsmenToReplace: string,
     batsmenToRefer: string
   ) {
@@ -213,7 +212,10 @@ export class MatchService {
         this.teamData[this.currentRoles['bat']].Batsmens.length &&
       this.teamData[this.currentRoles['bat']].Batsmens[
         indexOfTheBatsmenToRemove
-      ].status.toLowerCase() !== 'retired'
+      ].runs === 0 &&
+      this.teamData[this.currentRoles['bat']].Batsmens[
+        indexOfTheBatsmenToRemove
+      ].balls === 0
     )
       this.teamData[this.currentRoles['bat']].Batsmens.splice(
         indexOfTheBatsmenToRemove,

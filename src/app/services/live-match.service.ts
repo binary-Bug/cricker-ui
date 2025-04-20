@@ -135,6 +135,15 @@ export class LiveMatchService {
     ].oversPlayedData[con][pbn].nonStriker = { ...this.nonStriker };
   }
 
+  updateBolwerDataInOversPlayed(): void {
+    let con = this.currentOverNumber;
+    let pbn = this.previousBowlNumber;
+
+    this.matchService.teamData[
+      this.matchService.currentRoles['bat']
+    ].oversPlayedData[con][pbn].currentBowler = { ...this.currentBowler };
+  }
+
   updateBowlerData(
     run: number,
     isWideChecked: boolean,
@@ -335,7 +344,7 @@ export class LiveMatchService {
       if (isWicketBall || wasBatsmenRetired) {
         let batsmens: { batsmenToReplace: string; batsmenToRefer: string } =
           this.determineBatsmensForUndo();
-        this.matchService.undoPlayerReferenceForWicket(
+        this.matchService.undoBatsmenPlayerReferenceForWicket(
           batsmens.batsmenToReplace,
           batsmens.batsmenToRefer
         );
@@ -501,13 +510,16 @@ export class LiveMatchService {
     if (isWicketBall) {
       this.matchService.teamData[
         this.matchService.currentRoles['bat']
-      ].oversPlayedData[this.currentOverNumber][
-        this.currentBowlNumber
       ].wicketsLost += 1;
 
       this.matchService.teamData[
         this.matchService.currentRoles['bat']
-      ].wicketsLost += 1;
+      ].oversPlayedData[this.currentOverNumber][
+        this.currentBowlNumber
+      ].wicketsLost =
+        this.matchService.teamData[
+          this.matchService.currentRoles['bat']
+        ].wicketsLost;
     } else {
       this.matchService.teamData[
         this.matchService.currentRoles['bat']
