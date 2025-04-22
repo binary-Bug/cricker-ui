@@ -22,6 +22,15 @@
   </div>
 </div>
 
+<div style="place-content: center; display: flex; flex-wrap: wrap">
+  <mat-form-field>
+    <input matInput [formControl]="searchString" type="search" />
+    <button matSuffix mat-icon-button aria-label="Search">
+      <mat-icon>search</mat-icon>
+    </button>
+  </mat-form-field>
+</div>
+
 <div *ngFor="let player of playerList | async">
   <mat-card appearance="outlined">
     <mat-card-header>

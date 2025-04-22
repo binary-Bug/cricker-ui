@@ -60,6 +60,12 @@ export class PlayerService {
     }
   }
 
+  public getPlayer(playerName: string): Player | undefined {
+    if (this.players.length > 0) {
+      return this.players.find((player) => player.name === playerName);
+    } else return undefined;
+  }
+
   async savePlayerData(matchId: string, matchResult: string): Promise<void> {
     console.log('Saving Player Data');
     let winningTeamKey: string = matchResult.includes(
