@@ -169,4 +169,11 @@
       </ng-container>
     </div>
   </mat-tab>
+  <mat-tab label="Matches Played">
+    <app-match-list
+      [matchIds]="currentPlayer?.matchIds"
+      [isPlayerList]="true"
+      playerName="{{ currentPlayer?.name }}"
+    ></app-match-list>
+  </mat-tab>
 </mat-tab-group>

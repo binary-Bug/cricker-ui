@@ -8,6 +8,7 @@ import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { LiveMatchService } from '../../services/live-match.service';
 import { PlayerService } from '../../services/player.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-match-details',
@@ -21,23 +22,31 @@ export class MatchDetailsComponent implements OnInit, OnDestroy {
     public matchService: MatchService,
     private eventHandlerService: EventHandlerService,
     public liveMatchService: LiveMatchService,
+    private route: ActivatedRoute,
     private playerService: PlayerService
   ) {}
   private subscriptions: Subscription[] = [];
   public isMatchLoaded: boolean = false;
+  public playerName: string = '';
 
   ngOnInit(): void {
-    this,
-      this.subscriptions.push(
-        this.eventHandlerService.MatchLoadCompleteEvent$().subscribe(() => {
-          // match loaded
-          this.isMatchLoaded = true;
-          // this.playerService.savePlayerData(
-          //   'WItAdDq3YCJmKM1YlhaJ',
-          //   this.matchService.matchResult as string
-          // );
-        })
-      );
+    this.route.url.subscribe((url) => {
+      if (url[0].path === 'match-details') {
+        this.route.queryParams.subscribe(async (qp) => {
+          this.playerName = qp['playerName'];
+        });
+      }
+    });
+    this.subscriptions.push(
+      this.eventHandlerService.MatchLoadCompleteEvent$().subscribe(() => {
+        // match loaded
+        this.isMatchLoaded = true;
+        // this.playerService.savePlayerData(
+        //   'WItAdDq3YCJmKM1YlhaJ',
+        //   this.matchService.matchResult as string
+        // );
+      })
+    );
   }
 
   ngOnDestroy(): void {
@@ -48,6 +57,12 @@ export class MatchDetailsComponent implements OnInit, OnDestroy {
 
   toggleTab(event: any): void {
     this.handleOnToggleEvent(event.index);
+  }
+
+  exit() {
+    if (this.playerName && this.playerName.length > 0) {
+      this.liveMatchService.exitMatch('player-details?name=' + this.playerName);
+    } else this.liveMatchService.exitMatch('allMatches');
   }
 
   handleOnToggleEvent(index: number): void {

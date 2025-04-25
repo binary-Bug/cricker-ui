@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { CommonModule } from '@angular/common';
 import { UtilityService } from '../../services/utility.service';
+import { MatchListComponent } from '../match-list/match-list.component';
 
 @Component({
   selector: 'app-player-details',
@@ -18,6 +19,7 @@ import { UtilityService } from '../../services/utility.service';
     MatCardModule,
     MatButtonModule,
     MatButtonToggleModule,
+    MatchListComponent,
   ],
   templateUrl: './player-details.component.html',
   styleUrl: './player-details.component.css',
