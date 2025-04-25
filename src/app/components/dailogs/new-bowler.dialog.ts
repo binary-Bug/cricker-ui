@@ -64,7 +64,13 @@ export interface PlayerGroup {
       >
         Cancel
       </button>
-      <button mat-button color="primary" (click)="onOkClick()" cdkFocusInitial>
+      <button
+        mat-button
+        color="primary"
+        (click)="onOkClick()"
+        cdkFocusInitial
+        [disabled]="newBowler.invalid"
+      >
         Done
       </button>
     </mat-dialog-actions>`,

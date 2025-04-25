@@ -56,7 +56,7 @@ import { AutoCompleteService } from '../../services/auto-complete.service';
       >
         Cancel
       </button>
-      <button mat-button color="primary" (click)="onOkClick()" cdkFocusInitial>
+      <button mat-button color="primary" (click)="onOkClick()" cdkFocusInitial [disabled]="newBatsmen.invalid">
         Done
       </button>
     </mat-dialog-actions>`,

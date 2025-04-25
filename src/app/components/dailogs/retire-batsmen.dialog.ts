@@ -1,10 +1,11 @@
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import {
   FormsModule,
   ReactiveFormsModule,
   FormControl,
   Validators,
+  FormGroup,
 } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
@@ -28,53 +29,61 @@ import { AutoCompleteService } from '../../services/auto-complete.service';
   selector: 'retire-batsmen-dialog',
   template: `<h2 mat-dialog-title>Select Batsmen</h2>
     <mat-dialog-content>
-      <div class="grid place-items-center">
-        <mat-radio-group [(ngModel)]="selectedBatsmen" style="width: 100%;">
-          <div class="flex justify-between">
-            <div>
-              <mat-radio-button
-                color="primary"
-                [value]="liveMatchService.striker.name"
-                >{{ liveMatchService.striker.name }}</mat-radio-button
-              >
-            </div>
-            <div>
-              <mat-radio-button
-                color="primary"
-                [value]="liveMatchService.nonStriker.name"
-                >{{ liveMatchService.nonStriker.name }}</mat-radio-button
-              >
-            </div>
-          </div>
-        </mat-radio-group>
-      </div>
-      <mat-divider></mat-divider>
-      <div class="grid place-items-center">
-        <mat-form-field class="example-full-width">
-          <mat-label>New Batsmen</mat-label>
-          <input
-            type="text"
-            placeholder="Select Player"
-            matInput
-            [formControl]="newBatsmen"
-            [matAutocomplete]="auto"
-          />
-          <mat-autocomplete
-            #auto="matAutocomplete"
-            (optionSelected)="
-              filteredOptions = autoCompleteService._filter('', options)
-            "
+      <form [formGroup]="retireBatsmenForm">
+        <div class="grid place-items-center">
+          <mat-radio-group
+            formControlName="selectedBatsmen"
+            style="width: 100%;"
           >
-            @for (option of filteredOptions; track option) {
-            <mat-option [value]="option">{{ option }}</mat-option>
-            }
-          </mat-autocomplete>
-        </mat-form-field>
-      </div>
+            <div class="flex justify-between">
+              <div>
+                <mat-radio-button
+                  color="primary"
+                  [value]="liveMatchService.striker.name"
+                  >{{ liveMatchService.striker.name }}</mat-radio-button
+                >
+              </div>
+              <div>
+                <mat-radio-button
+                  color="primary"
+                  [value]="liveMatchService.nonStriker.name"
+                  >{{ liveMatchService.nonStriker.name }}</mat-radio-button
+                >
+              </div>
+            </div>
+          </mat-radio-group>
+        </div>
+        <mat-divider></mat-divider>
+        <div class="grid place-items-center">
+          <mat-form-field class="example-full-width">
+            <mat-label>New Batsmen</mat-label>
+            <input
+              type="text"
+              placeholder="Select Player"
+              matInput
+              formControlName="newBatsmen"
+              [matAutocomplete]="auto"
+            />
+            <mat-autocomplete
+              #auto="matAutocomplete"
+              (optionSelected)="
+                filteredOptions = autoCompleteService._filter('', options)
+              "
+            >
+              <mat-option
+                *ngFor="let option of filteredOptions"
+                [value]="option"
+              >
+                {{ option }}
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+        </div>
+      </form>
     </mat-dialog-content>
     <mat-dialog-actions>
       <button mat-button (click)="onCancelClick()">Cancel</button>
-      <button mat-button color="primary" (click)="onOkClick()" cdkFocusInitial>
+      <button mat-button color="primary" (click)="onOkClick()" cdkFocusInitial [disabled]="retireBatsmenForm.invalid">
         Done
       </button>
     </mat-dialog-actions>`,
@@ -82,6 +91,7 @@ import { AutoCompleteService } from '../../services/auto-complete.service';
   imports: [
     MatFormFieldModule,
     MatInputModule,
+    CommonModule,
     FormsModule,
     MatButtonModule,
     MatDialogTitle,
@@ -105,8 +115,10 @@ export class RetireBatsmenDialog implements OnInit {
   options: string[] = [];
   filteredOptions!: string[];
 
-  newBatsmen = new FormControl('', Validators.required);
-  selectedBatsmen: string = '';
+  retireBatsmenForm = new FormGroup({
+    newBatsmen: new FormControl('', Validators.required),
+    selectedBatsmen: new FormControl('', Validators.required),
+  });
 
   ngOnInit(): void {
     this.playerService.getAllPlayers().then((players) => {
@@ -116,11 +128,12 @@ export class RetireBatsmenDialog implements OnInit {
       this.options = this.autoCompleteService.populatePlayersArray(
         this.options
       );
-      this.newBatsmen.setValue('');
+      this.retireBatsmenForm.get('newBatsmen')?.setValue('');
     });
 
-    this.newBatsmen.valueChanges
-      .pipe(
+    this.retireBatsmenForm
+      .get('newBatsmen')
+      ?.valueChanges.pipe(
         startWith(''),
         map((value) =>
           this.autoCompleteService._filter(value || '', this.options)
@@ -133,8 +146,8 @@ export class RetireBatsmenDialog implements OnInit {
 
   onOkClick(): void {
     this.dialogRef.close({
-      old: this.selectedBatsmen,
-      new: (this.newBatsmen.value + '').trim(),
+      old: this.retireBatsmenForm.get('selectedBatsmen')?.value,
+      new: (this.retireBatsmenForm.get('newBatsmen')?.value + '').trim(),
     });
   }
   onCancelClick(): void {
