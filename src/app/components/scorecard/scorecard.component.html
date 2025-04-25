@@ -323,21 +323,33 @@
             "
           >
             <div
-              #overView
-              [ngClass]="'grid gap-2 grid-cols-' + (over.length + 1)"
-              style="margin-top: 15px; height: 50px; margin-right: 10px"
+              style="
+                align-content: center;
+                height: 35px;
+                font-weight: 500;
+                color: black;
+                font-size: medium;
+                margin-top: 5px;
+              "
             >
-              <span
-                style="
-                  align-content: center;
-                  height: 35px;
-                  font-weight: 500;
-                  color: black;
-                  font-size: medium;
-                "
-                >Over {{ i + 1 }}</span
-              >
-              <ng-container *ngFor="let ball of over">
+              Over {{ i + 1 }}
+              <span style="margin-left: 10px; color: gray">
+                ({{ over[0].currentBowler.name }})
+              </span>
+
+              <span> </span>
+
+              <span style="margin-left: 10px; color: gray">
+                ({{ over | CalculateTotalRunsInOver : i }}
+                runs)
+              </span>
+            </div>
+            <div
+              #overView
+              [ngClass]="'grid gap-2 grid-cols-' + over.length"
+              style="margin-top: 10px; height: 50px"
+            >
+              <div *ngFor="let ball of over">
                 <button
                   class="{{ ball.class }}"
                   mat-mini-fab
@@ -348,7 +360,7 @@
                 >
                   {{ ball.label }}
                 </button>
-              </ng-container>
+              </div>
             </div>
           </ng-container>
         </div>
@@ -372,21 +384,31 @@
             "
           >
             <div
-              #overView
-              [ngClass]="'grid gap-2 grid-cols-' + (over.length + 1)"
-              style="margin-top: 15px; height: 50px; margin-right: 10px"
+              style="
+                align-content: center;
+                height: 35px;
+                font-weight: 500;
+                color: black;
+                font-size: medium;
+                margin-top: 5px;
+              "
             >
-              <span
-                style="
-                  align-content: center;
-                  height: 35px;
-                  font-weight: 500;
-                  color: black;
-                  font-size: medium;
-                "
-                >Over {{ i + 1 }}</span
-              >
-              <ng-container *ngFor="let ball of over">
+              Over {{ i + 1 }}
+              <span style="margin-left: 10px; color: gray">
+                ({{ over[0].currentBowler.name }})
+              </span>
+
+              <span style="margin-left: 10px; color: gray">
+                ({{ over | CalculateTotalRunsInOver : i }}
+                runs)
+              </span>
+            </div>
+            <div
+              #overView
+              [ngClass]="'grid gap-2 grid-cols-' + over.length"
+              style="margin-top: 10px; height: 50px"
+            >
+              <div *ngFor="let ball of over">
                 <button
                   class="{{ ball.class }}"
                   mat-mini-fab
@@ -397,7 +419,7 @@
                 >
                   {{ ball.label }}
                 </button>
-              </ng-container>
+              </div>
             </div>
           </ng-container>
         </div>

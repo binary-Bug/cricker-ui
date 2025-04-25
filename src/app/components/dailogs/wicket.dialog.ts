@@ -235,6 +235,13 @@ export class WicketDialog implements OnInit {
       );
       this.actionPlayer.setValue('');
       this.newBatsmen.setValue('');
+      if (
+        this.matchService.teamData[this.matchService.currentRoles['bat']]
+          .wicketsLost ===
+        this.matchService.totalPlayers! - 2
+      ) {
+        this.newBatsmen.setValue('none');
+      }
     });
 
     if (this.data.isExtraChecked) {
@@ -245,14 +252,6 @@ export class WicketDialog implements OnInit {
       ];
     } else if (this.data.isByeChecked) {
       this.availableWicketOptions = [{ name: 'Run-out' }];
-    }
-
-    if (
-      this.matchService.teamData[this.matchService.currentRoles['bat']]
-        .wicketsLost ===
-      this.matchService.totalPlayers! - 2
-    ) {
-      this.newBatsmen.setValue('none');
     }
 
     this.actionPlayer.valueChanges

@@ -21,6 +21,32 @@ import { LoadMatchService } from '../../services/load-match.service';
 import { EventHandlerService } from '../../services/event-handler.service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
+import { Pipe, PipeTransform } from '@angular/core';
+import { BALL_DATA } from '../../models/ball_data.class';
+@Pipe({
+  name: 'CalculateTotalRunsInOver',
+  standalone: true,
+  pure: false,
+})
+export class CalculateTotalRunsInOver implements PipeTransform {
+  public static previousOverRuns: number = 0;
+  transform(over: BALL_DATA[], index: number): number {
+    if (index === 0) CalculateTotalRunsInOver.previousOverRuns = 0;
+
+    let value = over.filter((ball) => ball.hasBeenBowled)[
+      over.filter((ball) => ball.hasBeenBowled).length - 1
+    ]?.currentRuns;
+
+    if (value === undefined || value === null || value === 0) {
+      CalculateTotalRunsInOver.previousOverRuns = 0;
+      return 0;
+    }
+    let returnVal = value - CalculateTotalRunsInOver.previousOverRuns;
+    CalculateTotalRunsInOver.previousOverRuns = value;
+    return returnVal;
+  }
+}
+
 @Component({
   selector: 'app-scorecard',
   standalone: true,
@@ -32,6 +58,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     MatExpansionModule,
     MatTabsModule,
     MatProgressSpinnerModule,
+    CalculateTotalRunsInOver,
   ],
   templateUrl: './scorecard.component.html',
   styleUrl: './scorecard.component.css',
