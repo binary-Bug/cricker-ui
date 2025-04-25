@@ -53,12 +53,14 @@ import { MatchService } from '../../services/match.service';
       <mat-divider></mat-divider>
       <br />
       <div class="grid place-items-center">
+        <mat-label>Do you want to change the number of overs?</mat-label>
         <mat-form-field>
-          <mat-label>Do you want to add more overs?</mat-label>
+          <mat-label>Overs</mat-label>
           <input type="number" matInput [formControl]="totalOvers" />
         </mat-form-field>
+        <mat-label>Do you want to change the number of players?</mat-label>
         <mat-form-field>
-          <mat-label>Do you want to add more players?</mat-label>
+          <mat-label>Players</mat-label>
           <input type="number" matInput [formControl]="totalPlayers" />
         </mat-form-field>
       </div>

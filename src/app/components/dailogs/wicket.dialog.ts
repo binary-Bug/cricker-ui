@@ -223,7 +223,7 @@ export class WicketDialog implements OnInit {
 
   currentWicketOption: string = '';
   selectedBatsmen: string = '';
-  selectedEnd: string = '';
+  selectedEnd: string = 'striker';
 
   ngOnInit() {
     this.playerService.getAllPlayers().then((players) => {
