@@ -87,7 +87,7 @@ export interface DialogData {
             "
             class="example-full-width"
           >
-            <mat-label>{{ label }}</mat-label>
+            <mat-label>{{ actionPlayerLabel }}</mat-label>
             <input
               type="text"
               placeholder="Select Player"
@@ -218,7 +218,7 @@ export class WicketDialog implements OnInit {
   options: string[] = [];
   filteredOptionsActionPlayer!: string[];
   filteredOptionsNewBatsmen!: string[];
-  label: string = '';
+  actionPlayerLabel: string = '';
   isInvalid: boolean = true;
 
   currentWicketOption: string = '';
@@ -365,16 +365,16 @@ export class WicketDialog implements OnInit {
     this.currentWicketOption = selectedChip.value;
     switch (this.currentWicketOption) {
       case 'Caught':
-        this.label = 'Caught By';
-        this.isInvalid = true;
+        this.actionPlayerLabel = 'Caught By';
+        this.isInvalid = this.isValidForm();
         break;
       case 'Stumped':
-        this.label = 'Stumped By';
-        this.isInvalid = true;
+        this.actionPlayerLabel = 'Stumped By';
+        this.isInvalid = this.isValidForm();
         break;
       case 'Run-out':
-        this.label = 'Run out By';
-        this.isInvalid = true;
+        this.actionPlayerLabel = 'Run out By';
+        this.isInvalid = this.isValidForm();
         break;
       default:
         if (
@@ -384,8 +384,28 @@ export class WicketDialog implements OnInit {
           this.selectedBatsmen.length > 1
         ) {
           this.isInvalid = false;
+        } else if (
+          this.selectedBatsmen.length > 1 &&
+          this.newBatsmen.value &&
+          this.newBatsmen.value.length > 1
+        ) {
+          this.isInvalid = false;
         }
         break;
+    }
+  }
+
+  isValidForm(): boolean {
+    if (
+      this.newBatsmen.value &&
+      this.newBatsmen.value.length > 1 &&
+      this.selectedBatsmen.length > 1 &&
+      this.actionPlayer.value &&
+      this.actionPlayer.value.length > 1
+    ) {
+      return false;
+    } else {
+      return true;
     }
   }
 }

@@ -8,17 +8,20 @@ export const canDeactivateLiveGuard: CanDeactivateFn<any> = (
 ) => {
   if (nextState?.url?.includes('live')) {
     return true;
-  }
-  if (
-    confirm(
-      'Are you sure you want to leave this page? Unsaved changes may be lost.'
-    )
-  ) {
-    if (currentRoute.url[0].path === 'live') {
-      component.liveMatchService.exitMatch('');
+  } else if (nextState?.url?.includes('newMatchDetails')) {
+    if (
+      confirm(
+        'Are you sure you want to leave this page? Unsaved changes may be lost.'
+      )
+    ) {
+      if (currentRoute.url[0].path === 'live') {
+        component.liveMatchService.exitMatch('');
+      }
+      return true;
+    } else {
+      return false;
     }
-    return true;
   } else {
-    return false;
+    return true;
   }
 };

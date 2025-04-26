@@ -54,8 +54,8 @@ export class NewMatchDetailsComponent implements OnInit, OnDestroy {
     team2Captain: new FormControl('', Validators.required),
     tossWinner: new FormControl('team1'),
     tossResult: new FormControl('bat'),
-    totalPlayers: new FormControl(0, Validators.min(2)),
-    totalOvers: new FormControl(0, Validators.min(1)),
+    totalPlayers: new FormControl(0, [Validators.required, Validators.min(2)]),
+    totalOvers: new FormControl(0, [Validators.required, Validators.min(1)]),
     mode: new FormControl('test'),
   });
 
