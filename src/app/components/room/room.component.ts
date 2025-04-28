@@ -26,10 +26,11 @@ export class RoomComponent {
     private playerService: PlayerService,
     private matchService: MatchService
   ) {
-    if (environment.isProdEnv) matchService.matchMode = 'prod';
-
-    // saving user session to firebase
-    this.saveUserSession();
+    if (environment.isProdEnv) {
+      // saving user session to firebase
+      this.saveUserSession();
+      matchService.matchMode = 'prod';
+    }
   }
   roomService = inject(RoomService);
   openCodeDialog(): void {

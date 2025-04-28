@@ -52,6 +52,8 @@ export class SaveMatchService {
   }
 
   private prepareTeamDataObject(): any {
+    this.filterIncorrectBatsmenData();
+    this.filterIncorrectBowlersData();
     let teamObj = JSON.parse(JSON.stringify(this.matchService.teamData));
 
     this.prepareOversPlayedObj(
@@ -77,5 +79,25 @@ export class SaveMatchService {
       overDTO.push(ballDataObj);
     });
     teamObj[key]['oversPlayedData'] = overDTO;
+  }
+
+  filterIncorrectBatsmenData(): void {
+    this.matchService.teamData['team1'].Batsmens = this.matchService.teamData[
+      'team1'
+    ].Batsmens.filter((batsman) => batsman.runs > 0 && batsman.balls > 0);
+
+    this.matchService.teamData['team2'].Batsmens = this.matchService.teamData[
+      'team2'
+    ].Batsmens.filter((batsman) => batsman.runs > 0 && batsman.balls > 0);
+  }
+
+  filterIncorrectBowlersData(): void {
+    this.matchService.teamData['team1'].Bowlers = this.matchService.teamData[
+      'team1'
+    ].Bowlers.filter((bowler) => bowler.runs > 0 && bowler.overs > 0);
+
+    this.matchService.teamData['team2'].Bowlers = this.matchService.teamData[
+      'team2'
+    ].Bowlers.filter((bowler) => bowler.runs > 0 && bowler.overs > 0);
   }
 }

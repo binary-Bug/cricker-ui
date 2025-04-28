@@ -42,6 +42,7 @@ export class RoomService {
   async saveUserInfo(ip: any) {
     let docRef: any = null;
     let docData: DocumentData | null = null;
+    const date = new Date();
     (
       await getDocs(
         query(
@@ -57,11 +58,13 @@ export class RoomService {
       await addDoc(collection(this.firestore, 'UserInfo'), {
         ipAddress: ip,
         count: 1,
+        lastLoggedIn: date,
       });
     } else {
       let count: number = docData?.['count'] ? docData?.['count'] : 0;
       await updateDoc(docRef, {
         count: count + 1,
+        lastLoggedIn: date,
       });
     }
   }
