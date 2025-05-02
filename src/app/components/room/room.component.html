@@ -37,6 +37,16 @@
         </button>
       </div>
 
+      <div>
+        <button
+          mat-raised-button
+          style="width: 10em; height: 6em"
+          (click)="viewStats()"
+        >
+          View Stats
+        </button>
+      </div>
+
       <div *ngIf="!isProdEnv">
         <button
           mat-raised-button
@@ -54,6 +64,16 @@
           (click)="viewAllTestPlayers()"
         >
           View All Test Players
+        </button>
+      </div>
+
+      <div *ngIf="!isProdEnv">
+        <button
+          mat-raised-button
+          style="width: 10em; height: 6em"
+          (click)="viewTestStats()"
+        >
+          View Test Stats
         </button>
       </div>
 

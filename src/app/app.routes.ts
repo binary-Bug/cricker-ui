@@ -7,6 +7,7 @@ import { MatchListComponent } from './components/match-list/match-list.component
 import { PlayerListComponent } from './components/player-list/player-list.component';
 import { PlayerDetailsComponent } from './components/player-details/player-details.component';
 import { canDeactivateLiveGuard } from './guards/live.guard';
+import { StatsComponent } from './components/stats/stats.component';
 
 export const routes: Routes = [
   //{ path: '', component: IndexComponent },
@@ -26,4 +27,5 @@ export const routes: Routes = [
   { path: 'match-details', component: MatchDetailsComponent },
   { path: 'allPlayers', component: PlayerListComponent },
   { path: 'player-details', component: PlayerDetailsComponent },
+  { path: 'stats', component: StatsComponent },
 ];

@@ -1,0 +1,219 @@
+<div>
+  <div
+    class="grid grid-cols-3 place-items-start gap-4"
+    style="height: 60px; padding-top: 10px; padding-left: 5px"
+  >
+    <div>
+      <button
+        mat-mini-fab
+        color="primary"
+        (click)="router.navigateByUrl('room'); playerService.players = []"
+      >
+        <img
+          src="https://img.icons8.com/?size=100&id=65a5j6IY0Vy2&format=png&color=FFFFFF"
+          style="width: 40px"
+        />
+      </button>
+    </div>
+
+    <div class="col-span-2">
+      <h1
+        style="
+          text-align: center;
+          margin-top: 5px;
+          margin-bottom: 5px;
+          width: 120px;
+        "
+      >
+        Stats
+      </h1>
+    </div>
+  </div>
+  <div style="display: grid; place-content: center; padding-top: 20px">
+    <mat-form-field>
+      <mat-label>Stat</mat-label>
+      <mat-select
+        [(ngModel)]="selectedValue"
+        (selectionChange)="statTypeChanged()"
+      >
+        @for (stat of statTypes; track selectedValue) {
+        <mat-option [value]="stat.value">{{ stat.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div>
+    <div style="place-content: center; display: flex; flex-wrap: wrap">
+      <mat-form-field>
+        <mat-label>Search</mat-label>
+        <input
+          matInput
+          (input)="applyFilter($event)"
+          type="search"
+          placeholder="Ex. Dhoni"
+          #input
+        />
+        <button matSuffix mat-icon-button aria-label="Search">
+          <mat-icon>search</mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
+
+    <div class="mat-elevation-z8">
+      <table
+        mat-table
+        [dataSource]="dataSource"
+        matSort
+        [matSortActive]="assignActiveSort()"
+        matSortDirection="desc"
+        matSortDisableClear
+        matSortStart="desc"
+        (matSortChange)="sortData($event)"
+      >
+        <!-- Name Column -->
+        <ng-container matColumnDef="name" sticky>
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+        </ng-container>
+
+        <!-- Matches Played Column -->
+        <ng-container matColumnDef="matchesPlayed">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Inns.</th>
+          <td mat-cell *matCellDef="let row">{{ row.matchesPlayed }}</td>
+        </ng-container>
+
+        <!-- Runs Column -->
+        <ng-container matColumnDef="runsScored">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Runs</th>
+          <td mat-cell *matCellDef="let row">{{ row.runsScored }}</td>
+        </ng-container>
+
+        <!-- Highest Score Column -->
+        <ng-container matColumnDef="highestScore">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>H/S</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.highestScore
+            }}<span style="font-size: medium">{{
+              row.isNotOutHS ? "*" : ""
+            }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Strike Rate Column -->
+        <ng-container matColumnDef="sr">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>S/R</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.sr | number : "1.0-2" }}
+          </td>
+        </ng-container>
+
+        <!-- Fours Column -->
+        <ng-container matColumnDef="fours">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>4's</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.fours }}
+          </td>
+        </ng-container>
+
+        <!-- Sixes Column -->
+        <ng-container matColumnDef="sixes">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>6's</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.sixes }}
+          </td>
+        </ng-container>
+
+        <!-- Balls Played Column -->
+        <ng-container matColumnDef="ballsPlayed">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            Balls Played
+          </th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.ballsPlayed }}
+          </td>
+        </ng-container>
+
+        <!-- Wickets Column -->
+        <ng-container matColumnDef="wickets">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Wickets</th>
+          <td mat-cell *matCellDef="let row">{{ row.wickets }}</td>
+        </ng-container>
+
+        <!-- Overs Bowled Column -->
+        <ng-container matColumnDef="overs">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            Overs Bowled
+          </th>
+          <td mat-cell *matCellDef="let row">{{ row.overs }}</td>
+        </ng-container>
+
+        <!-- Economy Rate Column -->
+        <ng-container matColumnDef="eco">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            Economy Rate
+          </th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.eco | number : "1.0-2" }}
+          </td>
+        </ng-container>
+
+        <!-- Best Bowling Column -->
+        <ng-container matColumnDef="bbi">
+          <th mat-header-cell *matHeaderCellDef>BBI</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.bbi.wickets }}/{{ row.bbi.runs }}
+          </td>
+        </ng-container>
+
+        <!-- Maidens Column -->
+        <ng-container matColumnDef="maidens">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Maidens</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.bbi.maidens }}
+          </td>
+        </ng-container>
+
+        <!-- Runs Against Column -->
+        <ng-container matColumnDef="runsAgainst">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Runs Given</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.runsAgainst }}
+          </td>
+        </ng-container>
+
+        <!-- Catches Column -->
+        <ng-container matColumnDef="catches">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Catches</th>
+          <td mat-cell *matCellDef="let row">{{ row.catches }}</td>
+        </ng-container>
+
+        <!-- Stumpings Column -->
+        <ng-container matColumnDef="stumpOuts">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Stumpings</th>
+          <td mat-cell *matCellDef="let row">{{ row.stumpOuts }}</td>
+        </ng-container>
+
+        <!-- Run Outs Column -->
+        <ng-container matColumnDef="runOuts">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Run Outs</th>
+          <td mat-cell *matCellDef="let row">{{ row.runOuts }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedColumns"
+          (click)="goToPlayer(row)"
+        ></tr>
+
+        <!-- Row shown when there is no matching data. -->
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" colspan="4">
+            No data matching the filter "{{ input.value }}"
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>

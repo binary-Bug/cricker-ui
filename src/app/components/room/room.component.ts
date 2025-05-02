@@ -72,6 +72,11 @@ export class RoomComponent {
     this.router.navigateByUrl('allPlayers');
   }
 
+  viewStats(): void {
+    this.matchService.matchMode = 'prod';
+    this.router.navigateByUrl('stats');
+  }
+
   viewAllTestMatches(): void {
     this.matchService.matchMode = 'test';
     this.router.navigateByUrl('allMatches');
@@ -80,6 +85,11 @@ export class RoomComponent {
   viewAllTestPlayers(): void {
     this.matchService.matchMode = 'test';
     this.router.navigateByUrl('allPlayers');
+  }
+
+  viewTestStats(): void {
+    this.matchService.matchMode = 'test';
+    this.router.navigateByUrl('stats');
   }
 
   public async UpdateProdPlayerData(): Promise<void> {
