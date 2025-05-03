@@ -141,17 +141,33 @@ export class PlayerService {
     playerSaveObj.ballsPlayed += playerData.balls;
     playerSaveObj.fours += playerData.fours;
     playerSaveObj.sixes += playerData.six;
-    playerSaveObj.highestScore =
+    // Updating Player Highest Score
+    if (
       playerSaveObj.highestScore !== undefined &&
       playerSaveObj.highestScore !== null &&
-      playerSaveObj.highestScore >= playerData.runs
-        ? playerSaveObj.highestScore
-        : playerData.runs;
-    playerSaveObj.isNotOutHS =
-      playerSaveObj.highestScore === playerData.runs &&
-      playerData.status === 'Not Out'
-        ? true
-        : playerSaveObj.isNotOutHS;
+      playerData.runs > playerSaveObj.highestScore
+    ) {
+      playerSaveObj.highestScore = playerData.runs;
+      playerSaveObj.isNotOutHS = playerData.status === 'Not Out';
+    } else if (
+      playerSaveObj.highestScore !== undefined &&
+      playerSaveObj.highestScore !== null &&
+      playerSaveObj.highestScore === playerData.runs
+    ) {
+      if (playerData.status === 'Not Out') {
+        playerSaveObj.highestScore = playerData.runs;
+        playerSaveObj.isNotOutHS = true;
+      } else {
+        playerSaveObj.highestScore = playerData.runs;
+        playerSaveObj.isNotOutHS = playerSaveObj.isNotOutHS;
+      }
+    } else if (
+      playerSaveObj.highestScore === undefined ||
+      playerSaveObj.highestScore === null
+    ) {
+      playerSaveObj.highestScore = playerData.runs;
+      playerSaveObj.isNotOutHS = playerData.status === 'Not Out';
+    }
   }
 
   updateBowlerStats(playerSaveObj: Player, playerData: Bowler): void {

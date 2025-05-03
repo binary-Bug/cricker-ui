@@ -84,20 +84,20 @@ export class SaveMatchService {
   filterIncorrectBatsmenData(): void {
     this.matchService.teamData['team1'].Batsmens = this.matchService.teamData[
       'team1'
-    ].Batsmens.filter((batsman) => batsman.runs > 0 && batsman.balls > 0);
+    ].Batsmens.filter((batsman) => batsman.runs > 0 || batsman.balls > 0);
 
     this.matchService.teamData['team2'].Batsmens = this.matchService.teamData[
       'team2'
-    ].Batsmens.filter((batsman) => batsman.runs > 0 && batsman.balls > 0);
+    ].Batsmens.filter((batsman) => batsman.runs > 0 || batsman.balls > 0);
   }
 
   filterIncorrectBowlersData(): void {
     this.matchService.teamData['team1'].Bowlers = this.matchService.teamData[
       'team1'
-    ].Bowlers.filter((bowler) => bowler.runs > 0 && bowler.overs > 0);
+    ].Bowlers.filter((bowler) => bowler.runs > 0 || bowler.overs > 0);
 
     this.matchService.teamData['team2'].Bowlers = this.matchService.teamData[
       'team2'
-    ].Bowlers.filter((bowler) => bowler.runs > 0 && bowler.overs > 0);
+    ].Bowlers.filter((bowler) => bowler.runs > 0 || bowler.overs > 0);
   }
 }
