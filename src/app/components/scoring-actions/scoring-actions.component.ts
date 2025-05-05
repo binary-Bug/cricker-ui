@@ -14,6 +14,7 @@ import { EndInningsDialog } from '../dailogs/end-innings.dialog';
 import { PenaltyRunsDialog } from '../dailogs/penalty-runs.dialog';
 import { MatchCompleteDialog } from '../dailogs/match-complete.dialog';
 import { SaveMatchService } from '../../services/save-match.service';
+import { ConfirmDialog } from '../dailogs/confirm.dialog';
 
 @Component({
   selector: 'app-scoring-actions',
@@ -102,6 +103,11 @@ export class ScoringActionsComponent {
       this.checkForExtras_And_AddRun(run, color, false, null, null, null);
       if (!this.isWideChecked && !this.isNBChecked)
         this.checkForOverCompletion();
+      else if (this.matchService.isSecondInning) {
+        if (this.matchService.checkIfTargetChased()) {
+          this.dialog.open(MatchCompleteDialog);
+        }
+      }
       this.unCheckExtras();
     }
   }
@@ -310,6 +316,19 @@ export class ScoringActionsComponent {
   }
 
   exitMatch(): void {
-    this.liveMatchService.exitMatch();
+    const dialogRef = this.dialog.open(ConfirmDialog, {
+      width: '300px',
+      data: {
+        title: 'Exit Match',
+        message:
+          'Are you sure you want to exit the match? All unsaved progress will be lost.',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.liveMatchService.exitMatch();
+      }
+    });
   }
 }

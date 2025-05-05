@@ -1,9 +1,4 @@
-import {
-  FormsModule,
-  ReactiveFormsModule,
-  FormControl,
-  Validators,
-} from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import {
   MatDialogTitle,
