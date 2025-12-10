@@ -9,6 +9,7 @@ import { PlayerService } from '../../services/player.service';
 import { MatchService } from '../../services/match.service';
 import { environment } from '../../../environments/environment';
 import { CommonModule } from '@angular/common';
+import { VersionService } from '../../services/version.service';
 @Component({
   selector: 'app-room',
   standalone: true,
@@ -18,7 +19,8 @@ import { CommonModule } from '@angular/common';
 })
 export class RoomComponent {
   public isProdEnv: boolean = environment.isProdEnv;
-
+  versionService = inject(VersionService);
+  version: string = '';
   constructor(
     public dialog: MatDialog,
     private router: Router,
@@ -26,6 +28,7 @@ export class RoomComponent {
     private playerService: PlayerService,
     private matchService: MatchService
   ) {
+    this.versionService.getVersion().subscribe((v) => (this.version = v));
     if (environment.isProdEnv) {
       // saving user session to firebase
       this.saveUserSession();

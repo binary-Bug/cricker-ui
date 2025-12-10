@@ -13,14 +13,71 @@ jobs:
       name: "Production"
     name: Build and Deploy Job
     permissions:
-      id-token: write
-      contents: read
-    steps:
+  id-token: write
+  contents: write
+  steps:
       - name: Git Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
           lfs: false
+          fetch-depth: 0
+      - name: Compute Next Version (from latest tag)
+        id: compute_version
+        shell: bash
+        run: |
+          set -euo pipefail
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          NUM=${LAST_TAG#v}
+          IFS='.' read -r MA MI PA <<< "$NUM"
+          # Ensure numeric defaults
+          MA=${MA:-0}; MI=${MI:-0}; PA=${PA:-0}
+          if [ "$PA" -lt 9 ]; then
+            PA=$((PA+1))
+          else
+            PA=0
+            if [ "$MI" -lt 9 ]; then
+              MI=$((MI+1))
+            else
+              MI=0
+              # Major can grow indefinitely
+              MA=$((MA+1))
+            fi
+          fi
+          NEW_TAG="v${MA}.${MI}.${PA}"
+          echo "NEW_TAG=$NEW_TAG" >> "$GITHUB_ENV"
+          echo "Computed next version: $NEW_TAG"
+      - name: Write version.json to src/assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p src/assets
+          COMMIT_SHA=$(git rev-parse HEAD)
+          TS=$(date -Iseconds)
+          cat > src/assets/version.json << EOF
+          {
+            "version": "${NEW_TAG}",
+            "source": "git-tag",
+            "commit": "${COMMIT_SHA}",
+            "generatedAt": "${TS}"
+          }
+          EOF
+          echo "Wrote src/assets/version.json with version ${NEW_TAG}"
+      - name: Push tag ${NEW_TAG}
+        if: ${{ env.NEW_TAG != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "GitHub Actions"
+          git config user.email "actions@users.noreply.github.com"
+          # Create tag if it doesn't already exist
+          if git rev-parse "${NEW_TAG}" >/dev/null 2>&1; then
+            echo "Tag ${NEW_TAG} already exists, skipping push"
+          else
+            git tag "${NEW_TAG}"
+            git push origin "${NEW_TAG}"
+            echo "Pushed tag ${NEW_TAG}"
+          fi
       - name: Install OIDC Client from Core Package
         run: npm install @actions/core@1.11.1 @actions/http-client
       - name: Get Id Token
@@ -44,3 +101,12 @@ jobs:
           config_file_location: src/
           github_id_token: ${{ steps.idtoken.outputs.result }}
           ###### End of Repository/Build Configurations ######
+      - name: Post-deploy summary
+        if: always()
+        shell: bash
+        run: |
+          echo "# Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Version deployed: ${NEW_TAG}" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: $(git rev-parse --short HEAD)" >> $GITHUB_STEP_SUMMARY
+          echo "- Workflow run: $GITHUB_RUN_NUMBER" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
