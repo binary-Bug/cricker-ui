@@ -66,15 +66,15 @@ import { AutoCompleteService } from '../../services/auto-complete.service';
             />
             <mat-autocomplete
               #auto="matAutocomplete"
-              (optionSelected)="
-                filteredOptions = autoCompleteService._filter('', options)
-              "
+              (optionSelected)="onOptionSelected($event.option.value)"
             >
               <mat-option
                 *ngFor="let option of filteredOptions"
                 [value]="option"
               >
-                {{ option }}
+                {{ autoCompleteService.isAddPlayerOption(option)
+                  ? ('Add Player - ' + autoCompleteService.decodeAddPlayer(option))
+                  : option }}
               </mat-option>
             </mat-autocomplete>
           </mat-form-field>
@@ -135,9 +135,11 @@ export class RetireBatsmenDialog implements OnInit {
       .get('newBatsmen')
       ?.valueChanges.pipe(
         startWith(''),
-        map((value) =>
-          this.autoCompleteService._filter(value || '', this.options)
-        )
+        map((value) => {
+          const term = (value || '') + '';
+          const base = this.autoCompleteService._filter(term, this.options);
+          return this.autoCompleteService.withAddPlayerOption(term, base);
+        })
       )
       .subscribe((list) => {
         this.filteredOptions = list;
@@ -152,5 +154,12 @@ export class RetireBatsmenDialog implements OnInit {
   }
   onCancelClick(): void {
     this.dialogRef.close();
+  }
+
+  onOptionSelected(val: string): void {
+    if (this.autoCompleteService.isAddPlayerOption(val)) {
+      const name = this.autoCompleteService.decodeAddPlayer(val);
+      this.retireBatsmenForm.get('newBatsmen')?.setValue(name);
+    }
   }
 }

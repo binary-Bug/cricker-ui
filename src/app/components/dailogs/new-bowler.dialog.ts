@@ -42,14 +42,18 @@ export interface PlayerGroup {
         />
         <mat-autocomplete
           #auto="matAutocomplete"
-          (optionSelected)="bowlerSelected()"
+          (optionSelected)="onOptionSelected($event.option.value)"
           (closed)="closed()"
           (opened)="opened()"
         >
           @for (group of filteredOptions; track group) {
           <mat-optgroup style="font-weight: 500;" [label]="group.label">
             @for (name of group.names; track name) {
-            <mat-option [value]="name">{{ name }}</mat-option>
+            <mat-option [value]="name">
+              {{ autoCompleteService.isAddPlayerOption(name)
+                ? ('Add Player - ' + autoCompleteService.decodeAddPlayer(name))
+                : name }}
+            </mat-option>
             }
           </mat-optgroup>
           }
@@ -140,9 +144,10 @@ export class NewBowlerDialog implements OnInit, OnDestroy {
       .pipe(
         startWith(''),
         map((value) => {
+          const term = (value || '') + '';
           if (this.filteredOptions.length === 2) {
-            this.filteredOptions[0].names = this.autoCompleteService._filter(
-              value || '',
+            const baseThisMatch = this.autoCompleteService._filter(
+              term,
               this.autoCompleteService._filter(
                 this.liveMatchService.currentBowler.name,
                 this.matchService.teamData[
@@ -151,8 +156,13 @@ export class NewBowlerDialog implements OnInit, OnDestroy {
                 true
               )
             );
+            this.filteredOptions[0].names = this.autoCompleteService.withAddPlayerOption(
+              term,
+              baseThisMatch
+            );
           }
-          return this.autoCompleteService._filter(value || '', this.options);
+          const baseAll = this.autoCompleteService._filter(term, this.options);
+          return this.autoCompleteService.withAddPlayerOption(term, baseAll);
         })
       )
       .subscribe((list) => {
@@ -191,6 +201,15 @@ export class NewBowlerDialog implements OnInit, OnDestroy {
   }
   onCancelClick(): void {
     this.dialogRef.close();
+  }
+
+  onOptionSelected(val: string): void {
+    if (this.autoCompleteService.isAddPlayerOption(val)) {
+      const name = this.autoCompleteService.decodeAddPlayer(val);
+      this.newBowler.setValue(name);
+    } else {
+      this.bowlerSelected();
+    }
   }
 
   ngOnDestroy(): void {

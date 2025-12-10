@@ -38,12 +38,14 @@ import { AutoCompleteService } from '../../services/auto-complete.service';
         />
         <mat-autocomplete
           #auto="matAutocomplete"
-          (optionSelected)="
-            filteredOptions = autoCompleteService._filter('', options)
-          "
+          (optionSelected)="onOptionSelected($event.option.value)"
         >
           @for (option of filteredOptions; track option) {
-          <mat-option [value]="option">{{ option }}</mat-option>
+          <mat-option [value]="option">
+            {{ autoCompleteService.isAddPlayerOption(option)
+              ? ('Add Player - ' + autoCompleteService.decodeAddPlayer(option))
+              : option }}
+          </mat-option>
           }
         </mat-autocomplete>
       </mat-form-field>
@@ -105,9 +107,11 @@ export class NewBatsmenDialog implements OnInit {
     this.newBatsmen.valueChanges
       .pipe(
         startWith(''),
-        map((value) =>
-          this.autoCompleteService._filter(value || '', this.options)
-        )
+        map((value) => {
+          const term = (value || '') + '';
+          const base = this.autoCompleteService._filter(term, this.options);
+          return this.autoCompleteService.withAddPlayerOption(term, base);
+        })
       )
       .subscribe((list) => {
         this.filteredOptions = list;
@@ -119,5 +123,12 @@ export class NewBatsmenDialog implements OnInit {
   }
   onCancelClick(): void {
     this.dialogRef.close();
+  }
+
+  onOptionSelected(val: string): void {
+    if (this.autoCompleteService.isAddPlayerOption(val)) {
+      const name = this.autoCompleteService.decodeAddPlayer(val);
+      this.newBatsmen.setValue(name);
+    }
   }
 }

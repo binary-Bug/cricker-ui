@@ -41,12 +41,14 @@ import { AutoCompleteService } from '../../services/auto-complete.service';
         />
         <mat-autocomplete
           #auto1="matAutocomplete"
-          (optionSelected)="
-            filteredOptionsStriker = autoCompleteService._filter('', options)
-          "
+          (optionSelected)="onStrikerSelected($event.option.value)"
         >
           @for (option of filteredOptionsStriker; track option) {
-          <mat-option [value]="option">{{ option }}</mat-option>
+          <mat-option [value]="option">
+            {{ autoCompleteService.isAddPlayerOption(option)
+              ? ('Add Player - ' + autoCompleteService.decodeAddPlayer(option))
+              : option }}
+          </mat-option>
           }
         </mat-autocomplete>
       </mat-form-field>
@@ -61,12 +63,14 @@ import { AutoCompleteService } from '../../services/auto-complete.service';
         />
         <mat-autocomplete
           #auto2="matAutocomplete"
-          (optionSelected)="
-            filteredOptionsNonStriker = autoCompleteService._filter('', options)
-          "
+          (optionSelected)="onNonStrikerSelected($event.option.value)"
         >
           @for (option of filteredOptionsNonStriker; track option) {
-          <mat-option [value]="option">{{ option }}</mat-option>
+          <mat-option [value]="option">
+            {{ autoCompleteService.isAddPlayerOption(option)
+              ? ('Add Player - ' + autoCompleteService.decodeAddPlayer(option))
+              : option }}
+          </mat-option>
           }
         </mat-autocomplete>
       </mat-form-field>
@@ -81,12 +85,14 @@ import { AutoCompleteService } from '../../services/auto-complete.service';
         />
         <mat-autocomplete
           #auto3="matAutocomplete"
-          (optionSelected)="
-            filteredOptionsBowler = autoCompleteService._filter('', options)
-          "
+          (optionSelected)="onBowlerSelected($event.option.value)"
         >
           @for (option of filteredOptionsBowler; track option) {
-          <mat-option [value]="option">{{ option }}</mat-option>
+          <mat-option [value]="option">
+            {{ autoCompleteService.isAddPlayerOption(option)
+              ? ('Add Player - ' + autoCompleteService.decodeAddPlayer(option))
+              : option }}
+          </mat-option>
           }
         </mat-autocomplete>
       </mat-form-field>
@@ -170,9 +176,11 @@ export class OnFieldPlayerDetailsDialog implements OnInit {
     this.striker.valueChanges
       .pipe(
         startWith(''),
-        map((value) =>
-          this.autoCompleteService._filter(value || '', this.options)
-        )
+        map((value) => {
+          const term = (value || '') + '';
+          const base = this.autoCompleteService._filter(term, this.options);
+          return this.autoCompleteService.withAddPlayerOption(term, base);
+        })
       )
       .subscribe((list) => {
         this.filteredOptionsStriker = list;
@@ -181,9 +189,11 @@ export class OnFieldPlayerDetailsDialog implements OnInit {
     this.nonStriker.valueChanges
       .pipe(
         startWith(''),
-        map((value) =>
-          this.autoCompleteService._filter(value || '', this.options)
-        )
+        map((value) => {
+          const term = (value || '') + '';
+          const base = this.autoCompleteService._filter(term, this.options);
+          return this.autoCompleteService.withAddPlayerOption(term, base);
+        })
       )
       .subscribe((list) => {
         this.filteredOptionsNonStriker = list;
@@ -192,9 +202,11 @@ export class OnFieldPlayerDetailsDialog implements OnInit {
     this.currentBowler.valueChanges
       .pipe(
         startWith(''),
-        map((value) =>
-          this.autoCompleteService._filter(value || '', this.options)
-        )
+        map((value) => {
+          const term = (value || '') + '';
+          const base = this.autoCompleteService._filter(term, this.options);
+          return this.autoCompleteService.withAddPlayerOption(term, base);
+        })
       )
       .subscribe((list) => {
         this.filteredOptionsBowler = list;
@@ -216,6 +228,25 @@ export class OnFieldPlayerDetailsDialog implements OnInit {
 
   onCancelClick(): void {
     this.dialogRef.close();
+  }
+
+  onStrikerSelected(val: string): void {
+    if (this.autoCompleteService.isAddPlayerOption(val)) {
+      const name = this.autoCompleteService.decodeAddPlayer(val);
+      this.striker.setValue(name);
+    }
+  }
+  onNonStrikerSelected(val: string): void {
+    if (this.autoCompleteService.isAddPlayerOption(val)) {
+      const name = this.autoCompleteService.decodeAddPlayer(val);
+      this.nonStriker.setValue(name);
+    }
+  }
+  onBowlerSelected(val: string): void {
+    if (this.autoCompleteService.isAddPlayerOption(val)) {
+      const name = this.autoCompleteService.decodeAddPlayer(val);
+      this.currentBowler.setValue(name);
+    }
   }
 
   onOkClick(): void {

@@ -29,15 +29,15 @@
           />
           <mat-autocomplete
             #auto1="matAutocomplete"
-            (optionSelected)="
-              filteredOptionsCap1 = autoCompleteService._filter('', options)
-            "
+            (optionSelected)="onCap1Selected($event.option.value)"
           >
             <mat-option
               *ngFor="let option of filteredOptionsCap1"
               [value]="option"
             >
-              {{ option }}
+              {{ autoCompleteService.isAddPlayerOption(option)
+                ? ('Add Player - ' + autoCompleteService.decodeAddPlayer(option))
+                : option }}
             </mat-option>
           </mat-autocomplete>
         </mat-form-field>
@@ -58,15 +58,15 @@
           />
           <mat-autocomplete
             #auto2="matAutocomplete"
-            (optionSelected)="
-              filteredOptionsCap2 = autoCompleteService._filter('', options)
-            "
+            (optionSelected)="onCap2Selected($event.option.value)"
           >
             <mat-option
               *ngFor="let option of filteredOptionsCap2"
               [value]="option"
             >
-              {{ option }}
+              {{ autoCompleteService.isAddPlayerOption(option)
+                ? ('Add Player - ' + autoCompleteService.decodeAddPlayer(option))
+                : option }}
             </mat-option>
           </mat-autocomplete>
         </mat-form-field>

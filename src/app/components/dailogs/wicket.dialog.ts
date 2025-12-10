@@ -97,15 +97,14 @@ export interface DialogData {
             />
             <mat-autocomplete
               #auto1="matAutocomplete"
-              (optionSelected)="
-                filteredOptionsActionPlayer = autoCompleteService._filter(
-                  '',
-                  options
-                )
-              "
+              (optionSelected)="onActionPlayerSelected($event.option.value)"
             >
               @for (option of filteredOptionsActionPlayer; track option) {
-              <mat-option [value]="option">{{ option }}</mat-option>
+              <mat-option [value]="option">
+                {{ autoCompleteService.isAddPlayerOption(option)
+                  ? ('Add Player - ' + autoCompleteService.decodeAddPlayer(option))
+                  : option }}
+              </mat-option>
               }
             </mat-autocomplete>
           </mat-form-field>
@@ -145,15 +144,14 @@ export interface DialogData {
             />
             <mat-autocomplete
               #auto2="matAutocomplete"
-              (optionSelected)="
-                filteredOptionsNewBatsmen = autoCompleteService._filter(
-                  '',
-                  options
-                )
-              "
+              (optionSelected)="onNewBatsmenSelected($event.option.value)"
             >
               @for (option of filteredOptionsNewBatsmen; track option) {
-              <mat-option [value]="option">{{ option }}</mat-option>
+              <mat-option [value]="option">
+                {{ autoCompleteService.isAddPlayerOption(option)
+                  ? ('Add Player - ' + autoCompleteService.decodeAddPlayer(option))
+                  : option }}
+              </mat-option>
               }
             </mat-autocomplete>
           </mat-form-field>
@@ -257,9 +255,11 @@ export class WicketDialog implements OnInit {
     this.actionPlayer.valueChanges
       .pipe(
         startWith(''),
-        map((value) =>
-          this.autoCompleteService._filter(value || '', this.options)
-        )
+        map((value) => {
+          const term = (value || '') + '';
+          const base = this.autoCompleteService._filter(term, this.options);
+          return this.autoCompleteService.withAddPlayerOption(term, base);
+        })
       )
       .subscribe((list) => {
         this.filteredOptionsActionPlayer = list;
@@ -288,9 +288,11 @@ export class WicketDialog implements OnInit {
     this.newBatsmen.valueChanges
       .pipe(
         startWith(''),
-        map((value) =>
-          this.autoCompleteService._filter(value || '', this.options)
-        )
+        map((value) => {
+          const term = (value || '') + '';
+          const base = this.autoCompleteService._filter(term, this.options);
+          return this.autoCompleteService.withAddPlayerOption(term, base);
+        })
       )
       .subscribe((list) => {
         this.filteredOptionsNewBatsmen = list;
@@ -345,6 +347,19 @@ export class WicketDialog implements OnInit {
 
   onCancelClick(): void {
     this.dialogRef.close();
+  }
+
+  onActionPlayerSelected(val: string): void {
+    if (this.autoCompleteService.isAddPlayerOption(val)) {
+      const name = this.autoCompleteService.decodeAddPlayer(val);
+      this.actionPlayer.setValue(name);
+    }
+  }
+  onNewBatsmenSelected(val: string): void {
+    if (this.autoCompleteService.isAddPlayerOption(val)) {
+      const name = this.autoCompleteService.decodeAddPlayer(val);
+      this.newBatsmen.setValue(name);
+    }
   }
 
   onOkClick(): void {

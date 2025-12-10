@@ -88,9 +88,11 @@ export class NewMatchDetailsComponent implements OnInit, OnDestroy {
         .get('team1Captain')
         ?.valueChanges.pipe(
           startWith(''),
-          map((value) =>
-            this.autoCompleteService._filter(value || '', this.options)
-          )
+          map((value) => {
+            const term = (value || '') + '';
+            const base = this.autoCompleteService._filter(term, this.options);
+            return this.autoCompleteService.withAddPlayerOption(term, base);
+          })
         )
         .subscribe((list) => {
           this.filteredOptionsCap1 = list;
@@ -100,9 +102,11 @@ export class NewMatchDetailsComponent implements OnInit, OnDestroy {
         .get('team2Captain')
         ?.valueChanges.pipe(
           startWith(''),
-          map((value) =>
-            this.autoCompleteService._filter(value || '', this.options)
-          )
+          map((value) => {
+            const term = (value || '') + '';
+            const base = this.autoCompleteService._filter(term, this.options);
+            return this.autoCompleteService.withAddPlayerOption(term, base);
+          })
         )
         .subscribe((list) => {
           this.filteredOptionsCap2 = list;
@@ -169,5 +173,18 @@ export class NewMatchDetailsComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach((sub) => {
       sub.unsubscribe();
     });
+  }
+
+  onCap1Selected(val: string): void {
+    if (this.autoCompleteService.isAddPlayerOption(val)) {
+      const name = this.autoCompleteService.decodeAddPlayer(val);
+      this.matchDetailsForm.get('team1Captain')?.setValue(name);
+    }
+  }
+  onCap2Selected(val: string): void {
+    if (this.autoCompleteService.isAddPlayerOption(val)) {
+      const name = this.autoCompleteService.decodeAddPlayer(val);
+      this.matchDetailsForm.get('team2Captain')?.setValue(name);
+    }
   }
 }
