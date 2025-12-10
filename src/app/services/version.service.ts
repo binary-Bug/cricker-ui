@@ -14,10 +14,7 @@ export interface AppVersionInfo {
 export class VersionService {
   private readonly url = 'assets/version.json';
 
-  constructor(private http: HttpClient) {
-    debugger;
-    console.log("versions service initialized");
-  }
+  constructor(private http: HttpClient) {}
 
   getVersion(): Observable<string> {
     return this.http.get<AppVersionInfo>(this.url).pipe(

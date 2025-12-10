@@ -1,7 +1,0 @@
-/* Restrict app content to 768px on larger screens and center it */
-.app-container {
-	width: 100%;
-	max-width: 768px;
-	margin: auto;
-}
-
