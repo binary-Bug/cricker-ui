@@ -19,7 +19,32 @@ export class MatchService {
   totalPlayers: number | null = null;
   totalOvers: number | null = null;
   isSecondInning: boolean = false;
-  matchMode: string | null = null;
+
+  /**
+   * True when LoadMatchService looked for a requested match id and couldn't
+   * find it in the expected Firestore collection (bad/stale id, deleted
+   * match, etc.). match-details.component.html uses this to show a friendly
+   * "not found" message instead of crashing when trying to render data that
+   * was never actually loaded.
+   */
+  matchNotFound: boolean = false;
+
+  /**
+   * Set true by LoadMatchService once a historical match has been loaded
+   * from Firestore. Historical matches don't carry per-ball timestamps
+   * (they're stripped before saving - see SaveMatchService), so the 4
+   * innings/match timestamp getters below can't derive their values from
+   * oversPlayedData in that case. When this flag is true, the getters
+   * return the flat values loaded directly from Firestore instead
+   * (loadedInningsOneFirstBallTime etc.); when false (live match in
+   * progress), the getters derive fresh values from oversPlayedData on
+   * every read, which keeps them automatically correct across Undo.
+   */
+  isMatchLoadedFromHistory: boolean = false;
+  loadedInningsOneFirstBallTime: Date | null = null;
+  loadedInningsOneLastBallTime: Date | null = null;
+  loadedInningsTwoFirstBallTime: Date | null = null;
+  loadedInningsTwoLastBallTime: Date | null = null;
   team1Data: Team = {
     name: '',
     captain: '',
@@ -388,8 +413,16 @@ export class MatchService {
     this.totalPlayers = null;
     this.totalOvers = null;
     this.isSecondInning = false;
-    let currentMatchMode = this.matchMode;
-    this.matchMode = currentMatchMode;
+    this.matchNotFound = false;
+
+    // Clear the "loaded from history" timestamp fallback/flag so a fresh
+    // live match derives its innings timestamps from oversPlayedData again
+    // instead of reusing values leftover from a previously loaded match.
+    this.isMatchLoadedFromHistory = false;
+    this.loadedInningsOneFirstBallTime = null;
+    this.loadedInningsOneLastBallTime = null;
+    this.loadedInningsTwoFirstBallTime = null;
+    this.loadedInningsTwoLastBallTime = null;
 
     this.team1Data = {
       name: '',
@@ -448,5 +481,105 @@ export class MatchService {
       team2: this.team2Data,
     };
     this.currentRoles = { bat: 'team1', ball: 'team2' };
+  }
+
+  // ---------------------------------------------------------------------
+  // Innings/match ball timestamps
+  //
+  // We only ever expose 4 values: first/last ball of innings 1 and
+  // first/last ball of innings 2 (innings-1-first-ball also doubles as
+  // "match start time" - see match-details UI, which labels it as such
+  // rather than tracking a separate, always-identical field).
+  //
+  // For a LIVE match these are DERIVED on every read by scanning
+  // BALL_DATA.timestamp values already stamped onto oversPlayedData
+  // (see LiveMatchService.updateBallDataRuns). We deliberately avoid
+  // imperatively tracking "first ball"/"last ball" fields that get
+  // set-once/overwritten as balls are bowled, because that approach goes
+  // stale the moment a ball is undone (Undo pops/resets BALL_DATA entries,
+  // but wouldn't know how to roll back a separately-tracked field). Since
+  // undo() already mutates oversPlayedData correctly, deriving from it means
+  // undo is handled correctly for free, with no changes needed inside the
+  // undo() method itself.
+  //
+  // For a match LOADED from Firestore history, per-ball timestamps aren't
+  // available (they're stripped before saving to avoid bloating every ball
+  // record - see SaveMatchService.prepareOversPlayedObj), so we fall back to
+  // the 4 flat values LoadMatchService populated directly from the saved
+  // document.
+  // ---------------------------------------------------------------------
+
+  /** Team key that batted in innings 1, derived from current roles - no extra state needed. */
+  private get inningsOneBattingTeamKey(): string {
+    return this.isSecondInning
+      ? this.currentRoles['ball']
+      : this.currentRoles['bat'];
+  }
+
+  /** Team key batting in innings 2, or null if innings 2 hasn't started yet. */
+  private get inningsTwoBattingTeamKey(): string | null {
+    return this.isSecondInning ? this.currentRoles['bat'] : null;
+  }
+
+  /**
+   * Scans a team's oversPlayedData in bowled order and returns the
+   * timestamp of the first ball that has one (i.e. has actually been
+   * bowled), or null if no ball has been bowled yet for that team.
+   */
+  private findFirstBallTimestamp(teamKey: string | null): Date | null {
+    if (!teamKey) return null;
+    for (const over of this.teamData[teamKey].oversPlayedData) {
+      for (const ball of over) {
+        if (ball.timestamp) return ball.timestamp ?? null;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Scans a team's oversPlayedData in reverse and returns the timestamp of
+   * the most recently bowled ball, or null if no ball has been bowled yet.
+   * Scanning in reverse (rather than caching "the last ball added") is what
+   * makes this correct after an Undo: once undo() pops/resets the trailing
+   * BALL_DATA entries, this scan simply finds the new, correct last ball.
+   */
+  private findLastBallTimestamp(teamKey: string | null): Date | null {
+    if (!teamKey) return null;
+    const overs = this.teamData[teamKey].oversPlayedData;
+    for (let overIdx = overs.length - 1; overIdx >= 0; overIdx--) {
+      const over = overs[overIdx];
+      for (let ballIdx = over.length - 1; ballIdx >= 0; ballIdx--) {
+        if (over[ballIdx].timestamp) return over[ballIdx].timestamp ?? null;
+      }
+    }
+    return null;
+  }
+
+  /** First ball of innings 1 - also displayed as "Match Start" in the UI (they're the same moment). */
+  get inningsOneFirstBallTime(): Date | null {
+    if (this.isMatchLoadedFromHistory)
+      return this.loadedInningsOneFirstBallTime;
+    return this.findFirstBallTimestamp(this.inningsOneBattingTeamKey);
+  }
+
+  /** Last ball bowled so far in innings 1 (becomes final once innings 2 starts). */
+  get inningsOneLastBallTime(): Date | null {
+    if (this.isMatchLoadedFromHistory)
+      return this.loadedInningsOneLastBallTime;
+    return this.findLastBallTimestamp(this.inningsOneBattingTeamKey);
+  }
+
+  /** First ball of innings 2 - also the "innings 2 start time". Null until innings 2 begins. */
+  get inningsTwoFirstBallTime(): Date | null {
+    if (this.isMatchLoadedFromHistory)
+      return this.loadedInningsTwoFirstBallTime;
+    return this.findFirstBallTimestamp(this.inningsTwoBattingTeamKey);
+  }
+
+  /** Last ball bowled so far in innings 2 - also the "match end time" once the match completes. */
+  get inningsTwoLastBallTime(): Date | null {
+    if (this.isMatchLoadedFromHistory)
+      return this.loadedInningsTwoLastBallTime;
+    return this.findLastBallTimestamp(this.inningsTwoBattingTeamKey);
   }
 }

@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { AdminCodeDialog } from '../dailogs/admin-code.dialog';
 import { LoadMatchService } from '../../services/load-match.service';
 import { PlayerService } from '../../services/player.service';
-import { MatchService } from '../../services/match.service';
+import { ModeService } from '../../services/mode.service';
 import { environment } from '../../../environments/environment';
 import { CommonModule } from '@angular/common';
 import { VersionService } from '../../services/version.service';
@@ -26,13 +26,16 @@ export class RoomComponent {
     private router: Router,
     private loadMatchService: LoadMatchService,
     private playerService: PlayerService,
-    private matchService: MatchService
+    private modeService: ModeService
   ) {
     this.versionService.getVersion().subscribe((v) => (this.version = v));
     if (environment.isProdEnv) {
       // saving user session to firebase
       this.saveUserSession();
-      matchService.matchMode = 'prod';
+      // ModeService already defaults to 'prod' from environment.isProdEnv,
+      // but set it explicitly here too in case a prior "test" mode selection
+      // (e.g. from a previous session in the same tab) is still in memory.
+      modeService.setMode('prod');
     }
   }
   roomService = inject(RoomService);
@@ -66,32 +69,32 @@ export class RoomComponent {
   }
 
   viewAllMatches(): void {
-    this.matchService.matchMode = 'prod';
+    this.modeService.setMode('prod');
     this.router.navigateByUrl('allMatches');
   }
 
   viewAllPlayers(): void {
-    this.matchService.matchMode = 'prod';
+    this.modeService.setMode('prod');
     this.router.navigateByUrl('allPlayers');
   }
 
   viewStats(): void {
-    this.matchService.matchMode = 'prod';
+    this.modeService.setMode('prod');
     this.router.navigateByUrl('stats');
   }
 
   viewAllTestMatches(): void {
-    this.matchService.matchMode = 'test';
+    this.modeService.setMode('test');
     this.router.navigateByUrl('allMatches');
   }
 
   viewAllTestPlayers(): void {
-    this.matchService.matchMode = 'test';
+    this.modeService.setMode('test');
     this.router.navigateByUrl('allPlayers');
   }
 
   viewTestStats(): void {
-    this.matchService.matchMode = 'test';
+    this.modeService.setMode('test');
     this.router.navigateByUrl('stats');
   }
 

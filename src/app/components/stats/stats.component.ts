@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { PlayerService } from '../../services/player.service';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -40,7 +40,7 @@ interface IPlayer extends Player {
   templateUrl: './stats.component.html',
   styleUrl: './stats.component.css',
 })
-export class StatsComponent {
+export class StatsComponent implements OnInit {
   public playersData: IPlayer[] = [];
 
   selectedValue: string = 'batting';
@@ -85,7 +85,16 @@ export class StatsComponent {
     this.playersData
   );
 
-  @ViewChild(MatSort) sort!: MatSort;
+  // static: true because the <table matSort> is not behind any *ngIf/*ngFor,
+  // so it's safe to resolve this before ngOnInit. This matters because
+  // PlayerService caches players after the first fetch - on a cached load
+  // (e.g. navigating stats -> player-details -> back to stats) the
+  // getAllPlayers() promise below resolves almost instantly, which could
+  // otherwise race ahead of the default (non-static) ViewChild resolution
+  // (normally populated in ngAfterViewInit), leaving dataSource.sort
+  // assigned as undefined and silently falling back to unsorted (raw
+  // Firestore-order) data.
+  @ViewChild(MatSort, { static: true }) sort!: MatSort;
 
   constructor(
     public playerService: PlayerService,
@@ -100,6 +109,14 @@ export class StatsComponent {
       this.dataSource = new MatTableDataSource(this.playersData);
       this.dataSource.sort = this.sort;
     });
+  }
+
+  ngOnInit(): void {
+    // Restore the previously selected stat type (if any) so returning to
+    // this page (e.g. from player-details) keeps the user's selection
+    // instead of resetting to the 'batting' default.
+    this.selectedValue = this.playerService.lastSelectedStatType;
+    this.statTypeChanged();
   }
 
   applyFilter(event: Event) {
@@ -130,6 +147,7 @@ export class StatsComponent {
   }
 
   statTypeChanged(): void {
+    this.playerService.lastSelectedStatType = this.selectedValue;
     if (this.selectedValue === 'batting') {
       this.displayedColumns = this.battingnColumns;
       this.sort?.sort({ id: 'runsScored', start: 'desc', disableClear: true });
@@ -160,6 +178,9 @@ export class StatsComponent {
   }
 
   goToPlayer(data: any): void {
-    this.router.navigateByUrl('player-details?name=' + data.name);
+    // Tag the navigation with 'from=stats' so player-details' back button
+    // (and its nested "Matches Played" tab) can return here instead of
+    // defaulting to allPlayers.
+    this.router.navigateByUrl('player-details?name=' + data.name + '&from=stats');
   }
 }

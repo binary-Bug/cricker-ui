@@ -27,6 +27,11 @@ import { MatchListComponent } from '../match-list/match-list.component';
 export class PlayerDetailsComponent implements OnInit {
   currentPlayer: Player | undefined;
   selectedStatOption: string = 'batting';
+  // Where the back button (and the nested match-list's back button) should
+  // navigate to. Defaults to 'allPlayers' for backward compatibility with
+  // direct/bookmarked links that don't set a 'from' param. Only whitelisted
+  // values are honored - we never navigate to an arbitrary query-param value.
+  backTarget: string = 'allPlayers';
   overviewStats: { label: string; value: any }[] = [];
   batsmenStats: { label: string; value: any }[] = [];
   extendedBattingStats: { label: string; value: any }[] = [];
@@ -42,6 +47,7 @@ export class PlayerDetailsComponent implements OnInit {
   ) {}
   async ngOnInit(): Promise<void> {
     this.route.queryParams.subscribe(async (qp) => {
+      this.backTarget = qp['from'] === 'stats' ? 'stats' : 'allPlayers';
       this.currentPlayer = (await this.playerService.getAllPlayers()).find(
         (player) => {
           return player.name === qp['name'];

@@ -11,6 +11,7 @@ import {
   query,
 } from '@angular/fire/firestore';
 import { MatchService } from './match.service';
+import { ModeService } from './mode.service';
 import { Batsmen } from '../models/batsmen.interface';
 import { Bowler } from '../models/bowler.interface';
 import { Fielder } from '../models/fielder.interface';
@@ -21,9 +22,14 @@ import { UtilityService } from './utility.service';
 })
 export class PlayerService {
   players: Player[] = [];
+  // Persists the stats page's selected stat type (batting/bowling/fielding)
+  // across StatsComponent recreation, e.g. when navigating to player-details
+  // and back, so the selection isn't lost when the component reconstructs.
+  lastSelectedStatType: string = 'batting';
 
   firestore = inject(Firestore);
   matchService = inject(MatchService);
+  modeService = inject(ModeService);
   utilityService = inject(UtilityService);
 
   async getAllPlayers(): Promise<Player[]> {
@@ -32,7 +38,7 @@ export class PlayerService {
         resolve(this.players);
       });
     else {
-      if (this.matchService.matchMode === 'prod') {
+      if (this.modeService.mode === 'prod') {
         (
           await getDocs(
             query(
@@ -234,7 +240,7 @@ export class PlayerService {
   }
 
   async deleteExistingPlayerData(): Promise<void> {
-    if (this.matchService.matchMode === 'prod') {
+    if (this.modeService.mode === 'prod') {
       (await getDocs(query(collection(this.firestore, 'PlayerData')))).docs.map(
         async (player) =>
           await deleteDoc(doc(this.firestore, 'PlayerData/' + player.id))
@@ -250,7 +256,7 @@ export class PlayerService {
   }
 
   async updatePlayerDataInFirebase(): Promise<void> {
-    if (this.matchService.matchMode === 'prod') {
+    if (this.modeService.mode === 'prod') {
       this.players.forEach(async (player) => {
         await addDoc(collection(this.firestore, 'PlayerData'), {
           ...player,

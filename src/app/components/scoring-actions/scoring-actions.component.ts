@@ -38,6 +38,23 @@ export class ScoringActionsComponent {
   isWicketChecked: boolean = false;
   wicketDialogRef!: MatDialogRef<WicketDialog>;
 
+  // Whether the current penalty-run delivery should count as a ball bowled.
+  // Defaults to true so the existing "penalty runs always count" behavior is
+  // preserved unless the scorer explicitly unchecks it in PenaltyRunsDialog.
+  isPenaltyBallCounted: boolean = true;
+
+  // True whenever the current delivery should NOT consume a legal ball / advance
+  // the over - either because it's a wide/no-ball (existing behavior), or because
+  // it's a penalty run the scorer marked as "don't count this ball" (treated the
+  // same way structurally: a new ball slot is pushed instead of advancing).
+  get isBallUncounted(): boolean {
+    return (
+      this.isWideChecked ||
+      this.isNBChecked ||
+      (this.isPenaltyRun && !this.isPenaltyBallCounted)
+    );
+  }
+
   addRun(run: string, color: string): void {
     this.liveMatchService.updateOverData();
 
@@ -91,8 +108,7 @@ export class ScoringActionsComponent {
               //this.saveMatchService.saveMatchData();
             }
           } else {
-            if (!this.isWideChecked && !this.isNBChecked)
-              this.checkForOverCompletion();
+            if (!this.isBallUncounted) this.checkForOverCompletion();
           }
           this.unCheckExtras();
         } else {
@@ -101,8 +117,7 @@ export class ScoringActionsComponent {
       });
     } else {
       this.checkForExtras_And_AddRun(run, color, false, null, null, null);
-      if (!this.isWideChecked && !this.isNBChecked)
-        this.checkForOverCompletion();
+      if (!this.isBallUncounted) this.checkForOverCompletion();
       else if (this.matchService.isSecondInning) {
         if (this.matchService.checkIfTargetChased()) {
           this.dialog.open(MatchCompleteDialog);
@@ -189,6 +204,13 @@ export class ScoringActionsComponent {
         this.liveMatchService.updateBallDataCSS(run + ' LB', 'run');
       this.liveMatchService.addExtra('lb', +run);
       this.liveMatchService.updateCurrentPatnership(+run);
+    } else if (this.isPenaltyRun && !this.isPenaltyBallCounted) {
+      // Uncounted penalty run - distinct "PR" label so it's visually
+      // distinguishable from a counted penalty/bye ("B") on the over view.
+      if (!this.isWicketChecked)
+        this.liveMatchService.updateBallDataCSS(run + ' PR', 'run');
+      this.liveMatchService.addExtra('b', +run);
+      this.liveMatchService.updateCurrentPatnership(+run);
     } else if (this.isByesChecked) {
       if (!this.isWicketChecked)
         this.liveMatchService.updateBallDataCSS(run + ' B', 'run');
@@ -221,9 +243,16 @@ export class ScoringActionsComponent {
   ): void {
     let isExtra: boolean = false;
 
+    // The mandatory "+1 run" is exclusive to wide/no-ball. Pushing a new ball
+    // slot (instead of advancing the current one) applies to wide, no-ball, AND
+    // an uncounted penalty run - all three don't consume a legal delivery.
     if (this.isWideChecked || this.isNBChecked) {
       run = +run + 1 + '';
       isExtra = true;
+    } else if (this.isBallUncounted) {
+      isExtra = true;
+    }
+    if (this.isBallUncounted) {
       this.liveMatchService.totalBallsinCurrentOver += 1;
       this.liveMatchService.addNewBalltoOversPlayedData();
     }
@@ -238,7 +267,8 @@ export class ScoringActionsComponent {
       this.isByesChecked,
       this.isPenaltyRun,
       isWicketBall,
-      wicketType
+      wicketType,
+      this.isBallUncounted
     );
 
     if (!this.isWideChecked)
@@ -247,7 +277,8 @@ export class ScoringActionsComponent {
         this.isNBChecked,
         this.isByesChecked,
         this.isLBChecked,
-        this.isPenaltyRun
+        this.isPenaltyRun,
+        !this.isBallUncounted
       );
     else {
       if ((+run - 1) % 2 !== 0) this.liveMatchService.swapStriker();
@@ -265,8 +296,7 @@ export class ScoringActionsComponent {
 
     this.liveMatchService.updateBallNumber();
 
-    if (!this.isWideChecked && !this.isNBChecked)
-      this.liveMatchService.updateOversPlayed();
+    if (!this.isBallUncounted) this.liveMatchService.updateOversPlayed();
 
     this.matchService.calculateCurrentRunRate();
     if (this.matchService.isSecondInning)
@@ -308,9 +338,11 @@ export class ScoringActionsComponent {
       if (data) {
         this.isPenaltyRun = true;
         this.isByesChecked = true;
-        this.addRun(data as string, 'run');
+        this.isPenaltyBallCounted = data.countBall;
+        this.addRun(data.runs as string, 'run');
         this.isPenaltyRun = false;
         this.isByesChecked = false;
+        this.isPenaltyBallCounted = true;
       }
     });
   }

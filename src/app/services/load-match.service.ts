@@ -11,6 +11,7 @@ import {
 } from '@angular/fire/firestore';
 import { LoadMatchDTO } from '../models/LoadMatchDTO.interface';
 import { MatchService } from './match.service';
+import { ModeService } from './mode.service';
 import { Team } from '../models/team.interface';
 import { EventHandlerService } from './event-handler.service';
 import { PlayerService } from './player.service';
@@ -21,6 +22,7 @@ import { PlayerService } from './player.service';
 export class LoadMatchService {
   constructor(
     public matchService: MatchService,
+    private modeService: ModeService,
     private eventHandlerService: EventHandlerService,
     private playerService: PlayerService
   ) {}
@@ -30,7 +32,7 @@ export class LoadMatchService {
 
   async getAllMatches(): Promise<LoadMatchDTO[]> {
     if (this.matches.length === 0) {
-      if (this.matchService.matchMode === 'prod') {
+      if (this.modeService.mode === 'prod') {
         let matchesObj: LoadMatchDTO[] = [];
         (
           await getDocs(
@@ -73,6 +75,16 @@ export class LoadMatchService {
     let matchToLoad = matches.find((match) => {
       return match['id'] === matchId;
     });
+
+    // If the id isn't present in the collection ModeService currently points
+    // at (e.g. a stale/bad link, or a deleted match), surface that instead of
+    // silently wiping teamData with undefined values further down - see
+    // matchService.matchNotFound doc comment for how the UI reacts to this.
+    this.matchService.matchNotFound = !matchToLoad;
+    if (!matchToLoad) {
+      return;
+    }
+
     this.matchService.tossWinner = matchToLoad?.data['tossWinner'];
     this.matchService.tossResult = matchToLoad?.data['tossResult'];
     this.matchService.matchResult = matchToLoad?.data['MatchResult'];
@@ -85,10 +97,43 @@ export class LoadMatchService {
     this.matchService.teamData['team2'] = matchToLoad?.data['teamData'][
       'team2'
     ] as unknown as Team;
+
+    // Historical matches don't carry per-ball timestamps (they're stripped
+    // before saving - see SaveMatchService.prepareOversPlayedObj), so the 4
+    // innings-timestamp getters on MatchService can't derive their values
+    // from oversPlayedData here. Instead, read the 4 flat fields saved on
+    // the match document directly and flip isMatchLoadedFromHistory so
+    // those getters fall back to these loaded values instead of scanning
+    // (now timestamp-less) ball data.
+    this.matchService.isMatchLoadedFromHistory = true;
+    this.matchService.loadedInningsOneFirstBallTime = this.toDateOrNull(
+      matchToLoad?.data['InningsOneFirstBallTime']
+    );
+    this.matchService.loadedInningsOneLastBallTime = this.toDateOrNull(
+      matchToLoad?.data['InningsOneLastBallTime']
+    );
+    this.matchService.loadedInningsTwoFirstBallTime = this.toDateOrNull(
+      matchToLoad?.data['InningsTwoFirstBallTime']
+    );
+    this.matchService.loadedInningsTwoLastBallTime = this.toDateOrNull(
+      matchToLoad?.data['InningsTwoLastBallTime']
+    );
+
     this.mapOversPlayedData();
     this.matchService.setCurrentRoles();
     //console.log('load completed for {' + matchId + '} from service');
     this.eventHandlerService.NotifyMatchLoadCompleteEvent();
+  }
+
+  /**
+   * Firestore returns Timestamp fields (not JS Date) when a document is
+   * read back. Older matches saved before this feature also won't have
+   * these fields at all. This normalizes both cases to a plain Date | null
+   * so match-details can safely call toLocaleTimeString() on the result.
+   */
+  private toDateOrNull(value: any): Date | null {
+    if (!value) return null;
+    return typeof value.toDate === 'function' ? value.toDate() : value;
   }
 
   public async getMatchData(matchRef: DocumentReference) {
@@ -122,12 +167,12 @@ export class LoadMatchService {
   }
 
   public async UpdateProdPlayerData(): Promise<void> {
-    this.matchService.matchMode = 'prod';
+    this.modeService.setMode('prod');
     await this.playerService.deleteExistingPlayerData();
     console.log('Starting... Updating Player Data for prod');
     this.getAllMatches().then(async (matches) => {
       for (const match of matches) {
-        this.matchService.matchMode = 'prod';
+        this.modeService.setMode('prod');
         await this.loadMatch(match.id);
         console.log(match.id + ' - match loaded in loop');
         console.log('loading players data from firebase');

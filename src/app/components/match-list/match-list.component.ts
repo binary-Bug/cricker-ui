@@ -17,6 +17,10 @@ export class MatchListComponent implements OnInit {
   @Input('matchIds') matchIds: string[] | undefined = [];
   @Input('isPlayerList') isPlayerList: boolean = false;
   @Input('playerName') playerName: string | undefined = '';
+  // Where to navigate on back() when isPlayerList is true. Defaults to
+  // 'allPlayers' to preserve existing behavior for any usage that doesn't
+  // set it explicitly.
+  @Input('backTarget') backTarget: string = 'allPlayers';
 
   public matchesList: LoadMatchDTO[] = [];
   constructor(
@@ -41,8 +45,16 @@ export class MatchListComponent implements OnInit {
 
   navigateToMatch(matchId: string): void {
     if (this.playerName && this.playerName.length > 0) {
+      // Carry backTarget through as 'from' so match-details' exit() can
+      // pass it back to player-details, preserving the original origin
+      // (e.g. stats) instead of losing it and falling back to allPlayers.
       this.router.navigateByUrl(
-        'match-details?id=' + matchId + '&playerName=' + this.playerName
+        'match-details?id=' +
+          matchId +
+          '&playerName=' +
+          this.playerName +
+          '&from=' +
+          this.backTarget
       );
     } else {
       this.router.navigateByUrl('match-details?id=' + matchId);
@@ -52,7 +64,7 @@ export class MatchListComponent implements OnInit {
   back(): void {
     this.loadMatchService.matches = []; // Clear the matches array in the service
     if (this.isPlayerList) {
-      this.router.navigateByUrl('allPlayers');
+      this.router.navigateByUrl(this.backTarget);
     } else {
       this.router.navigateByUrl('room');
     }

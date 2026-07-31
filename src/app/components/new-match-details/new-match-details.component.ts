@@ -14,6 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { MatchService } from '../../services/match.service';
+import { ModeService } from '../../services/mode.service';
 import { OnFieldPlayerDetailsDialog } from '../dailogs/on-field-player-detail.dialog';
 import { LiveMatchService } from '../../services/live-match.service';
 import { PlayerService } from '../../services/player.service';
@@ -42,6 +43,7 @@ export class NewMatchDetailsComponent implements OnInit, OnDestroy {
     public dialog: MatDialog,
     private router: Router,
     private matchService: MatchService,
+    private modeService: ModeService,
     private liveMatchService: LiveMatchService,
     private playerService: PlayerService,
     public autoCompleteService: AutoCompleteService
@@ -69,8 +71,9 @@ export class NewMatchDetailsComponent implements OnInit, OnDestroy {
     this.matchDetailsForm
       .get('mode')
       ?.setValue(environment.isProdEnv ? 'prod' : 'test');
-    this.matchService.matchMode = this.matchDetailsForm.get('mode')
-      ?.value as string;
+    this.modeService.setMode(
+      this.matchDetailsForm.get('mode')?.value as 'prod' | 'test'
+    );
 
     this.playerService.getAllPlayers().then((players) => {
       players.forEach((player) => {
@@ -113,7 +116,7 @@ export class NewMatchDetailsComponent implements OnInit, OnDestroy {
         }) as Subscription,
 
       this.matchDetailsForm.get('mode')?.valueChanges.subscribe((value) => {
-        this.matchService.matchMode = value;
+        this.modeService.setMode(value as 'prod' | 'test');
         this.playerService.players = [];
         this.options = [];
         this.playerService.getAllPlayers().then((players) => {
@@ -155,8 +158,9 @@ export class NewMatchDetailsComponent implements OnInit, OnDestroy {
         )?.value as number;
         this.matchService.totalOvers = this.matchDetailsForm.get('totalOvers')
           ?.value as number;
-        this.matchService.matchMode = this.matchDetailsForm.get('mode')
-          ?.value as string;
+        this.modeService.setMode(
+          this.matchDetailsForm.get('mode')?.value as 'prod' | 'test'
+        );
         this.matchService.setCurrentRoles();
         this.matchService.addBatsmenToTeam(this.liveMatchService.striker, null);
         this.matchService.addBatsmenToTeam(

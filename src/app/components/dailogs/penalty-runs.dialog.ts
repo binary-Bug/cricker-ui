@@ -13,6 +13,7 @@ import {
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { Component } from '@angular/core';
 
 @Component({
@@ -24,6 +25,11 @@ import { Component } from '@angular/core';
         <mat-label>Enter Runs</mat-label>
         <input type="number" matInput [formControl]="runs" />
       </mat-form-field>
+      <p>
+        <mat-checkbox [formControl]="countBall"
+          >Count this ball (bowled towards the over)</mat-checkbox
+        >
+      </p>
     </mat-dialog-content>
     <mat-dialog-actions>
       <button mat-button (click)="onCancelClick()">Cancel</button>
@@ -41,14 +47,19 @@ import { Component } from '@angular/core';
     MatDialogContent,
     MatDialogActions,
     ReactiveFormsModule,
+    MatCheckboxModule,
   ],
 })
 export class PenaltyRunsDialog {
   constructor(public dialogRef: MatDialogRef<PenaltyRunsDialog>) {}
 
   runs = new FormControl(0, [Validators.required]);
+  // Defaults to true - preserves today's "penalty runs always count as a ball
+  // bowled" behavior unless the scorer explicitly unchecks it.
+  countBall = new FormControl(true);
+
   onOkClick(): void {
-    this.dialogRef.close(this.runs.value);
+    this.dialogRef.close({ runs: this.runs.value, countBall: this.countBall.value });
   }
   onCancelClick(): void {
     this.dialogRef.close();

@@ -8,7 +8,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "build_iis": "ng build --base-href /cricker/",
-    "build_iis_watch": "ng build --base-href /cricker/ --watch",
+    "build_iis_watch": "ng build --configuration development --base-href /cricker/ --watch",
     "build_iis_prod": "ng build --configuration production --base-href /cricker/",
     "serve:ssr:cricket-scorer": "node dist/cricket-scorer/server/server.mjs"
   },

@@ -59,11 +59,16 @@ export class LiveMatchService {
     isNBChecked: boolean,
     isByesChecked: boolean,
     isLBChecked: boolean,
-    isPenaltyRun: boolean
+    isPenaltyRun: boolean,
+    // Whether this delivery counts as a ball faced by the striker. Defaults to
+    // true for all existing call patterns; only an uncounted penalty run (the
+    // scorer unchecked "Count this ball") passes false, mirroring how a wide
+    // never counts as a ball faced either.
+    countsAsBallFaced: boolean = true
   ): void {
     if (isNBChecked) run -= 1;
 
-    this.striker.balls += 1;
+    if (countsAsBallFaced) this.striker.balls += 1;
 
     if (run % 2 === 0) {
       if (isByesChecked || isLBChecked || isPenaltyRun) run = 0;
@@ -151,11 +156,15 @@ export class LiveMatchService {
     isByesChecked: boolean,
     isPenaltyRun: boolean,
     isWicketBall: boolean,
-    wicketType: string | null
+    wicketType: string | null,
+    // True when the delivery shouldn't be credited towards the bowler's overs
+    // (wide/no-ball already excluded via the two params above; this also
+    // covers an uncounted penalty run - "Count this ball" unchecked).
+    isBallUncounted: boolean = false
   ): void {
     if (!isByesChecked && !isPenaltyRun) this.currentBowler.runs += run;
 
-    if (!isWideChecked && !isNBChecked) {
+    if (!isWideChecked && !isNBChecked && !isBallUncounted) {
       this.currentBowler.overs = +parseFloat(
         this.currentBowler.overs + 0.1 + ''
       ).toFixed(1);
@@ -181,6 +190,12 @@ export class LiveMatchService {
     }
   }
 
+  // NOTE: Innings/match ball timestamps (first/last ball of each innings)
+  // are intentionally NOT managed here. MatchService derives those 4 values
+  // by scanning BALL_DATA.timestamp across oversPlayedData on demand, so
+  // once undo() below pops/resets the relevant BALL_DATA entries, the
+  // derived timestamps automatically reflect the corrected state - no
+  // undo-specific timestamp rollback logic is needed.
   undo(): void {
     if (this.currentBowlNumber > 0 || this.currentOverNumber > 0) {
       this.currentBowlNumber -= 1;
@@ -494,6 +509,18 @@ export class LiveMatchService {
     isExtra: boolean,
     isWicketBall: boolean
   ): void {
+    // Stamp the wall-clock time this ball was finalized. This method is the
+    // single choke point hit exactly once per delivery (run/wicket/extra),
+    // called from ScoringActionsComponent.checkForExtras_And_AddRun(), which
+    // makes it the right place to record "when this ball happened". See
+    // BALL_DATA.timestamp for why this is derived rather than tracked
+    // imperatively (undo-safety) and why it isn't persisted at ball level.
+    this.matchService.teamData[
+      this.matchService.currentRoles['bat']
+    ].oversPlayedData[this.currentOverNumber][
+      this.currentBowlNumber
+    ].timestamp = new Date();
+
     this.matchService.teamData[
       this.matchService.currentRoles['bat']
     ].oversPlayedData[this.currentOverNumber][
