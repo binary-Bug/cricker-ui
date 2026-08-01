@@ -3,7 +3,7 @@
     <div>
       <div
         class="grid grid-cols-3 place-items-start gap-4 mb-2"
-        style="height: 60px; padding-top: 10px; padding-left: 5px"
+        style="min-height: 60px; padding-top: 10px; padding-left: 5px"
       >
         <div>
           <button
@@ -18,48 +18,41 @@
           </button>
         </div>
         <div class="col-span-2">
-          <h2
-            style="
-              text-align: center;
-              margin-top: 5px;
-              margin-bottom: 5px;
-              margin-left: 30px;
-            "
-          >
-            {{ currentPlayer?.name }}
+          <h2 class="player-name-row">
+            <span class="player-name">{{ currentPlayer?.name }}</span>
             <!-- MoM badge - only shown once this player has been named Man of the Match at least once (see PlayerService.applyMvpPointsToPlayers). -->
             <span
               *ngIf="currentPlayer?.momCount && currentPlayer!.momCount > 0"
+              class="mom-badge"
               title="Man of the Match {{ currentPlayer?.momCount }} time(s)"
-              style="font-size: 0.6em"
             >
-              🏆 x{{ currentPlayer?.momCount }}
+              <span class="mom-badge-icon">🏆</span>
+              <span class="mom-badge-count"
+                >x{{ currentPlayer?.momCount }}</span
+              >
             </span>
           </h2>
         </div>
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 place-items-center">
         <ng-container *ngFor="let stat of overviewStats">
-          <div class="stat-card-overview" style="display: inline">
-            <button mat-fab>
-              <div style="margin-bottom: 15px; width: 50px; margin-top: 10px">
-                {{ stat.label }}
-              </div>
-              <div style="margin-bottom: 20px">
-                <h1 style="font-weight: 700; font-size: 50px">
-                  {{ stat.value }}
-                </h1>
-              </div>
+          <div class="stat-card-overview" style="display: inline-block">
+            <button mat-fab class="stat-card-btn">
+              <div class="stat-label">{{ stat.label }}</div>
+              <h1 class="stat-value">
+                {{ stat.value }}
+              </h1>
             </button>
           </div>
         </ng-container>
         <div
           class="stat-card-overview"
-          style="display: inline"
+          style="display: inline-block"
           *ngIf="currentPlayer?.bestMvpMatchId"
         >
           <button
             mat-fab
+            class="stat-card-btn"
             title="View this match"
             (click)="
               router.navigateByUrl(
@@ -72,14 +65,10 @@
               )
             "
           >
-            <div style="margin-bottom: 15px; width: 50px; margin-top: 10px">
-              Best MVP Performance
-            </div>
-            <div style="margin-bottom: 20px">
-              <h1 style="font-weight: 700; font-size: 50px">
-                {{ currentPlayer?.bestMvpPoints ?? 0 }}
-              </h1>
-            </div>
+            <div class="stat-label">Best MVP Performance</div>
+            <h1 class="stat-value">
+              {{ currentPlayer?.bestMvpPoints ?? 0 }}
+            </h1>
           </button>
         </div>
       </div>
@@ -91,8 +80,7 @@
         "
       >
         <div class="mvp-sparkline-title">
-          MVP Points Trend (last {{ currentPlayer!.mvpPointsHistory.length }}
-          matches)
+          MVP Points Trend (last {{ mvpTrendMatchCount }} matches)
         </div>
         <svg
           viewBox="0 0 300 80"
@@ -144,40 +132,30 @@
     <div *ngIf="selectedStat.value === 'batting'">
       <div class="grid grid-cols-2 gap-4 place-items-center mt-4">
         <ng-container *ngFor="let stat of batsmenStats">
-          <div class="stat-card-role col-span-1" style="display: inline">
-            <button mat-fab>
-              <div style="margin-bottom: 40px; margin-top: 10px">
-                {{ stat.label }}
-              </div>
-              <div style="margin-bottom: 40px">
-                <h1 style="font-weight: 700; font-size: 80px; display: inline">
-                  {{ stat.value | number : "1.0-0" }}
-                </h1>
-                <span
-                  style="position: absolute; top: 45px; font-size: xx-large"
-                  >{{
-                    stat.label === "Highest Score" && currentPlayer?.isNotOutHS
-                      ? "*"
-                      : ""
-                  }}</span
+          <div class="stat-card-role col-span-1" style="display: inline-block">
+            <button mat-fab class="stat-card-btn">
+              <div class="stat-label">{{ stat.label }}</div>
+              <h1 class="stat-value">
+                {{ stat.value | number : "1.0-0" }}<span
+                  class="not-out-marker"
+                  *ngIf="
+                    stat.label === 'Highest Score' && currentPlayer?.isNotOutHS
+                  "
+                  >*</span
                 >
-              </div>
+              </h1>
             </button>
           </div>
         </ng-container>
       </div>
       <div class="grid grid-cols-3 gap-4 place-items-center">
         <ng-container *ngFor="let stat of extendedBattingStats">
-          <div class="stat-card-overview" style="display: inline">
-            <button mat-fab>
-              <div style="margin-bottom: 15px; width: 50px; margin-top: 10px">
-                {{ stat.label }}
-              </div>
-              <div style="margin-bottom: 20px">
-                <h1 style="font-weight: 700; font-size: 50px">
-                  {{ stat.value | number : "1.0-1" }}
-                </h1>
-              </div>
+          <div class="stat-card-overview" style="display: inline-block">
+            <button mat-fab class="stat-card-btn">
+              <div class="stat-label">{{ stat.label }}</div>
+              <h1 class="stat-value">
+                {{ stat.value | number : "1.0-1" }}
+              </h1>
             </button>
           </div>
         </ng-container>
@@ -186,41 +164,33 @@
     <div *ngIf="selectedStat.value === 'bowling'">
       <div class="grid grid-cols-2 gap-4 place-items-center mt-4">
         <ng-container *ngFor="let stat of bowlerStats">
-          <div class="stat-card-role col-span-1" style="display: inline">
-            <button mat-fab>
-              <div style="margin-bottom: 40px; margin-top: 10px">
-                {{ stat.label }}
-              </div>
-              <div style="margin-bottom: 40px">
-                <h1
-                  *ngIf="stat.label !== 'BBI' && stat.label !== 'Wickets'"
-                  style="font-weight: 700; font-size: 80px"
-                >
-                  {{ stat.value | number : "1.1-1" }}
-                </h1>
-                <h1
-                  *ngIf="stat.label === 'BBI' || stat.label === 'Wickets'"
-                  style="font-weight: 700; font-size: 80px"
-                >
-                  {{ stat.value }}
-                </h1>
-              </div>
+          <div class="stat-card-role col-span-1" style="display: inline-block">
+            <button mat-fab class="stat-card-btn">
+              <div class="stat-label">{{ stat.label }}</div>
+              <h1
+                *ngIf="stat.label !== 'BBI' && stat.label !== 'Wickets'"
+                class="stat-value"
+              >
+                {{ stat.value | number : "1.1-1" }}
+              </h1>
+              <h1
+                *ngIf="stat.label === 'BBI' || stat.label === 'Wickets'"
+                class="stat-value"
+              >
+                {{ stat.value }}
+              </h1>
             </button>
           </div>
         </ng-container>
       </div>
       <div class="grid grid-cols-3 gap-4 place-items-center">
         <ng-container *ngFor="let stat of extendedBowlingStats">
-          <div class="stat-card-overview" style="display: inline">
-            <button mat-fab>
-              <div style="margin-bottom: 15px; width: 50px; margin-top: 10px">
-                {{ stat.label }}
-              </div>
-              <div style="margin-bottom: 20px">
-                <h1 style="font-weight: 700; font-size: 50px">
-                  {{ stat.value | number : "1.0-1" }}
-                </h1>
-              </div>
+          <div class="stat-card-overview" style="display: inline-block">
+            <button mat-fab class="stat-card-btn">
+              <div class="stat-label">{{ stat.label }}</div>
+              <h1 class="stat-value">
+                {{ stat.value | number : "1.0-1" }}
+              </h1>
             </button>
           </div>
         </ng-container>
@@ -231,16 +201,12 @@
       class="grid grid-cols-2 gap-4 place-items-center mt-4"
     >
       <ng-container *ngFor="let stat of fielderStats">
-        <div class="stat-card-role col-span-1" style="display: inline">
-          <button mat-fab>
-            <div style="margin-bottom: 40px; margin-top: 10px">
-              {{ stat.label }}
-            </div>
-            <div style="margin-bottom: 40px">
-              <h1 style="font-weight: 700; font-size: 80px">
-                {{ stat.value }}
-              </h1>
-            </div>
+        <div class="stat-card-role col-span-1" style="display: inline-block">
+          <button mat-fab class="stat-card-btn">
+            <div class="stat-label">{{ stat.label }}</div>
+            <h1 class="stat-value">
+              {{ stat.value }}
+            </h1>
           </button>
         </div>
       </ng-container>
@@ -249,6 +215,7 @@
   <mat-tab label="Matches Played">
     <app-match-list
       [matchIds]="currentPlayer?.matchIds"
+      [mvpPointsHistory]="currentPlayer?.mvpPointsHistory"
       [isPlayerList]="true"
       [backTarget]="backTarget"
       playerName="{{ currentPlayer?.name }}"

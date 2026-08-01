@@ -146,16 +146,29 @@ export class PlayerDetailsComponent implements OnInit {
   }
 
   /**
+   * How many of the most recent matches the MVP trend sparkline shows -
+   * capped at 10 so the chart stays readable for players with long
+   * careers, but never more than the player actually has history for (so
+   * the header text reads correctly for newer players with < 10 matches).
+   */
+  get mvpTrendMatchCount(): number {
+    return Math.min(10, this.currentPlayer?.mvpPointsHistory?.length ?? 0);
+  }
+
+  /**
    * Per-point (x, y, value) coordinates for the MVP trend sparkline -
    * `viewBox`-based (not fixed pixel dimensions) so it scales cleanly to
    * any container width, phone through desktop, unlike a canvas/fixed-size
    * chart would. Returns [] when there's fewer than 2 matches of history,
-   * since a trend line needs at least 2 points. Reserves headroom at the
-   * top of the viewBox (topPadding) so each point's value label can be
-   * drawn above it without getting clipped, even for the highest peak.
+   * since a trend line needs at least 2 points. Only plots the most recent
+   * `mvpTrendMatchCount` matches (see above) rather than the player's
+   * entire career, so the chart doesn't get cramped/unreadable over time.
+   * Reserves headroom at the top of the viewBox (topPadding) so each
+   * point's value label can be drawn above it without getting clipped,
+   * even for the highest peak.
    */
   get mvpSparklineData(): { x: number; y: number; value: number }[] {
-    const history = this.currentPlayer?.mvpPointsHistory ?? [];
+    const history = (this.currentPlayer?.mvpPointsHistory ?? []).slice(-10);
     if (history.length < 2) return [];
     const width = 300;
     const height = 80;

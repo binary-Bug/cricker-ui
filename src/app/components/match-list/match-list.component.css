@@ -1,3 +1,116 @@
-::ng-deep .mat-mdc-card-header-text {
-  width: 100% !important;
+.match-card {
+  border-radius: 14px;
+}
+
+.match-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.match-card-row-secondary,
+.match-result-row {
+  margin-top: 10px;
+}
+
+.match-teams {
+  font-weight: 600;
+  font-size: 1.05em;
+  line-height: 1.3;
+}
+
+.vs-label {
+  color: #9e9e9e;
+  font-weight: 400;
+  font-size: 0.85em;
+  margin: 0 2px;
+}
+
+.match-date {
+  color: #757575;
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.match-result {
+  color: forestgreen;
+  font-weight: 500;
+  font-size: 0.9em;
+}
+
+/* Actions row: badges group (when present) pinned to the far left, the
+   open-match button pinned to the far right via space-between - see
+   .match-badges-group below for why the button stays put even when no
+   badges are shown. */
+.match-card-actions {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 16px;
+  padding-right: 8px;
+}
+
+/* Groups the MoM + MVP points badges together on the left of the actions
+   row, so the open-match button on the right always has a single sibling
+   to space-between against, even when both badges are hidden (this div
+   still renders, just empty). */
+.match-badges-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Man of the Match badge - gold/amber accent, reserved exclusively for
+   MoM so it stands out as more prestigious than the plain MVP points
+   badge below. Read straight off match.data.mvp.manOfTheMatch at
+   runtime (see MatchListComponent.isPlayerMomForMatch) - no badge shown
+   at all if the player wasn't MoM for this match. */
+.match-mom-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8em;
+  font-weight: 700;
+  background-color: #fff3cd;
+  color: #7a5b00;
+  border: 1px solid #ffe08a;
+  border-radius: 999px;
+  padding: 3px 12px;
+  white-space: nowrap;
+}
+
+/* Per-match MVP points badge - only rendered when this match-list is used
+   from player-details' "Matches Played" tab (isPlayerList). Shows the
+   player's total points for that match either way (sourced from
+   match.data.mvp.topFive when they made that match's top 5, otherwise
+   falling back to their career mvpPointsHistory) - but is only clickable
+   (opens the full MvpBreakdownDialog) when the richer topFive breakdown
+   is actually available. Blue accent - every MVP points badge uses this
+   same color regardless of clickability; gold is reserved for MoM only. */
+.match-mvp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8em;
+  font-weight: 600;
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  border: 1px solid #90caf9;
+  border-radius: 999px;
+  padding: 3px 12px;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.match-mvp-badge.clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.match-mvp-badge.clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }

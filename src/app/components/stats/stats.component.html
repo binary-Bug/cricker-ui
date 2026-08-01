@@ -149,6 +149,16 @@
           <td mat-cell *matCellDef="let row">{{ row.wickets }}</td>
         </ng-container>
 
+        <!-- Average MVP Points Column (mvpPoints / matchesPlayed, computed at runtime - default/highest-priority sort for the MVP stat type) -->
+        <ng-container matColumnDef="avgMvpPoints">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            Avg MVP Points
+          </th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.avgMvpPoints | number : "1.0-1" }}
+          </td>
+        </ng-container>
+
         <!-- MVP Points Column (lifetime total) -->
         <ng-container matColumnDef="mvpPoints">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>MVP Points</th>

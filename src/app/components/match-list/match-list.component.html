@@ -19,21 +19,43 @@
 </div>
 
 <ng-container *ngFor="let match of matchesList">
-  <mat-card appearance="outlined">
-    <mat-card-header>
-      <mat-card-title style="display: flex; justify-content: space-between"
-        ><span style="margin-bottom: 0px; font-weight: 500">
+  <mat-card appearance="outlined" class="match-card">
+    <mat-card-content>
+      <div class="match-card-row">
+        <span class="match-teams">
           {{ match.data["teamData"]["team1"]["name"] }}
-          vs
+          <span class="vs-label">vs</span>
           {{ match.data["teamData"]["team2"]["name"] }}
         </span>
-        <span>{{ match.data["MatchDate"] }}</span></mat-card-title
-      >
-      <mat-card-subtitle style="color: forestgreen">{{
-        match.data["MatchResult"]
-      }}</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-actions align="end">
+        <span class="match-date">{{ match.data["MatchDate"] }}</span>
+      </div>
+      <div class="match-result-row">
+        <span class="match-result">{{ match.data["MatchResult"] }}</span>
+      </div>
+    </mat-card-content>
+    <mat-card-actions class="match-card-actions">
+      <div class="match-badges-group">
+        <span
+          *ngIf="isPlayerList && isPlayerMomForMatch(match)"
+          class="match-mom-badge"
+          title="Man of the Match"
+        >
+          🏆 MoM
+        </span>
+        <span
+          *ngIf="isPlayerList && getPlayerMvpPoints(match) !== undefined"
+          class="match-mvp-badge"
+          [class.clickable]="getPlayerMvpBreakdown(match)"
+          [title]="
+            getPlayerMvpBreakdown(match)
+              ? 'View MVP breakdown'
+              : 'MVP points earned this match'
+          "
+          (click)="openPlayerMvpBreakdown(match)"
+        >
+          ⭐ {{ getPlayerMvpPoints(match) }} pts
+        </span>
+      </div>
       <button mat-mini-fab color="accent" (click)="navigateToMatch(match.id)">
         <img src="assets/icon-external-link.png" style="width: 18px" />
       </button>

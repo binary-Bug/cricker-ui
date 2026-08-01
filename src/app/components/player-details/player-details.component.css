@@ -1,19 +1,110 @@
-.stat-card-overview .mat-mdc-button-base {
+.player-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  column-gap: 8px;
+  row-gap: 2px;
+  margin: 5px 0 5px 30px;
+  text-align: center;
+}
+
+.player-name {
+  line-height: 1.2;
+}
+
+.mom-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.45em;
+  font-weight: 600;
+  background-color: #fff3cd;
+  color: #7a5b00;
+  border: 1px solid #ffe08a;
+  border-radius: 999px;
+  padding: 4px 10px;
+  line-height: 1;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.mom-badge-icon {
+  font-size: 1.2em;
+  line-height: 1;
+}
+
+.mom-badge-count {
+  line-height: 1;
+}
+
+/* Stat cards: sized to fit content (min-size floor, grows as needed) so
+   large numbers/labels (e.g. "Man of the Match", high strike rates, many
+   overs bowled) never get clipped or overflow the box. */
+.stat-card-btn.mat-mdc-button-base {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  white-space: normal;
+  text-align: center;
+}
+
+.stat-card-overview .stat-card-btn.mat-mdc-button-base {
   border-radius: 20px;
-  width: 105px !important;
-  height: 105px !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 105px;
+  min-height: 105px;
+  max-width: 220px;
+  padding: 14px 16px;
+  gap: 6px;
   background-color: rgb(224, 224, 224);
   color: black;
   margin-bottom: 30px;
 }
 
-.stat-card-role .mat-mdc-button-base {
+.stat-card-role .stat-card-btn.mat-mdc-button-base {
   border-radius: 30px;
-  width: 150px !important;
-  height: 150px !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 150px;
+  min-height: 150px;
+  max-width: 260px;
+  padding: 20px 22px;
+  gap: 8px;
   background-color: #673ab7;
   color: white;
   margin-bottom: 30px;
+}
+
+.stat-label {
+  font-size: 0.85em;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.stat-card-role .stat-label {
+  font-size: 1em;
+}
+
+.stat-value {
+  font-weight: 700;
+  font-size: clamp(26px, 6vw, 50px);
+  line-height: 1.15;
+  word-break: break-word;
+  margin: 0;
+}
+
+.stat-card-role .stat-value {
+  font-size: clamp(36px, 9vw, 80px);
+}
+
+.not-out-marker {
+  font-size: 0.5em;
+  vertical-align: super;
+  margin-left: 2px;
 }
 
 .mvp-sparkline-wrap {

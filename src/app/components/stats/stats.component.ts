@@ -24,6 +24,8 @@ interface StatType {
 interface IPlayer extends Player {
   sr: number;
   eco: number;
+  /** mvpPoints / matchesPlayed, computed at runtime (see calculateAvgMvpPoints) - not persisted, since it's trivially derived from two fields already on the player doc. */
+  avgMvpPoints: number;
 }
 
 @Component({
@@ -84,8 +86,19 @@ export class StatsComponent implements OnInit {
     'stumpOuts',
   ];
 
-  /** Leaderboard columns for the MVP stat type - lifetime totals, not per-match. */
-  mvpColumns: string[] = ['name', 'matchesPlayed', 'mvpPoints', 'momCount'];
+  /**
+   * Leaderboard columns for the MVP stat type - lifetime totals, not per-match.
+   * avgMvpPoints is listed right after matchesPlayed (before the raw
+   * mvpPoints total) since it's the default/highest-priority sort for this
+   * stat type - see statTypeChanged().
+   */
+  mvpColumns: string[] = [
+    'name',
+    'matchesPlayed',
+    'avgMvpPoints',
+    'mvpPoints',
+    'momCount',
+  ];
 
   displayedColumns: string[] = this.battingnColumns;
   dataSource: MatTableDataSource<IPlayer> = new MatTableDataSource(
@@ -115,6 +128,7 @@ export class StatsComponent implements OnInit {
 
       this.calculateSR();
       this.calculateEco();
+      this.calculateAvgMvpPoints();
       this.dataSource = new MatTableDataSource(this.playersData);
       this.dataSource.sort = this.sort;
     });
@@ -155,6 +169,15 @@ export class StatsComponent implements OnInit {
     });
   }
 
+  /** mvpPoints / matchesPlayed - guards against divide-by-zero for players with no matches yet. */
+  calculateAvgMvpPoints(): void {
+    this.playersData.forEach((player) => {
+      player.avgMvpPoints = player.matchesPlayed
+        ? (player.mvpPoints ?? 0) / player.matchesPlayed
+        : 0;
+    });
+  }
+
   statTypeChanged(): void {
     this.playerService.lastSelectedStatType = this.selectedValue;
     if (this.selectedValue === 'batting') {
@@ -168,7 +191,13 @@ export class StatsComponent implements OnInit {
       this.sort?.sort({ id: 'catches', start: 'desc', disableClear: true });
     } else if (this.selectedValue === 'mvp') {
       this.displayedColumns = this.mvpColumns;
-      this.sort?.sort({ id: 'mvpPoints', start: 'desc', disableClear: true });
+      // Default/highest-priority sort is avgMvpPoints (not the raw lifetime
+      // total), but users can still manually re-sort by mvpPoints or momCount.
+      this.sort?.sort({
+        id: 'avgMvpPoints',
+        start: 'desc',
+        disableClear: true,
+      });
     }
   }
 
@@ -181,7 +210,7 @@ export class StatsComponent implements OnInit {
       case 'fielding':
         return 'catches';
       case 'mvp':
-        return 'mvpPoints';
+        return 'avgMvpPoints';
       default:
         return 'runsScored';
     }

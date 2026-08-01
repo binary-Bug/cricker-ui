@@ -184,7 +184,16 @@ export class LoadMatchService {
     await this.playerService.deleteExistingPlayerData();
     console.log('Starting... Updating Player Data for prod');
     this.getAllMatches().then(async (matches) => {
-      for (const match of matches) {
+      // getAllMatches() returns matches newest-first (FireBaseDate desc -
+      // the order the match-browsing UI wants), but this loop rebuilds
+      // every player's stats from scratch via savePlayerData(), which
+      // appends onto Player.mvpPointsHistory in whatever order matches are
+      // replayed here (see PlayerService.applyMvpPointsToPlayers). Replaying
+      // newest-first would leave that history - and the player-details MVP
+      // trend sparkline that reads it - in reverse-chronological order, so
+      // reverse to oldest-first here before replaying.
+      const chronologicalMatches = [...matches].reverse();
+      for (const match of chronologicalMatches) {
         this.modeService.setMode('prod');
         await this.loadMatch(match.id);
         console.log(match.id + ' - match loaded in loop');

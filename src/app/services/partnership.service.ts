@@ -47,7 +47,21 @@ export class PartnershipService {
   getInningsBreakdown(team: Team): InningsBreakdown {
     const balls: BALL_DATA[] = team.oversPlayedData
       .reduce((acc: BALL_DATA[], over) => acc.concat(over), [])
-      .filter((ball) => ball.hasBeenBowled);
+      .filter(
+        (ball) =>
+          ball.hasBeenBowled &&
+          // Guards against a small number of legacy matches with corrupted/
+          // incomplete ball records - e.g. a ball entry that only has
+          // class/label/hasBeenBowled and is missing striker/nonStriker/
+          // extras entirely (seen in match bw7HeCxt2GDG5JF53cOD). Every
+          // read below (runsOf/ballsOf/ball.extras['w']/etc.) assumes
+          // those fields exist, so such balls are treated the same as one
+          // that was never bowled rather than crashing the whole
+          // scorecard.
+          !!ball.striker &&
+          !!ball.nonStriker &&
+          !!ball.extras
+      );
 
     const fallOfWickets: FallOfWicket[] = [];
     const partnerships: Partnership[] = [];
