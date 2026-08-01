@@ -38,3 +38,65 @@
 .wicket {
   background-color: rgb(216, 12, 12);
 }
+
+.fow-panel {
+  box-shadow: none !important;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+.fow-row {
+  width: 100%;
+  padding: 4px 0 8px 0;
+  font-size: 0.85rem;
+  color: #444;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  box-sizing: border-box;
+}
+
+.partnerships-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.partnerships-empty {
+  color: #777;
+  font-style: italic;
+  padding: 8px 0;
+}
+
+.partnership-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  background-color: #fafafa;
+}
+
+.partnership-card-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  font-weight: 600;
+  gap: 4px 10px;
+}
+
+.partnership-card-total {
+  color: #673ab7;
+  font-weight: 700;
+}
+
+.partnership-contributors {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: #333;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.partnership-contributor {
+  white-space: nowrap;
+}

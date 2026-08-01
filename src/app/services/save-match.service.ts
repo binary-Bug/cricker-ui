@@ -6,6 +6,7 @@ import { ModeService } from './mode.service';
 import { BALL_DATA } from '../models/ball_data.class';
 import { EventHandlerService } from './event-handler.service';
 import { LoadMatchService } from './load-match.service';
+import { MatchMvpSummary } from '../models/mvp.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -20,10 +21,24 @@ export class SaveMatchService {
 
   firestore = inject(Firestore);
 
-  public async saveMatchData(matchResult: string): Promise<void> {
+  public async saveMatchData(
+    matchResult: string,
+    mvpSummary: MatchMvpSummary
+  ): Promise<void> {
     const date = new Date();
     const dateWithoutTime = date.toLocaleDateString();
     let teamDataDTO = this.prepareTeamDataObject();
+
+    // Only persist the top 5 + Man of the Match on the match document
+    // itself - mvpSummary.allPlayers is intentionally left out here (it's
+    // only needed in-memory, once, to update every player's lifetime
+    // mvpPoints total - see PlayerService.applyMvpPointsToPlayers) so the
+    // match document doesn't carry a full-roster breakdown it'll never
+    // display.
+    const mvpDTO = {
+      topFive: mvpSummary.topFive,
+      manOfTheMatch: mvpSummary.manOfTheMatch,
+    };
 
     // Read the 4 derived innings/match ball timestamps off MatchService
     // *before* saving. These getters scan oversPlayedData (see
@@ -51,6 +66,7 @@ export class SaveMatchService {
         FireBaseDate: date,
         ...inningsTimestamps,
         teamData: teamDataDTO,
+        mvp: mvpDTO,
       }).then(async (matchRef) => {
         this.eventHandlerService.NotifyMatchSaveCompleteEvent(matchRef.id);
       });
@@ -65,6 +81,7 @@ export class SaveMatchService {
         FireBaseDate: date,
         ...inningsTimestamps,
         teamData: teamDataDTO,
+        mvp: mvpDTO,
       }).then(async (matchRef) => {
         this.eventHandlerService.NotifyMatchSaveCompleteEvent(matchRef.id);
       });

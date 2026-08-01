@@ -15,3 +15,33 @@
   color: white;
   margin-bottom: 30px;
 }
+
+.mvp-sparkline-wrap {
+  width: 96%;
+  max-width: 400px;
+  margin: 4px auto 16px auto;
+}
+
+.mvp-sparkline-title {
+  font-size: 0.8em;
+  color: #757575;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.mvp-sparkline {
+  width: 100%;
+  height: 80px;
+  display: block;
+  /* Point-value labels are drawn just above each peak using the reserved
+     topPadding headroom (see mvpSparklineData), but allow slight bleed
+     past the viewBox edges too, so labels on the very first/last points
+     never get clipped. */
+  overflow: visible;
+}
+
+.mvp-sparkline-label {
+  font-size: 9px;
+  font-weight: 600;
+  fill: #673ab7;
+}

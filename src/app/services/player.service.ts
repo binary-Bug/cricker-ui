@@ -16,6 +16,7 @@ import { Batsmen } from '../models/batsmen.interface';
 import { Bowler } from '../models/bowler.interface';
 import { Fielder } from '../models/fielder.interface';
 import { UtilityService } from './utility.service';
+import { MatchMvpSummary } from '../models/mvp.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -46,7 +47,11 @@ export class PlayerService {
               orderBy('matchesPlayed', 'desc')
             )
           )
-        ).docs.map((player) => this.players.push(player.data() as Player));
+        ).docs.map((player) => {
+          const playerObj = player.data() as Player;
+          this.normalizePlayerNumericFields(playerObj);
+          this.players.push(playerObj);
+        });
         return new Promise<Player[]>((resolve) => {
           resolve(this.players);
         });
@@ -58,7 +63,11 @@ export class PlayerService {
               orderBy('matchesPlayed', 'desc')
             )
           )
-        ).docs.map((player) => this.players.push(player.data() as Player));
+        ).docs.map((player) => {
+          const playerObj = player.data() as Player;
+          this.normalizePlayerNumericFields(playerObj);
+          this.players.push(playerObj);
+        });
         return new Promise<Player[]>((resolve) => {
           resolve(this.players);
         });
@@ -72,7 +81,11 @@ export class PlayerService {
     } else return undefined;
   }
 
-  async savePlayerData(matchId: string, matchResult: string): Promise<void> {
+  async savePlayerData(
+    matchId: string,
+    matchResult: string,
+    mvpSummary: MatchMvpSummary
+  ): Promise<void> {
     console.log('Saving Player Data');
     let winningTeamKey: string = matchResult.includes(
       this.matchService.teamData['team1'].name
@@ -87,9 +100,109 @@ export class PlayerService {
     parameter.push([this.matchService.teamData['team2'].Bowlers, 'team2']);
     parameter.push([this.matchService.teamData['team2'].Fielders, 'team2']);
     this.updatePlayerStats(parameter, matchId, winningTeamKey);
+    // Roll each player's MVP points for this match onto their career total,
+    // and bump the Man of the Match's momCount - done after updatePlayerStats
+    // so every player involved already has an up-to-date entry in
+    // this.players (either an existing, mutated-in-place record, or a
+    // freshly created one) to attach points to.
+    this.applyMvpPointsToPlayers(mvpSummary, matchId);
     await this.deleteExistingPlayerData();
     await this.updatePlayerDataInFirebase();
     console.log('Player Data Saved Successfully');
+  }
+
+  /**
+   * Adds each player's computed MVP points for this match onto their
+   * lifetime Player.mvpPoints total, and increments the Man of the Match's
+   * momCount. Uses mvpSummary.allPlayers (every player who took part), not
+   * just the persisted top 5 - a player's career MVP total should reflect
+   * every match they played, not only the ones where they made the top 5.
+   */
+  /**
+   * Ensures every numeric/array field on a Player is a real number/array
+   * before any arithmetic or `.push()` is done on it. Firestore docs
+   * created before a given field existed simply don't have it (undefined),
+   * and any doc that was already corrupted by the pre-fix
+   * `undefined + x = NaN` MVP bug may still hold a stored NaN - both cases
+   * must be reset here, since `??`/`||` fallbacks don't catch an
+   * already-NaN value. This covers the entire numeric/array surface of
+   * `Player` (not just mvpPoints/momCount) as precautionary hardening,
+   * since every one of these fields predates the MVP feature and could in
+   * principle hit the same class of bug.
+   */
+  private normalizePlayerNumericFields(player: Player): void {
+    const numericFields: (keyof Player)[] = [
+      'matchesPlayed',
+      'won',
+      'lost',
+      'runsScored',
+      'ballsPlayed',
+      'fours',
+      'sixes',
+      'overs',
+      'runsAgainst',
+      'wickets',
+      'maidens',
+      'catches',
+      'runOuts',
+      'stumpOuts',
+      'highestScore',
+      'mvpPoints',
+      'momCount',
+      'bestMvpPoints',
+    ];
+    numericFields.forEach((field) => {
+      const value = player[field];
+      if (value === undefined || value === null || (typeof value === 'number' && isNaN(value))) {
+        (player[field] as number) = 0;
+      }
+    });
+
+    if (!player.matchIds) player.matchIds = [];
+    if (!player.mvpPointsHistory) player.mvpPointsHistory = [];
+    if (player.bestMvpMatchId === undefined || player.bestMvpMatchId === null) {
+      player.bestMvpMatchId = '';
+    }
+    if (!player.bbi) player.bbi = { wickets: 0, runs: 0 };
+    if (player.bbi.wickets === undefined || player.bbi.wickets === null || isNaN(player.bbi.wickets)) {
+      player.bbi.wickets = 0;
+    }
+    if (player.bbi.runs === undefined || player.bbi.runs === null || isNaN(player.bbi.runs)) {
+      player.bbi.runs = 0;
+    }
+  }
+
+  /**
+   * @param matchId The match this mvpSummary was computed for - recorded
+   *   against a player's bestMvpMatchId only if this match becomes their new
+   *   career-best, and appended to mvpPointsHistory either way so the
+   *   trend sparkline has one entry per match played, in order.
+   */
+  applyMvpPointsToPlayers(mvpSummary: MatchMvpSummary, matchId: string): void {
+    mvpSummary.allPlayers.forEach((breakdown) => {
+      const playerObj = this.players.find(
+        (ply) => ply.name.trim() === breakdown.name.trim()
+      );
+      if (playerObj) {
+        // Existing players' Firestore docs may predate the MVP feature and
+        // simply not have these fields yet (undefined), or may already be
+        // corrupted to NaN from before this normalization existed - either
+        // way, `undefined + x` / `NaN + x` both evaluate to NaN and would
+        // permanently poison the player's career total. Normalize to 0 first
+        // so every player accumulates correctly, not just newly created ones.
+        this.normalizePlayerNumericFields(playerObj);
+        playerObj.mvpPoints += breakdown.totalPoints;
+        if (breakdown.name === mvpSummary.manOfTheMatch) {
+          playerObj.momCount += 1;
+        }
+
+        playerObj.mvpPointsHistory.push(breakdown.totalPoints);
+        if (breakdown.totalPoints > playerObj.bestMvpPoints) {
+          playerObj.bestMvpPoints = breakdown.totalPoints;
+          playerObj.bestMvpMatchId = matchId;
+        }
+      }
+    });
   }
 
   updatePlayerStats(
@@ -236,6 +349,13 @@ export class PlayerService {
       bbi: { wickets: 0, runs: 0 },
       highestScore: 0,
       isNotOutHS: false,
+      // MVP points/MoM count start at 0 for a brand new player - populated
+      // going forward as they play matches (see applyMvpPointsToPlayers).
+      mvpPoints: 0,
+      momCount: 0,
+      bestMvpPoints: 0,
+      bestMvpMatchId: '',
+      mvpPointsHistory: [],
     } as Player;
   }
 

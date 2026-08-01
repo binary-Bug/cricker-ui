@@ -78,6 +78,14 @@ export class PlayerDetailsComponent implements OnInit {
       { label: 'Matches Played', value: this.currentPlayer?.matchesPlayed },
       { label: 'Matches Won', value: this.currentPlayer?.won },
       { label: 'Matches Lost', value: this.currentPlayer?.lost },
+      { label: 'MVP Points', value: this.currentPlayer?.mvpPoints ?? 0 },
+      { label: 'Man of the Match', value: this.currentPlayer?.momCount ?? 0 },
+      {
+        label: 'Avg MVP Points',
+        value: matchesPlayed
+          ? ((this.currentPlayer?.mvpPoints ?? 0) / matchesPlayed).toFixed(1)
+          : '0.0',
+      },
     ];
 
     this.batsmenStats = [
@@ -135,5 +143,41 @@ export class PlayerDetailsComponent implements OnInit {
       { label: 'Run Outs', value: this.currentPlayer?.runOuts },
       { label: 'Stump Outs', value: this.currentPlayer?.stumpOuts },
     ];
+  }
+
+  /**
+   * Per-point (x, y, value) coordinates for the MVP trend sparkline -
+   * `viewBox`-based (not fixed pixel dimensions) so it scales cleanly to
+   * any container width, phone through desktop, unlike a canvas/fixed-size
+   * chart would. Returns [] when there's fewer than 2 matches of history,
+   * since a trend line needs at least 2 points. Reserves headroom at the
+   * top of the viewBox (topPadding) so each point's value label can be
+   * drawn above it without getting clipped, even for the highest peak.
+   */
+  get mvpSparklineData(): { x: number; y: number; value: number }[] {
+    const history = this.currentPlayer?.mvpPointsHistory ?? [];
+    if (history.length < 2) return [];
+    const width = 300;
+    const height = 80;
+    const sidePadding = 14;
+    const bottomPadding = 6;
+    const topPadding = 22;
+    const max = Math.max(...history, 0);
+    const min = Math.min(...history, 0);
+    const range = max - min || 1;
+    const stepX = (width - sidePadding * 2) / (history.length - 1);
+    return history.map((value, i) => {
+      const x = sidePadding + i * stepX;
+      const y =
+        height -
+        bottomPadding -
+        ((value - min) / range) * (height - bottomPadding - topPadding);
+      return { x: +x.toFixed(1), y: +y.toFixed(1), value };
+    });
+  }
+
+  /** `points` attribute for the sparkline's connecting polyline - derived from mvpSparklineData so the line and the per-point labels/markers always line up exactly. */
+  get mvpSparklinePoints(): string {
+    return this.mvpSparklineData.map((p) => `${p.x},${p.y}`).join(' ');
   }
 }

@@ -41,6 +41,15 @@
         }
       </mat-select>
     </mat-form-field>
+    <!-- Explains how MVP points/Man of the Match are calculated. Shown regardless of the selected stat type since it's handy context either way. -->
+    <button
+      mat-icon-button
+      title="How are MVP points calculated?"
+      (click)="openMvpHelp()"
+      style="justify-self: center"
+    >
+      <mat-icon>help_outline</mat-icon>
+    </button>
   </div>
 
   <div>
@@ -138,6 +147,18 @@
         <ng-container matColumnDef="wickets">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Wickets</th>
           <td mat-cell *matCellDef="let row">{{ row.wickets }}</td>
+        </ng-container>
+
+        <!-- MVP Points Column (lifetime total) -->
+        <ng-container matColumnDef="mvpPoints">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>MVP Points</th>
+          <td mat-cell *matCellDef="let row">{{ row.mvpPoints || 0 }}</td>
+        </ng-container>
+
+        <!-- Man of the Match Count Column (lifetime total) -->
+        <ng-container matColumnDef="momCount">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>MoM</th>
+          <td mat-cell *matCellDef="let row">{{ row.momCount || 0 }}</td>
         </ng-container>
 
         <!-- Overs Bowled Column -->

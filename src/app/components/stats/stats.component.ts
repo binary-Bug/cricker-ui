@@ -12,6 +12,9 @@ import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
 import { UtilityService } from '../../services/utility.service';
+import { MatDialog } from '@angular/material/dialog';
+import { MvpCalculatorService } from '../../services/mvp-calculator.service';
+import { MvpHelpDialog } from '../dailogs/mvp-help.dialog';
 
 interface StatType {
   value: string;
@@ -48,6 +51,7 @@ export class StatsComponent implements OnInit {
     { value: 'batting', label: 'Batting' },
     { value: 'bowling', label: 'Bowling' },
     { value: 'fielding', label: 'Fielding' },
+    { value: 'mvp', label: 'MVP' },
   ];
 
   battingnColumns: string[] = [
@@ -80,6 +84,9 @@ export class StatsComponent implements OnInit {
     'stumpOuts',
   ];
 
+  /** Leaderboard columns for the MVP stat type - lifetime totals, not per-match. */
+  mvpColumns: string[] = ['name', 'matchesPlayed', 'mvpPoints', 'momCount'];
+
   displayedColumns: string[] = this.battingnColumns;
   dataSource: MatTableDataSource<IPlayer> = new MatTableDataSource(
     this.playersData
@@ -99,7 +106,9 @@ export class StatsComponent implements OnInit {
   constructor(
     public playerService: PlayerService,
     public router: Router,
-    private utilityService: UtilityService
+    private utilityService: UtilityService,
+    private mvpCalculatorService: MvpCalculatorService,
+    private dialog: MatDialog
   ) {
     playerService.getAllPlayers().then((players) => {
       this.playersData = players as any;
@@ -157,6 +166,9 @@ export class StatsComponent implements OnInit {
     } else if (this.selectedValue === 'fielding') {
       this.displayedColumns = this.fieldingColumns;
       this.sort?.sort({ id: 'catches', start: 'desc', disableClear: true });
+    } else if (this.selectedValue === 'mvp') {
+      this.displayedColumns = this.mvpColumns;
+      this.sort?.sort({ id: 'mvpPoints', start: 'desc', disableClear: true });
     }
   }
 
@@ -168,6 +180,8 @@ export class StatsComponent implements OnInit {
         return 'wickets';
       case 'fielding':
         return 'catches';
+      case 'mvp':
+        return 'mvpPoints';
       default:
         return 'runsScored';
     }
@@ -182,5 +196,19 @@ export class StatsComponent implements OnInit {
     // (and its nested "Matches Played" tab) can return here instead of
     // defaulting to allPlayers.
     this.router.navigateByUrl('player-details?name=' + data.name + '&from=stats');
+  }
+
+  /**
+   * Opens the "how are MVP points calculated?" help dialog. Called with no
+   * specific match in view (this is the general Stats page), so
+   * describeRules() falls back to describing the scaling formulas in words
+   * rather than resolving them to one match's concrete numbers.
+   */
+  openMvpHelp(): void {
+    this.mvpCalculatorService.loadWeights().then((weights) => {
+      this.dialog.open(MvpHelpDialog, {
+        data: { sections: this.mvpCalculatorService.describeRules(weights) },
+      });
+    });
   }
 }

@@ -5,6 +5,7 @@ import { UtilityService } from './utility.service';
 import { Batsmen } from '../models/batsmen.interface';
 import { Bowler } from '../models/bowler.interface';
 import { Fielder } from '../models/fielder.interface';
+import { MatchMvpSummary } from '../models/mvp.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -28,6 +29,16 @@ export class MatchService {
    * was never actually loaded.
    */
   matchNotFound: boolean = false;
+
+  /**
+   * MVP points/Man of the Match result for this match, computed once by
+   * MvpCalculatorService right when the match ends (see MatchCompleteDialog)
+   * or loaded back from Firestore for a historical match (see
+   * LoadMatchService.loadMatch). Undefined until either of those happens -
+   * match-details.component.html only renders the MoM banner/top-5 list
+   * once this is populated.
+   */
+  mvpSummary: MatchMvpSummary | undefined = undefined;
 
   /**
    * Set true by LoadMatchService once a historical match has been loaded
@@ -414,6 +425,7 @@ export class MatchService {
     this.totalOvers = null;
     this.isSecondInning = false;
     this.matchNotFound = false;
+    this.mvpSummary = undefined;
 
     // Clear the "loaded from history" timestamp fallback/flag so a fresh
     // live match derives its innings timestamps from oversPlayedData again

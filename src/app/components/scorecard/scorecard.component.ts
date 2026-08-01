@@ -23,6 +23,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { Pipe, PipeTransform } from '@angular/core';
 import { BALL_DATA } from '../../models/ball_data.class';
+import { PartnershipService } from '../../services/partnership.service';
+import { InningsBreakdown } from '../../models/partnership.interface';
 @Pipe({
   name: 'CalculateTotalRunsInOver',
   standalone: true,
@@ -71,7 +73,8 @@ export class ScorecardComponent
     public liveMatchService: LiveMatchService,
     private route: ActivatedRoute,
     private loadMatchService: LoadMatchService,
-    private eventHandlerService: EventHandlerService
+    private eventHandlerService: EventHandlerService,
+    private partnershipService: PartnershipService
   ) {}
 
   @Input('isActive') isActive!: boolean;
@@ -105,6 +108,40 @@ export class ScorecardComponent
 
   openStat(player: string): void {
     console.log(player);
+  }
+
+  /**
+   * Fall of Wickets + Partnerships breakdown for one team's innings, fully
+   * derived from ball-by-ball data (see PartnershipService) - works the
+   * same whether this is a live in-progress innings or a historical match
+   * loaded from Firestore. Recomputed on every call (cheap - an innings is
+   * at most a couple hundred balls), so it stays correct across Undo.
+   */
+  inningsBreakdown(teamKey: string): InningsBreakdown {
+    return this.partnershipService.getInningsBreakdown(
+      this.matchService.teamData[teamKey]
+    );
+  }
+
+  /** Formats a 1-based wicket number as an ordinal, e.g. 1 -> "1st", 2 -> "2nd". */
+  ordinal(n: number): string {
+    const suffixes: { [key: string]: string } = {
+      one: 'st',
+      two: 'nd',
+      few: 'rd',
+    };
+    const mod100 = n % 100;
+    if (mod100 >= 11 && mod100 <= 13) return n + 'th';
+    switch (n % 10) {
+      case 1:
+        return n + suffixes['one'];
+      case 2:
+        return n + suffixes['two'];
+      case 3:
+        return n + suffixes['few'];
+      default:
+        return n + 'th';
+    }
   }
 
   renderTableData(): void {

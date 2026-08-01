@@ -12,10 +12,13 @@ import { MatTableModule } from '@angular/material/table';
 import { CommonModule } from '@angular/common';
 import { ScoringActionsComponent } from '../scoring-actions/scoring-actions.component';
 import { MatButtonModule } from '@angular/material/button';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatchService } from '../../services/match.service';
 import { EventHandlerService } from '../../services/event-handler.service';
 import { Subscription } from 'rxjs';
 import { UtilityService } from '../../services/utility.service';
+import { PartnershipService } from '../../services/partnership.service';
+import { InningsBreakdown } from '../../models/partnership.interface';
 
 @Component({
   selector: 'app-scoring',
@@ -25,6 +28,7 @@ import { UtilityService } from '../../services/utility.service';
     CommonModule,
     ScoringActionsComponent,
     MatButtonModule,
+    MatExpansionModule,
   ],
   templateUrl: './scoring.component.html',
   styleUrl: './scoring.component.css',
@@ -38,6 +42,7 @@ export class ScoringComponent implements OnInit, OnDestroy {
   liveMatchService: LiveMatchService = inject(LiveMatchService);
   utilityService: UtilityService = inject(UtilityService);
   matchService: MatchService = inject(MatchService);
+  partnershipService: PartnershipService = inject(PartnershipService);
   displayedColumns: string[] = ['nameBat', 'runs', 'balls', 'S/R', '4s', '6s'];
   displayedColumnsBowler: string[] = [
     'nameBowl',
@@ -128,6 +133,35 @@ export class ScoringComponent implements OnInit, OnDestroy {
 
   openStat(player: string): void {
     console.log(player);
+  }
+
+  /**
+   * Fall of Wickets + Partnerships breakdown for the currently batting team,
+   * fully derived from ball-by-ball data (see PartnershipService/
+   * scorecard.component.ts, which uses the same method) - recomputed on
+   * every read so it updates ball-by-ball automatically and stays correct
+   * across Undo.
+   */
+  get currentInningsBreakdown(): InningsBreakdown {
+    return this.partnershipService.getInningsBreakdown(
+      this.matchService.teamData[this.matchService.currentRoles['bat']]
+    );
+  }
+
+  /** Formats a 1-based wicket number as an ordinal, e.g. 1 -> "1st", 2 -> "2nd". */
+  ordinal(n: number): string {
+    const mod100 = n % 100;
+    if (mod100 >= 11 && mod100 <= 13) return n + 'th';
+    switch (n % 10) {
+      case 1:
+        return n + 'st';
+      case 2:
+        return n + 'nd';
+      case 3:
+        return n + 'rd';
+      default:
+        return n + 'th';
+    }
   }
 
   reAssignBatsmenData(isSwap: boolean = false) {

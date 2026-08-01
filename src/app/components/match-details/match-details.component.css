@@ -24,3 +24,210 @@ td {
 .infoHeader {
   text-align: center;
 }
+
+/* MVP / Man of the Match section on the Match Info tab. */
+.mvp-section {
+  width: 96%;
+  margin: 12px 2% 16px 2%;
+  padding: 0;
+  border-radius: 6px;
+  background: #fafafa;
+  overflow: hidden;
+}
+
+/*
+  Man of the Match spotlight - deliberately the loudest, highest-contrast
+  element in this whole section so it's the first thing a viewer's eye
+  lands on ("center of attraction"), with the top-5 list below styled as
+  clearly secondary/supporting detail (see .mvp-secondary).
+*/
+.mom-spotlight {
+  cursor: pointer;
+  text-align: center;
+  padding: 18px 14px 20px 14px;
+  background: linear-gradient(135deg, #fff8e1, #ffd54f);
+  border-bottom: 3px solid #f5a623;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mom-spotlight:hover,
+.mom-spotlight:active {
+  background: linear-gradient(135deg, #fff3c4, #ffca28);
+}
+
+.mom-label {
+  font-size: 0.85em;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #8a6100;
+}
+
+.mom-name {
+  font-size: 1.7em;
+  font-weight: 800;
+  color: #6d4c00;
+  margin: 4px 0 2px 0;
+  line-height: 1.2;
+}
+
+.mom-points {
+  font-size: 1.05em;
+  font-weight: 600;
+  color: #8a6100;
+}
+
+/*
+  Secondary/supporting detail - visually quieter than the spotlight above
+  (smaller, muted grey instead of gold, no border/elevation of its own) so
+  it reads as "more info if you want it" rather than competing with the
+  Man of the Match for attention.
+*/
+.mvp-secondary {
+  padding: 8px 14px 12px 14px;
+}
+
+.mvp-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  font-size: 0.9em;
+  color: #757575;
+  margin-bottom: 4px;
+}
+
+.mvp-table {
+  width: 100%;
+  margin: 0;
+  border: none;
+  font-size: 0.9em;
+}
+
+.mvp-table tr,
+.mvp-table td {
+  border: none;
+  height: auto;
+  padding: 4px 8px;
+}
+
+.mvp-row {
+  cursor: pointer;
+  /* Replace the browser's default grey/blue tap flash with our own
+     intentional .mvp-row:active highlight below - some mobile browsers
+     don't render the default tap highlight on table rows at all, so we
+     can't rely on it as the "you tapped something" cue. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Desktop cue: pointer cursor (above) + background highlight on mouse
+   hover, discoverable before the user even clicks. */
+.mvp-row:hover {
+  background: #f0e9fb;
+}
+
+/* Mobile/touch cue: :active fires on touchstart (as well as mousedown),
+   so a tap gets the same instant highlight feedback a desktop user gets
+   from hovering - hover itself never fires on touchscreens, so this is
+   the touch equivalent, not just a nicety. */
+.mvp-row:active {
+  background: #e0d1f7;
+}
+
+.mvp-rank {
+  width: 10%;
+  font-weight: bold;
+  text-align: center;
+}
+
+.mvp-name {
+  width: 55%;
+  text-align: left;
+}
+
+.mvp-points {
+  width: 25%;
+  text-align: right;
+}
+
+/* Always-visible "this row opens something" affordance - not dependent on
+   hover, so it's the primary way touchscreen users (this app's main
+   audience) discover the rows are tappable, mirroring what the pointer
+   cursor silently tells desktop users. */
+.mvp-chevron {
+  width: 10%;
+  text-align: center;
+  color: #9575cd;
+}
+
+.mvp-chevron mat-icon {
+  vertical-align: middle;
+  font-size: 20px;
+  height: 20px;
+  width: 20px;
+}
+
+.mvp-title-actions {
+  display: flex;
+  align-items: center;
+  /* mat-icon-button already renders at Material's standard 40-48px touch
+     target, so the Share/Help buttons here are tap-friendly without any
+     extra sizing - just enough gap so they don't feel cramped together
+     on narrow phone widths. */
+  gap: 2px;
+}
+
+/*
+  Offscreen shareable MoM card (see MatchDetailsComponent.shareMomCard) -
+  a fixed-size template rasterized to a PNG via html2canvas, so it is
+  DELIBERATELY not responsive (it isn't rendered on-screen for the viewer
+  at all). Positioned far off the visible viewport rather than
+  display:none, since html2canvas needs the element actually laid out to
+  capture it.
+*/
+.share-card {
+  position: fixed;
+  top: 0;
+  left: -9999px;
+  width: 600px;
+  padding: 40px;
+  box-sizing: border-box;
+  text-align: center;
+  background: linear-gradient(135deg, #fff8e1, #ffd54f 60%, #f5a623);
+  font-family: Roboto, Arial, sans-serif;
+}
+
+.share-card-label {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #8a6100;
+}
+
+.share-card-name {
+  font-size: 48px;
+  font-weight: 800;
+  color: #6d4c00;
+  margin: 12px 0 4px 0;
+  line-height: 1.15;
+}
+
+.share-card-points {
+  font-size: 28px;
+  font-weight: 700;
+  color: #8a6100;
+  margin-bottom: 24px;
+}
+
+.share-card-teams {
+  font-size: 20px;
+  font-weight: 500;
+  color: #6d4c00;
+}
+
+.share-card-result {
+  font-size: 16px;
+  color: #8a6100;
+  margin-top: 4px;
+}
+

@@ -92,6 +92,52 @@
     </div>
   </div>
   <br />
+  <mat-accordion class="w-[100%]" style="margin-bottom: 10px">
+    <mat-expansion-panel class="fow-panel">
+      <mat-expansion-panel-header>
+        <mat-panel-title>Fall of Wickets &amp; Partnerships</mat-panel-title>
+      </mat-expansion-panel-header>
+      <div *ngIf="currentInningsBreakdown as breakdown">
+        <div class="fow-row" *ngIf="breakdown.fallOfWickets.length > 0">
+          <b>FoW:</b>
+          <span *ngFor="let fow of breakdown.fallOfWickets; let last = last">
+            {{ fow.wicketNumber }}-{{ fow.teamScore }} ({{ fow.batsmanOut }},
+            {{ fow.overs }} ov){{ last ? "" : ", " }}
+          </span>
+        </div>
+        <div
+          *ngIf="breakdown.fallOfWickets.length === 0"
+          class="partnerships-empty"
+        >
+          No wickets yet.
+        </div>
+        <div class="partnerships-wrap">
+          <div *ngFor="let p of breakdown.partnerships" class="partnership-card">
+            <div class="partnership-card-header">
+              <span
+                >{{ ordinal(p.wicketNumber) }} Wicket
+                <em *ngIf="p.isUnbroken">(unbroken)</em></span
+              >
+              <span class="partnership-card-total"
+                >{{ p.runs }} ({{ p.balls }})</span
+              >
+            </div>
+            <div class="partnership-contributors">
+              <span
+                *ngFor="let c of p.contributors; let last = last"
+                class="partnership-contributor"
+              >
+                {{ c.name }} {{ c.runs }}({{ c.balls }}){{
+                  last ? "" : " & "
+                }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-expansion-panel>
+  </mat-accordion>
+
   <div
     #overView
     *ngIf="!overCompleted"

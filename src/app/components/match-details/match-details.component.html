@@ -30,6 +30,7 @@
         {{ matchService.matchResult }}
       </h2>
     </div>
+
     <!--
       Shown when LoadMatchService looked for the requested match id and
       couldn't find it (bad/stale link, deleted match, etc.) instead of
@@ -139,6 +140,114 @@
         </td>
       </tr>
     </table>
+
+    <!--
+      MVP / Man of the Match section - placed below the main match-info
+      table (toss/result/overs/players/date) to match how scoreboards
+      typically lay out this kind of "extras" info online: core match facts
+      first, standout-performance highlights after. Only rendered once a
+      summary is available on MatchService (either just computed live by
+      MatchCompleteDialog when the match ended, or loaded back from the
+      match document's "mvp" field by LoadMatchService for a historical
+      match). Older matches saved before this feature existed simply won't
+      have one, so this whole block quietly disappears for them.
+    -->
+    <div
+      *ngIf="matchService.mvpSummary?.manOfTheMatch"
+      class="mvp-section mat-elevation-z4"
+    >
+      <!--
+        Man of the Match spotlight - the primary "center of attraction" of
+        this whole section, so it needs to read at a glance before anything
+        else here (the top-5 list below is deliberately styled as
+        secondary/supporting detail). Tapping it opens the same points
+        breakdown dialog as tapping their row in the top-5 list below,
+        since the Man of the Match is always topFive[0].
+      -->
+      <div
+        class="mom-spotlight"
+        *ngIf="matchService.mvpSummary?.topFive?.length"
+        (click)="openPlayerMvpBreakdown(matchService.mvpSummary!.topFive[0])"
+        title="Tap for the full points breakdown"
+      >
+        <div class="mom-label">🏆 Man of the Match</div>
+        <div class="mom-name">{{ matchService.mvpSummary?.manOfTheMatch }}</div>
+        <div class="mom-points">
+          {{ matchService.mvpSummary?.topFive?.[0]?.totalPoints }} pts
+        </div>
+      </div>
+
+      <div class="mvp-secondary">
+        <div class="mvp-title-row">
+          <span>MVP Points - Top 5 (tap a player for the full breakdown)</span>
+          <span class="mvp-title-actions">
+            <button
+              mat-icon-button
+              title="Share Man of the Match card"
+              [disabled]="isGeneratingShareCard"
+              (click)="shareMomCard()"
+            >
+              <mat-icon>share</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              title="How are MVP points calculated?"
+              (click)="openMvpHelp()"
+            >
+              <mat-icon>help_outline</mat-icon>
+            </button>
+          </span>
+        </div>
+        <table class="mvp-table">
+          <tr
+            *ngFor="let player of matchService.mvpSummary?.topFive; let i = index"
+            class="mvp-row"
+            (click)="openPlayerMvpBreakdown(player)"
+          >
+            <td class="mvp-rank">{{ i + 1 }}</td>
+            <td class="mvp-name">{{ player.name }}</td>
+            <td class="mvp-points">{{ player.totalPoints }} pts</td>
+            <!--
+              Chevron affordance - shown at all times (not just on hover), so
+              it doubles as the "this row is tappable" cue on touchscreens,
+              where there's no cursor/hover to signal it the way desktop's
+            pointer cursor + hover highlight does.
+          -->
+          <td class="mvp-chevron">
+            <mat-icon>chevron_right</mat-icon>
+          </td>
+        </tr>
+      </table>
+      </div>
+    </div>
+
+    <!--
+      Offscreen shareable MoM card - rendered off the visible viewport (not
+      display:none, since html2canvas needs the element actually laid out
+      to rasterize it) and captured to a PNG by shareMomCard() above. This
+      is a deliberately FIXED-size template, independent of the viewer's
+      own screen size, since it's turned into a static image - unlike the
+      rest of this page, it is NOT meant to be responsive.
+    -->
+    <div
+      class="share-card"
+      #shareCard
+      *ngIf="matchService.mvpSummary?.manOfTheMatch"
+    >
+      <div class="share-card-label">🏆 MAN OF THE MATCH</div>
+      <div class="share-card-name">
+        {{ matchService.mvpSummary?.manOfTheMatch }}
+      </div>
+      <div class="share-card-points">
+        {{ matchService.mvpSummary?.topFive?.[0]?.totalPoints }} pts
+      </div>
+      <div class="share-card-teams">
+        {{ matchService.teamData['team1']['name'] }} vs
+        {{ matchService.teamData['team2']['name'] }}
+      </div>
+      <div class="share-card-result">{{ matchService.matchResult }}</div>
+    </div>
+
     <div style="justify-content: center; display: flex">
       <button mat-raised-button class="mb-4 mt-4" color="warn" (click)="exit()">
         Exit

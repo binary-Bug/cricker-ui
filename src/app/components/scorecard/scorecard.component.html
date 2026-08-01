@@ -106,6 +106,18 @@
         </h5>
       </div>
     </div>
+    <div
+      *ngIf="inningsBreakdown(FIBattingTeamKey) as fiBreakdown"
+      class="fow-row"
+    >
+      <ng-container *ngIf="fiBreakdown.fallOfWickets.length > 0">
+        <b>FoW:</b>
+        <span *ngFor="let fow of fiBreakdown.fallOfWickets; let last = last">
+          {{ fow.wicketNumber }}-{{ fow.teamScore }} ({{ fow.batsmanOut }},
+          {{ fow.overs }} ov){{ last ? "" : ", " }}
+        </span>
+      </ng-container>
+    </div>
     <h1></h1>
 
     <table
@@ -252,6 +264,18 @@
           }}
         </h5>
       </div>
+    </div>
+    <div
+      *ngIf="inningsBreakdown(SIBattingTeamKey) as siBreakdown"
+      class="fow-row"
+    >
+      <ng-container *ngIf="siBreakdown.fallOfWickets.length > 0">
+        <b>FoW:</b>
+        <span *ngFor="let fow of siBreakdown.fallOfWickets; let last = last">
+          {{ fow.wicketNumber }}-{{ fow.teamScore }} ({{ fow.batsmanOut }},
+          {{ fow.overs }} ov){{ last ? "" : ", " }}
+        </span>
+      </ng-container>
     </div>
     <h1></h1>
 
@@ -422,6 +446,105 @@
               </div>
             </div>
           </ng-container>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-expansion-panel>
+  <div style="height: 1px; background-color: #0000001a"></div>
+  <mat-expansion-panel class="headers-align">
+    <mat-expansion-panel-header>
+      <mat-panel-title> Partnerships </mat-panel-title>
+      <mat-panel-description> </mat-panel-description>
+    </mat-expansion-panel-header>
+    <mat-tab-group>
+      <mat-tab label="{{ matchService.teamData[FIBattingTeamKey].name }}">
+        <div
+          *ngIf="inningsBreakdown(FIBattingTeamKey) as fiBreakdown"
+          class="partnerships-wrap"
+        >
+          <div
+            *ngIf="fiBreakdown.partnerships.length === 0"
+            class="partnerships-empty"
+          >
+            No partnerships yet.
+          </div>
+          <div
+            *ngFor="let p of fiBreakdown.partnerships"
+            class="partnership-card"
+          >
+            <div class="partnership-card-header">
+              <span
+                >{{ ordinal(p.wicketNumber) }} Wicket
+                <em *ngIf="p.isUnbroken">(unbroken)</em></span
+              >
+              <span class="partnership-card-total"
+                >{{ p.runs }} ({{ p.balls }})</span
+              >
+            </div>
+            <div class="partnership-fow-detail" *ngIf="!p.isUnbroken">
+              {{ p.batsmanOut }} out - {{ p.brokenAtTeamScore }}/{{
+                p.wicketNumber
+              }}
+              ({{ p.brokenAtOvers }} ov)<span *ngIf="p.dismissal">
+                , {{ p.dismissal }}</span
+              >
+            </div>
+            <div class="partnership-contributors">
+              <ng-container
+                *ngFor="let c of p.contributors; let last = last"
+              >
+                <span class="partnership-contributor"
+                  >{{ c.name }} {{ c.runs }}({{ c.balls }})</span
+                >
+                <span class="partnership-separator" *ngIf="!last">&amp;</span>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+      <mat-tab label="{{ matchService.teamData[SIBattingTeamKey].name }}">
+        <div
+          *ngIf="inningsBreakdown(SIBattingTeamKey) as siBreakdown"
+          class="partnerships-wrap"
+        >
+          <div
+            *ngIf="siBreakdown.partnerships.length === 0"
+            class="partnerships-empty"
+          >
+            No partnerships yet.
+          </div>
+          <div
+            *ngFor="let p of siBreakdown.partnerships"
+            class="partnership-card"
+          >
+            <div class="partnership-card-header">
+              <span
+                >{{ ordinal(p.wicketNumber) }} Wicket
+                <em *ngIf="p.isUnbroken">(unbroken)</em></span
+              >
+              <span class="partnership-card-total"
+                >{{ p.runs }} ({{ p.balls }})</span
+              >
+            </div>
+            <div class="partnership-fow-detail" *ngIf="!p.isUnbroken">
+              {{ p.batsmanOut }} out - {{ p.brokenAtTeamScore }}/{{
+                p.wicketNumber
+              }}
+              ({{ p.brokenAtOvers }} ov)<span *ngIf="p.dismissal">
+                , {{ p.dismissal }}</span
+              >
+            </div>
+            <div class="partnership-contributors">
+              <ng-container
+                *ngFor="let c of p.contributors; let last = last"
+              >
+                <span class="partnership-contributor"
+                  >{{ c.name }} {{ c.runs }}({{ c.balls }})</span
+                >
+                <span class="partnership-separator" *ngIf="!last">&amp;</span>
+              </ng-container>
+            </div>
+          </div>
         </div>
       </mat-tab>
     </mat-tab-group>
