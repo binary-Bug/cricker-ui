@@ -1,4 +1,11 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewChecked,
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { ScorecardComponent } from '../scorecard/scorecard.component';
@@ -34,7 +41,7 @@ import { PlayerMvpBreakdown } from '../../models/mvp.interface';
   templateUrl: './match-details.component.html',
   styleUrl: './match-details.component.css',
 })
-export class MatchDetailsComponent implements OnInit, OnDestroy {
+export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecked {
   constructor(
     public matchService: MatchService,
     private eventHandlerService: EventHandlerService,
@@ -56,6 +63,20 @@ export class MatchDetailsComponent implements OnInit, OnDestroy {
   @ViewChild('shareCard') shareCardRef: ElementRef<HTMLDivElement> | undefined;
   /** True while the share card image is being generated - disables the Share button so a slow render/tap-happy user can't kick off multiple overlapping shares. */
   public isGeneratingShareCard: boolean = false;
+  /**
+   * Pre-rendered share card image, captured as soon as #shareCard first
+   * becomes available (see ngAfterViewChecked/prerenderShareCard) rather
+   * than on-demand inside shareMomCard(). This closes the async gap
+   * between the user's tap and the navigator.share() call - html2canvas
+   * can take a noticeable moment, and some Android WebView-based wrapper
+   * apps (e.g. Median/GoNative hybrid shells used to publish this site as
+   * an APK) only honor a Web Share API call made almost synchronously
+   * within the click's user-activation window, silently rejecting it (or
+   * not exposing navigator.share at all) once an await has intervened -
+   * even though the same page works fine in a real mobile browser tab.
+   */
+  private cachedShareBlob: Blob | null = null;
+  private hasAttemptedSharePrerender = false;
 
   ngOnInit(): void {
     this.route.url.subscribe((url) => {
@@ -83,6 +104,38 @@ export class MatchDetailsComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach((sub) => {
       sub.unsubscribe();
     });
+  }
+
+  /**
+   * Fires on every change-detection pass, but only actually does anything
+   * once: the first time #shareCard exists in the DOM (it's behind
+   * `*ngIf="mvpSummary?.manOfTheMatch"`, so it isn't there yet on the very
+   * first check while the match is still loading). At that point we
+   * pre-render its PNG in the background, well before the user ever taps
+   * Share - see cachedShareBlob's doc comment for why this timing matters.
+   */
+  ngAfterViewChecked(): void {
+    if (!this.hasAttemptedSharePrerender && this.shareCardRef) {
+      this.hasAttemptedSharePrerender = true;
+      this.prerenderShareCard();
+    }
+  }
+
+  private async prerenderShareCard(): Promise<void> {
+    if (!this.shareCardRef) return;
+    try {
+      const canvas = await html2canvas(this.shareCardRef.nativeElement, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+      });
+      this.cachedShareBlob = await new Promise((resolve) =>
+        canvas.toBlob((b) => resolve(b), 'image/png')
+      );
+    } catch {
+      // Non-fatal - shareMomCard() falls back to rendering it live on
+      // demand if the pre-render didn't succeed for any reason.
+      this.cachedShareBlob = null;
+    }
   }
 
   /**
@@ -121,8 +174,33 @@ export class MatchDetailsComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Returns the Median/GoNative JavaScript Bridge object if this page is
+   * currently running inside a Median-built (or legacy GoNative) Android/iOS
+   * WebView wrapper app, or undefined in a normal browser tab. The bridge is
+   * injected onto `window.median` (or `window.gonative` for apps that
+   * predate the Median.co rebrand) only at runtime inside their app shell -
+   * see https://docs.median.co/docs/javascript-bridge.
+   */
+  private getWebViewBridge():
+    | { share?: { sharePage?: (opts: { url?: string; text?: string }) => void } }
+    | undefined {
+    const win = window as any;
+    return win.median ?? win.gonative;
+  }
+
+  /**
    * Renders the offscreen #shareCard template into a PNG (via html2canvas)
    * and shares/copies/downloads it, in this priority order:
+   *   0. Median/GoNative JS Bridge (`median.share.sharePage()`) - used only
+   *      when this page is running inside a Median-built Android/iOS
+   *      wrapper app (see getWebViewBridge). These WebView shells often
+   *      don't expose (or reliably honor) the standard `navigator.share()`
+   *      Web Share API, but Median's own bridge opens the real native share
+   *      sheet directly, bypassing that limitation entirely. It can only
+   *      share a URL + text (not our generated PNG file - Median's
+   *      file/image share commands require the file to already be hosted
+   *      at a public URL, which our client-rendered canvas never is), so
+   *      recipients get a link back to this match instead of the image.
    *   1. Web Share API with a file attachment (`navigator.share`) - the
    *      primary path on mobile browsers (Android Chrome, iOS Safari) and
    *      several desktop browsers (Chromium/Safari) - opens the OS's
@@ -139,15 +217,39 @@ export class MatchDetailsComponent implements OnInit, OnDestroy {
    */
   async shareMomCard(): Promise<void> {
     if (!this.shareCardRef || this.isGeneratingShareCard) return;
+
+    const momName = this.matchService.mvpSummary?.manOfTheMatch || 'MVP';
+
+    // Checked first and synchronously (no await before it) so it fires
+    // within the click's user-activation window, and before any
+    // html2canvas work - we don't need the rendered image for this path.
+    const bridge = this.getWebViewBridge();
+    if (bridge?.share?.sharePage) {
+      bridge.share.sharePage({
+        url: window.location.href,
+        text: `\ud83c\udfc6 ${momName} - Man of the Match!`,
+      });
+      return;
+    }
+
     this.isGeneratingShareCard = true;
     try {
-      const canvas = await html2canvas(this.shareCardRef.nativeElement, {
-        backgroundColor: '#ffffff',
-        scale: 2,
-      });
-      const blob: Blob | null = await new Promise((resolve) =>
-        canvas.toBlob((b) => resolve(b), 'image/png')
-      );
+      // Prefer the pre-rendered image (see cachedShareBlob) so
+      // navigator.share() below fires as close to the tap as possible. Only
+      // fall back to rendering it live here (the old behavior) if the
+      // pre-render hasn't happened/succeeded yet - e.g. a very fast tap
+      // right as the match finished loading.
+      const blob: Blob | null =
+        this.cachedShareBlob ??
+        (await (async () => {
+          const canvas = await html2canvas(this.shareCardRef!.nativeElement, {
+            backgroundColor: '#ffffff',
+            scale: 2,
+          });
+          return new Promise<Blob | null>((resolve) =>
+            canvas.toBlob((b) => resolve(b), 'image/png')
+          );
+        })());
       if (!blob) {
         this.snackBar.open('Could not generate the share image.', 'Dismiss', {
           duration: 4000,
@@ -155,7 +257,6 @@ export class MatchDetailsComponent implements OnInit, OnDestroy {
         return;
       }
 
-      const momName = this.matchService.mvpSummary?.manOfTheMatch || 'MVP';
       const fileName = `${momName}-man-of-the-match.png`.replace(/\s+/g, '-');
       const file = new File([blob], fileName, { type: 'image/png' });
       const shareData = {
