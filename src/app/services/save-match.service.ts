@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Team } from '../models/team.interface';
+import { Batsmen } from '../models/batsmen.interface';
 import { addDoc, collection, Firestore } from '@angular/fire/firestore';
 import { MatchService } from './match.service';
 import { ModeService } from './mode.service';
@@ -126,14 +127,76 @@ export class SaveMatchService {
     teamObj[key]['oversPlayedData'] = overDTO;
   }
 
+  /**
+   * Removes batsmen entries that never really got to the crease (0 runs AND
+   * 0 balls faced) - this guards against accidental "new batsman" mis-taps
+   * during live scoring that get corrected moments later without the wrong
+   * name ever facing a ball.
+   *
+   * BUT a legitimate not-out survivor (e.g. a non-striker who never got the
+   * strike before the innings ended - all out, overs completed, or target
+   * chased) can have that exact same 0/0 signature, and a blind runs/balls
+   * filter used to strip them too, leaving strikerIndex/nonStrikerIndex
+   * pointing out of bounds (see the missing-batsmen prod data bug this
+   * fixes the root cause of).
+   *
+   * The two cases are disambiguated per team via filterBatsmenForTeam().
+   */
   filterIncorrectBatsmenData(): void {
-    this.matchService.teamData['team1'].Batsmens = this.matchService.teamData[
-      'team1'
-    ].Batsmens.filter((batsman) => batsman.runs > 0 || batsman.balls > 0);
+    this.filterBatsmenForTeam('team1');
+    this.filterBatsmenForTeam('team2');
+  }
 
-    this.matchService.teamData['team2'].Batsmens = this.matchService.teamData[
-      'team2'
-    ].Batsmens.filter((batsman) => batsman.runs > 0 || batsman.balls > 0);
+  /**
+   * A mis-tapped/corrected batsman is already spliced out of Batsmens (and
+   * strikerIndex/nonStrikerIndex already repointed to the corrected name) by
+   * MatchService.undoBatsmenPlayerReferenceForWicket() the moment a scorer
+   * fixes it via Undo - so by save time it's simply gone, not sitting here
+   * at 0/0. Anything STILL referenced by strikerIndex/nonStrikerIndex at
+   * save time is therefore either a genuine not-out survivor, or (rarely) an
+   * uncorrected mistake that was never undone.
+   *
+   * To tell those two apart, a team can never legitimately have more
+   * batsmen than totalPlayers - so a 0/0 index occupant is only protected
+   * from removal if keeping it stays within the team's real roster size.
+   * If protecting it would exceed totalPlayers, it falls back to the
+   * original blanket removal (this is what correctly filters out a bogus
+   * entry like a scorer typing "Null"/similar for a wicket that didn't
+   * actually need a new batsman).
+   */
+  private filterBatsmenForTeam(teamKey: 'team1' | 'team2'): void {
+    const team = this.matchService.teamData[teamKey];
+    const batsmens = team.Batsmens;
+    const isUnfaced = (b: Batsmen) => b.runs === 0 && b.balls === 0;
+
+    const strikerBatsmen = batsmens[team.strikerIndex];
+    const nonStrikerBatsmen = batsmens[team.nonStrikerIndex];
+
+    const candidateProtections = [strikerBatsmen, nonStrikerBatsmen].filter(
+      (b): b is Batsmen => !!b && isUnfaced(b)
+    );
+    const uniqueProtections = Array.from(new Set(candidateProtections));
+
+    const totalPlayers = this.matchService.totalPlayers;
+    const nonZeroCount = batsmens.filter((b) => !isUnfaced(b)).length;
+    const canProtect =
+      totalPlayers !== null &&
+      nonZeroCount + uniqueProtections.length <= totalPlayers;
+
+    const filtered = batsmens.filter(
+      (b) => !isUnfaced(b) || (canProtect && uniqueProtections.includes(b))
+    );
+
+    if (strikerBatsmen) {
+      const newStrikerIndex = filtered.indexOf(strikerBatsmen);
+      if (newStrikerIndex !== -1) team.strikerIndex = newStrikerIndex;
+    }
+    if (nonStrikerBatsmen) {
+      const newNonStrikerIndex = filtered.indexOf(nonStrikerBatsmen);
+      if (newNonStrikerIndex !== -1) team.nonStrikerIndex = newNonStrikerIndex;
+    }
+
+    team.Batsmens = filtered;
   }
 
   filterIncorrectBowlersData(): void {
