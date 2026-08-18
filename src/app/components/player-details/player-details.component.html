@@ -1,77 +1,104 @@
-<mat-tab-group>
-  <mat-tab label="Player Details">
-    <div>
-      <div
-        class="grid grid-cols-3 place-items-start gap-4 mb-2"
-        style="min-height: 60px; padding-top: 10px; padding-left: 5px"
-      >
-        <div>
-          <button
-            mat-mini-fab
-            color="primary"
-            (click)="router.navigateByUrl(backTarget)"
+<!--
+  Player Details page.
+
+  Reached from 3 different entry points (All Players list, /stats table,
+  match-details' exit/back flow) - all route to this same component via
+  `player-details?name=X&from=Y`, so this redesign renders identically no
+  matter where the user came from; only the `from`-driven backTarget
+  differs (see player-details.component.ts's ngOnInit).
+
+  Wrapped in the same centered max-width container used by the room
+  dashboard and All Players redesigns, so this page doesn't stretch
+  edge-to-edge on large desktop screens.
+-->
+<div class="player-details-container">
+  <!-- player-tab-group: scoping class so the pill-style restyle in
+       player-details.component.css (via :host ::ng-deep) only affects
+       this page's tab bar, not the other mat-tab-group instances used in
+       match-details/scorecard/live-match-dashboard. -->
+  <mat-tab-group class="player-tab-group">
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon class="tab-label-icon">person</mat-icon>
+        Player Details
+      </ng-template>
+      <div class="player-header">
+        <!-- mat-icon (not the icons8 raster image used elsewhere in the
+             app) to stay consistent with the All Players/room dashboard
+             redesigns. -->
+        <button
+          mat-mini-fab
+          color="primary"
+          aria-label="Back"
+          (click)="router.navigateByUrl(backTarget)"
+        >
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+
+        <!-- Colored initials avatar - same shared UtilityService helper
+             (hash-based palette) used on the All Players cards, so a
+             given player always gets the exact same avatar color/initials
+             everywhere in the app. -->
+        <div
+          class="player-avatar"
+          [style.background-color]="
+            utilityService.getAvatarColor(currentPlayer?.name ?? '')
+          "
+        >
+          {{ utilityService.getInitials(currentPlayer?.name ?? "") }}
+        </div>
+
+        <h2 class="player-name-row">
+          <span class="player-name">{{ currentPlayer?.name }}</span>
+          <!-- MoM badge - only shown once this player has been named Man of the Match at least once (see PlayerService.applyMvpPointsToPlayers). -->
+          <span
+            *ngIf="currentPlayer?.momCount && currentPlayer!.momCount > 0"
+            class="mom-badge"
+            title="Man of the Match {{ currentPlayer?.momCount }} time(s)"
           >
-            <img
-              src="https://img.icons8.com/?size=100&id=65a5j6IY0Vy2&format=png&color=FFFFFF"
-              style="width: 40px"
-            />
-          </button>
-        </div>
-        <div class="col-span-2">
-          <h2 class="player-name-row">
-            <span class="player-name">{{ currentPlayer?.name }}</span>
-            <!-- MoM badge - only shown once this player has been named Man of the Match at least once (see PlayerService.applyMvpPointsToPlayers). -->
-            <span
-              *ngIf="currentPlayer?.momCount && currentPlayer!.momCount > 0"
-              class="mom-badge"
-              title="Man of the Match {{ currentPlayer?.momCount }} time(s)"
-            >
-              <span class="mom-badge-icon">🏆</span>
-              <span class="mom-badge-count"
-                >x{{ currentPlayer?.momCount }}</span
-              >
-            </span>
-          </h2>
-        </div>
+            <span class="mom-badge-icon">🏆</span>
+            <span class="mom-badge-count">x{{ currentPlayer?.momCount }}</span>
+          </span>
+        </h2>
       </div>
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 place-items-center">
+
+      <!--
+        Overview tiles - each colored by category (see .stat-tile-* accent
+        variants in the CSS) so the same color language used for MVP/MoM
+        badges elsewhere in the app (blue = MVP, gold = MoM) carries
+        through here too. These are plain non-interactive divs (no
+        Material button/ripple) since tapping them does nothing - only
+        "Best MVP Performance" below is a real button, since it navigates.
+      -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 overview-grid">
         <ng-container *ngFor="let stat of overviewStats">
-          <div class="stat-card-overview" style="display: inline-block">
-            <button mat-fab class="stat-card-btn">
-              <div class="stat-label">{{ stat.label }}</div>
-              <h1 class="stat-value">
-                {{ stat.value }}
-              </h1>
-            </button>
+          <div class="stat-tile stat-tile-{{ stat.accent }}">
+            <div class="stat-label">{{ stat.label }}</div>
+            <h1 class="stat-value">{{ stat.value }}</h1>
           </div>
         </ng-container>
-        <div
-          class="stat-card-overview"
-          style="display: inline-block"
+        <button
           *ngIf="currentPlayer?.bestMvpMatchId"
+          type="button"
+          class="stat-tile stat-tile-clickable"
+          title="View this match"
+          (click)="
+            router.navigateByUrl(
+              'match-details?id=' +
+                currentPlayer!.bestMvpMatchId +
+                '&playerName=' +
+                currentPlayer!.name +
+                '&from=' +
+                backTarget
+            )
+          "
         >
-          <button
-            mat-fab
-            class="stat-card-btn"
-            title="View this match"
-            (click)="
-              router.navigateByUrl(
-                'match-details?id=' +
-                  currentPlayer!.bestMvpMatchId +
-                  '&playerName=' +
-                  currentPlayer!.name +
-                  '&from=' +
-                  backTarget
-              )
-            "
-          >
-            <div class="stat-label">Best MVP Performance</div>
-            <h1 class="stat-value">
-              {{ currentPlayer?.bestMvpPoints ?? 0 }}
-            </h1>
-          </button>
-        </div>
+          <div class="stat-label">Best MVP Performance</div>
+          <h1 class="stat-value">{{ currentPlayer?.bestMvpPoints ?? 0 }}</h1>
+          <mat-icon class="stat-tile-chevron">chevron_right</mat-icon>
+        </button>
       </div>
+
       <div
         class="mvp-sparkline-wrap"
         *ngIf="
@@ -111,29 +138,36 @@
           </ng-container>
         </svg>
       </div>
-    </div>
-    <div style="display: flex; place-content: center; flex-wrap: wrap">
-      <mat-button-toggle-group
-        appearance="standard"
-        #selectedStat="matButtonToggleGroup"
-        [value]="selectedStatOption"
-      >
-        <mat-button-toggle value="batting" aria-label="Text align left">
-          Batting
-        </mat-button-toggle>
-        <mat-button-toggle value="bowling" aria-label="Text align center">
-          Bowling
-        </mat-button-toggle>
-        <mat-button-toggle value="fielding" aria-label="Text align right">
-          Fielding
-        </mat-button-toggle>
-      </mat-button-toggle-group>
-    </div>
-    <div *ngIf="selectedStat.value === 'batting'">
-      <div class="grid grid-cols-2 gap-4 place-items-center mt-4">
-        <ng-container *ngFor="let stat of batsmenStats">
-          <div class="stat-card-role col-span-1" style="display: inline-block">
-            <button mat-fab class="stat-card-btn">
+
+      <!-- Batting/Bowling/Fielding toggle - restyled as a pill/segmented
+           control matching All Players' "Sort by" toggle, with an icon
+           per tab for quicker recognition. -->
+      <div class="role-toggle-wrap">
+        <mat-button-toggle-group
+          appearance="standard"
+          class="role-toggle-group"
+          #selectedStat="matButtonToggleGroup"
+          [value]="selectedStatOption"
+        >
+          <mat-button-toggle value="batting" aria-label="Batting stats">
+            <mat-icon class="role-toggle-icon">sports_cricket</mat-icon>
+            Batting
+          </mat-button-toggle>
+          <mat-button-toggle value="bowling" aria-label="Bowling stats">
+            <mat-icon class="role-toggle-icon">sports_baseball</mat-icon>
+            Bowling
+          </mat-button-toggle>
+          <mat-button-toggle value="fielding" aria-label="Fielding stats">
+            <mat-icon class="role-toggle-icon">front_hand</mat-icon>
+            Fielding
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+
+      <div *ngIf="selectedStat.value === 'batting'">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 role-stats-grid">
+          <ng-container *ngFor="let stat of batsmenStats">
+            <div class="stat-tile stat-tile-role">
               <div class="stat-label">{{ stat.label }}</div>
               <h1 class="stat-value">
                 {{ stat.value | number : "1.0-0" }}<span
@@ -144,28 +178,22 @@
                   >*</span
                 >
               </h1>
-            </button>
-          </div>
-        </ng-container>
-      </div>
-      <div class="grid grid-cols-3 gap-4 place-items-center">
-        <ng-container *ngFor="let stat of extendedBattingStats">
-          <div class="stat-card-overview" style="display: inline-block">
-            <button mat-fab class="stat-card-btn">
+            </div>
+          </ng-container>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 role-stats-grid">
+          <ng-container *ngFor="let stat of extendedBattingStats">
+            <div class="stat-tile stat-tile-neutral">
               <div class="stat-label">{{ stat.label }}</div>
-              <h1 class="stat-value">
-                {{ stat.value | number : "1.0-1" }}
-              </h1>
-            </button>
-          </div>
-        </ng-container>
+              <h1 class="stat-value">{{ stat.value | number : "1.0-1" }}</h1>
+            </div>
+          </ng-container>
+        </div>
       </div>
-    </div>
-    <div *ngIf="selectedStat.value === 'bowling'">
-      <div class="grid grid-cols-2 gap-4 place-items-center mt-4">
-        <ng-container *ngFor="let stat of bowlerStats">
-          <div class="stat-card-role col-span-1" style="display: inline-block">
-            <button mat-fab class="stat-card-btn">
+      <div *ngIf="selectedStat.value === 'bowling'">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 role-stats-grid">
+          <ng-container *ngFor="let stat of bowlerStats">
+            <div class="stat-tile stat-tile-role">
               <div class="stat-label">{{ stat.label }}</div>
               <h1
                 *ngIf="stat.label !== 'BBI' && stat.label !== 'Wickets'"
@@ -179,46 +207,42 @@
               >
                 {{ stat.value }}
               </h1>
-            </button>
-          </div>
-        </ng-container>
-      </div>
-      <div class="grid grid-cols-3 gap-4 place-items-center">
-        <ng-container *ngFor="let stat of extendedBowlingStats">
-          <div class="stat-card-overview" style="display: inline-block">
-            <button mat-fab class="stat-card-btn">
-              <div class="stat-label">{{ stat.label }}</div>
-              <h1 class="stat-value">
-                {{ stat.value | number : "1.0-1" }}
-              </h1>
-            </button>
-          </div>
-        </ng-container>
-      </div>
-    </div>
-    <div
-      *ngIf="selectedStat.value === 'fielding'"
-      class="grid grid-cols-2 gap-4 place-items-center mt-4"
-    >
-      <ng-container *ngFor="let stat of fielderStats">
-        <div class="stat-card-role col-span-1" style="display: inline-block">
-          <button mat-fab class="stat-card-btn">
-            <div class="stat-label">{{ stat.label }}</div>
-            <h1 class="stat-value">
-              {{ stat.value }}
-            </h1>
-          </button>
+            </div>
+          </ng-container>
         </div>
-      </ng-container>
-    </div>
-  </mat-tab>
-  <mat-tab label="Matches Played">
-    <app-match-list
-      [matchIds]="currentPlayer?.matchIds"
-      [mvpPointsHistory]="currentPlayer?.mvpPointsHistory"
-      [isPlayerList]="true"
-      [backTarget]="backTarget"
-      playerName="{{ currentPlayer?.name }}"
-    ></app-match-list>
-  </mat-tab>
-</mat-tab-group>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 role-stats-grid">
+          <ng-container *ngFor="let stat of extendedBowlingStats">
+            <div class="stat-tile stat-tile-neutral">
+              <div class="stat-label">{{ stat.label }}</div>
+              <h1 class="stat-value">{{ stat.value | number : "1.0-1" }}</h1>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+      <div
+        *ngIf="selectedStat.value === 'fielding'"
+        class="grid grid-cols-2 sm:grid-cols-3 gap-3 role-stats-grid"
+      >
+        <ng-container *ngFor="let stat of fielderStats">
+          <div class="stat-tile stat-tile-role">
+            <div class="stat-label">{{ stat.label }}</div>
+            <h1 class="stat-value">{{ stat.value }}</h1>
+          </div>
+        </ng-container>
+      </div>
+    </mat-tab>
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon class="tab-label-icon">sports_cricket</mat-icon>
+        Matches Played
+      </ng-template>
+      <app-match-list
+        [matchIds]="currentPlayer?.matchIds"
+        [mvpPointsHistory]="currentPlayer?.mvpPointsHistory"
+        [isPlayerList]="true"
+        [backTarget]="backTarget"
+        playerName="{{ currentPlayer?.name }}"
+      ></app-match-list>
+    </mat-tab>
+  </mat-tab-group>
+</div>

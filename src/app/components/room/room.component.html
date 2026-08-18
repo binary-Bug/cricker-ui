@@ -1,111 +1,151 @@
-<div class="main grid justify-content-center">
-  <div class="grid place-items-center">
-    <div class="example-button-row grid place-items-center">
-      <div>
-        <img class="w-[90px]" src="favicon.ico" />
-        <br />
-      </div>
-      <div *ngIf="roomService.currentRoom !== null">
-        <h1 class="text-6xl text-purple-800 font-mono">
-          Current room id is {{ roomService.currentRoom.roomId }}
-        </h1>
-      </div>
-      <div>
-        <button
-          mat-raised-button
-          color="primary"
-          style="width: 12em; height: 6em"
-          (click)="openCodeDialog()"
-        >
-          Create New Match
-        </button>
-      </div>
+<!--
+  Room / Dashboard page.
 
-      <div>
-        <button
-          mat-raised-button
-          style="width: 10em; height: 6em"
-          (click)="viewAllPlayers()"
-        >
-          View All Players
-        </button>
-      </div>
+  This used to be a "join or create a room" screen, but that flow is
+  currently bypassed app-wide (RoomService.createRoom() has no reachable
+  caller today - rooms are never actually created/joined), so in practice
+  this page is just the app's main navigation dashboard. It's redesigned
+  as a mobile-first "app dashboard": one prominent hero action (Create
+  New Match), a responsive icon-tile grid for everyday navigation
+  (Explore), and a visually-separated Developer Tools section for the
+  test-mode-only utilities. All click handlers/navigation/mode-switching
+  logic are unchanged from before this redesign - this is a presentation
+  layer change only.
 
-      <div>
-        <button
-          mat-raised-button
-          style="width: 10em; height: 6em"
-          (click)="viewAllMatches()"
-        >
-          View All Matches
-        </button>
-      </div>
-
-      <div>
-        <button
-          mat-raised-button
-          style="width: 10em; height: 6em"
-          (click)="viewStats()"
-        >
-          View Stats
-        </button>
-      </div>
-
-      <div *ngIf="!isProdEnv">
-        <button
-          mat-raised-button
-          style="width: 10em; height: 6em"
-          (click)="viewAllTestMatches()"
-        >
-          View All Test Matches
-        </button>
-      </div>
-
-      <div *ngIf="!isProdEnv">
-        <button
-          mat-raised-button
-          style="width: 10em; height: 6em"
-          (click)="viewAllTestPlayers()"
-        >
-          View All Test Players
-        </button>
-      </div>
-
-      <div *ngIf="!isProdEnv">
-        <button
-          mat-raised-button
-          style="width: 10em; height: 6em"
-          (click)="viewTestStats()"
-        >
-          View Test Stats
-        </button>
-      </div>
-
-      <div *ngIf="!isProdEnv">
-        <button
-          mat-raised-button
-          style="width: 10em; height: 6em"
-          (click)="UpdateProdPlayerData()"
-        >
-          Update Prod Player Data
-        </button>
-      </div>
-
-      <div *ngIf="roomService.currentRoom !== null">
-        <button
-          mat-raised-button
-          color="warn"
-          style="width: 7em; height: 4em; background-color: red"
-          (click)="exit()"
-        >
-          Exit Room
-        </button>
-      </div>
-
-      <div style="margin-top: 20px; margin-right: 7px; color: #555; font-size: 0.9em">
-          Version: {{ version }}
-      </div>
-
-    </div>
+  The two-column-on-mobile / three-on-tablet / four-on-desktop grid
+  columns come from Tailwind's responsive utility classes (grid-cols-2
+  sm:grid-cols-3 lg:grid-cols-4 - Tailwind is loaded via the CDN script
+  in index.html, same pattern already used elsewhere e.g.
+  player-details.component.html). Anything Tailwind doesn't cover
+  (tile elevation/sizing, accent colors, the hero button, section
+  dividers) lives in room.component.css.
+-->
+<div class="dashboard-container">
+  <!-- Header: logo + app name/title + tagline. Enhanced vs. the old
+       icon-only header for more visual presence on first load. -->
+  <div class="dashboard-header">
+    <img class="app-logo" src="favicon.ico" alt="Cricker logo" />
+    <h1 class="app-title">Cricker</h1>
+    <p class="app-tagline">Score. Track. Compete.</p>
   </div>
+
+  <!--
+    Room-id banner - intentionally left near-untouched (not a focus of
+    this redesign). Only ever renders when roomService.currentRoom is
+    non-null, which doesn't happen today since room creation/joining is
+    bypassed. Kept in case that flow is reactivated later.
+  -->
+  <div *ngIf="roomService.currentRoom !== null" class="room-banner">
+    <h1 class="text-6xl text-purple-800 font-mono">
+      Current room id is {{ roomService.currentRoom.roomId }}
+    </h1>
+  </div>
+
+  <!--
+    Primary CTA. Deliberately icon-free/text-only (unlike every tile
+    below it) so it stands out as the one "special" action on the page,
+    rather than blending into the icon-forward grid.
+  -->
+  <button
+    mat-raised-button
+    color="primary"
+    class="hero-cta"
+    (click)="openCodeDialog()"
+  >
+    Create New Match
+  </button>
+
+  <!-- Explore: everyday navigation, always visible. -->
+  <section class="dashboard-section">
+    <h2 class="section-label">Explore</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <button
+        mat-raised-button
+        class="dashboard-tile"
+        (click)="viewAllPlayers()"
+      >
+        <mat-icon class="tile-icon">groups</mat-icon>
+        <span class="tile-label">View All Players</span>
+      </button>
+
+      <button
+        mat-raised-button
+        class="dashboard-tile"
+        (click)="viewAllMatches()"
+      >
+        <mat-icon class="tile-icon">sports_cricket</mat-icon>
+        <span class="tile-label">View All Matches</span>
+      </button>
+
+      <button mat-raised-button class="dashboard-tile" (click)="viewStats()">
+        <mat-icon class="tile-icon">bar_chart</mat-icon>
+        <span class="tile-label">View Stats</span>
+      </button>
+    </div>
+  </section>
+
+  <!--
+    Developer Tools: test-mode-only utilities. Visually separated (amber
+    accent + divider/label) purely for clarity that these are a different
+    kind of action - the *ngIf="!isProdEnv" here is the SAME visibility
+    condition each button used individually before this redesign, just
+    hoisted onto the wrapping <section> since all 4 tiles always share
+    it. Styling is config-driven-visibility-agnostic: this section is
+    either fully present or fully absent, exactly as before.
+  -->
+  <section *ngIf="!isProdEnv" class="dashboard-section dev-tools-section">
+    <div class="section-divider">
+      <mat-icon class="section-divider-icon">science</mat-icon>
+      <h2 class="section-label dev-tools-label">Developer Tools</h2>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <button
+        mat-raised-button
+        class="dashboard-tile dev-tile"
+        (click)="viewAllTestMatches()"
+      >
+        <mat-icon class="tile-icon">sports_cricket</mat-icon>
+        <span class="tile-label">View All Test Matches</span>
+      </button>
+
+      <button
+        mat-raised-button
+        class="dashboard-tile dev-tile"
+        (click)="viewAllTestPlayers()"
+      >
+        <mat-icon class="tile-icon">groups</mat-icon>
+        <span class="tile-label">View All Test Players</span>
+      </button>
+
+      <button
+        mat-raised-button
+        class="dashboard-tile dev-tile"
+        (click)="viewTestStats()"
+      >
+        <mat-icon class="tile-icon">insights</mat-icon>
+        <span class="tile-label">View Test Stats</span>
+      </button>
+
+      <button
+        mat-raised-button
+        class="dashboard-tile dev-tile"
+        (click)="UpdateProdPlayerData()"
+      >
+        <mat-icon class="tile-icon">sync</mat-icon>
+        <span class="tile-label">Update Prod Player Data</span>
+      </button>
+    </div>
+  </section>
+
+  <!--
+    Exit Room button - see room-banner comment above; same "left
+    near-untouched, unreachable today" reasoning applies here.
+  -->
+  <div *ngIf="roomService.currentRoom !== null" class="exit-room-wrap">
+    <button mat-raised-button color="warn" class="exit-room-btn" (click)="exit()">
+      Exit Room
+    </button>
+  </div>
+
+  <div class="version-footer">Version: {{ version }}</div>
 </div>

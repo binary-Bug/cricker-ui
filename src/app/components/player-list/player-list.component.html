@@ -1,53 +1,136 @@
-<div
-  class="grid grid-cols-3 place-items-start gap-4"
-  style="height: 60px; padding-top: 10px; padding-left: 5px"
->
-  <div>
-    <button
-      mat-mini-fab
-      color="primary"
-      (click)="router.navigateByUrl('room'); playerService.players = []"
-    >
-      <img
-        src="https://img.icons8.com/?size=100&id=65a5j6IY0Vy2&format=png&color=FFFFFF"
-        style="width: 40px"
-      />
-    </button>
-  </div>
+<!--
+  All Players directory page.
 
-  <div class="col-span-2">
-    <h1 style="text-align: center; margin-top: 5px; margin-bottom: 5px">
-      All Players ({{ (playerList | async)?.length }})
-    </h1>
+  Redesigned as a mobile-first list of tappable player cards (colored
+  initials avatar + key stats + MoM/MVP badges), with a search bar and a
+  sort toggle - both operate entirely client-side against the already
+  cached PlayerService.players array (see updateList() in the .ts file),
+  so neither control triggers an extra Firestore read.
+-->
+<div class="players-header">
+  <!-- mat-icon (not the icons8 raster image used elsewhere in the app)
+       to stay consistent with every other icon on this redesigned page
+       (search/close/chevron_right/person_search are all vector Material
+       icons - a fuzzy PNG back button stood out against them). -->
+  <button
+    mat-mini-fab
+    color="primary"
+    aria-label="Back to dashboard"
+    (click)="router.navigateByUrl('room'); playerService.players = []"
+  >
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+
+  <div class="players-title-wrap">
+    <h1 class="players-title">All Players</h1>
+    <span class="players-count-badge">{{
+      (playerList | async)?.length ?? 0
+    }}</span>
   </div>
 </div>
 
-<div style="place-content: center; display: flex; flex-wrap: wrap">
-  <mat-form-field>
-    <input matInput [formControl]="searchString" type="search" />
-    <button matSuffix mat-icon-button aria-label="Search">
-      <mat-icon>search</mat-icon>
+<div class="players-toolbar">
+  <mat-form-field
+    appearance="outline"
+    class="players-search-field"
+    subscriptSizing="dynamic"
+  >
+    <mat-icon matPrefix class="search-prefix-icon">search</mat-icon>
+    <input
+      matInput
+      [formControl]="searchString"
+      type="text"
+      placeholder="Search players..."
+    />
+    <button
+      *ngIf="searchString.value"
+      matSuffix
+      mat-icon-button
+      aria-label="Clear search"
+      (click)="searchString.setValue('')"
+    >
+      <mat-icon>close</mat-icon>
     </button>
   </mat-form-field>
+
+  <!-- Wrapped with an explicit "Sort by" label + icon so the toggle
+       group reads as a sort control at a glance, rather than an
+       unlabeled row of buttons. The wrapper (not the group itself) is
+       what shrinks to fit its content on mobile - see
+       .players-sort-wrap / .players-toolbar's align-items. -->
+  <div class="players-sort-wrap">
+    <span class="players-sort-label">
+      <mat-icon class="sort-label-icon">sort</mat-icon>
+      Sort by
+    </span>
+    <mat-button-toggle-group
+      class="players-sort-group"
+      [formControl]="sortBy"
+      aria-label="Sort players by"
+    >
+      <mat-button-toggle value="matchesPlayed">Matches</mat-button-toggle>
+      <mat-button-toggle value="mvpPoints">MVP Points</mat-button-toggle>
+      <mat-button-toggle value="momCount">MoM</mat-button-toggle>
+      <mat-button-toggle value="name">Name</mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
 </div>
 
-<div *ngFor="let player of playerList | async">
-  <mat-card appearance="outlined">
-    <mat-card-header>
-      <mat-card-title>{{ player.name }}</mat-card-title>
-      <mat-card-subtitle
-        >Matches Played: {{ player.matchesPlayed }}</mat-card-subtitle
+<ng-container *ngIf="playerList | async as players">
+  <div
+    *ngIf="players.length > 0; else emptyState"
+    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 players-grid"
+  >
+    <mat-card
+      *ngFor="let player of players"
+      appearance="outlined"
+      class="player-card"
+      role="button"
+      tabindex="0"
+      [attr.aria-label]="'View stats for ' + player.name"
+      (click)="navigateToPlayerDetails(player.name)"
+      (keydown.enter)="navigateToPlayerDetails(player.name)"
+      (keydown.space)="navigateToPlayerDetails(player.name)"
+    >
+      <div
+        class="player-avatar"
+        [style.background-color]="utilityService.getAvatarColor(player.name)"
       >
-    </mat-card-header>
-    <mat-card-actions align="end">
-      <button
-        mat-button
-        color="primary"
-        (click)="router.navigateByUrl('player-details?name=' + player.name + '&from=allPlayers')"
-      >
-        View Stats
-      </button>
-    </mat-card-actions>
-  </mat-card>
-  <br />
-</div>
+        {{ utilityService.getInitials(player.name) }}
+      </div>
+
+      <div class="player-card-body">
+        <div class="player-name-row">
+          <span class="player-card-name">{{ player.name }}</span>
+          <span
+            *ngIf="player.momCount > 0"
+            class="player-mom-badge"
+            title="Man of the Match {{ player.momCount }} time(s)"
+          >
+            <span class="player-mom-badge-icon">🏆</span>
+            <span>x{{ player.momCount }}</span>
+          </span>
+        </div>
+        <div class="player-card-meta">
+          <span class="player-matches-played"
+            >Matches Played: {{ player.matchesPlayed }}</span
+          >
+          <span class="player-mvp-badge">⭐ {{ player.mvpPoints }} MVP</span>
+        </div>
+      </div>
+
+      <mat-icon class="player-card-chevron">chevron_right</mat-icon>
+    </mat-card>
+  </div>
+</ng-container>
+
+<ng-template #emptyState>
+  <div class="players-empty-state">
+    <mat-icon class="players-empty-icon">person_search</mat-icon>
+    <p>
+      No players found{{
+        searchString.value ? ' for "' + searchString.value + '"' : ""
+      }}.
+    </p>
+  </div>
+</ng-template>

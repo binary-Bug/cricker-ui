@@ -312,6 +312,51 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
     this.handleOnToggleEvent(event.index);
   }
 
+  /**
+   * True if `teamKey` ('team1'/'team2') is the winning team, so the
+   * template can show a small non-color checkmark cue next to their name
+   * (see match-list's identical UX pattern - the green result badge is
+   * already the single color-coded "who won" signal, so this deliberately
+   * doesn't recolor the team name/score too). Compares runsScored
+   * directly rather than string-parsing matchService.matchResult - more
+   * robust since match-details has direct numeric team data available
+   * (unlike match-list, which only has the loaded DTO's data map) - and
+   * correctly returns false for both teams on a tie.
+   */
+  isWinningTeam(teamKey: 'team1' | 'team2'): boolean {
+    const other: 'team1' | 'team2' = teamKey === 'team1' ? 'team2' : 'team1';
+    const teamData = this.matchService.teamData;
+    if (!teamData?.[teamKey] || !teamData?.[other]) return false;
+    return teamData[teamKey].runsScored > teamData[other].runsScored;
+  }
+
+  /**
+   * matchService.matchDate is persisted as a plain locale date STRING
+   * (date.toLocaleDateString(), e.g. "8/1/2026" - see SaveMatchService),
+   * not a Date object, so it can't be formatted with toLocaleDateString's
+   * options directly. Re-parsing it here is purely a display concern -
+   * the stored field itself is untouched - and gives a more human-
+   * readable "Aug 1, 2026" instead of the terser "8/1/2026".
+   */
+  formatMatchDate(dateStr: string | null): string {
+    if (!dateStr) return 'N/A';
+    const parsed = new Date(dateStr);
+    if (isNaN(parsed.getTime())) return dateStr;
+    return parsed.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  }
+
+  /** Drops the seconds Date.toLocaleTimeString() shows by default (e.g.
+   * "3:42:44 AM" -> "3:42 AM"), which is unnecessary precision for a
+   * human reading when a ball was bowled. */
+  formatTime(date: Date | null | undefined): string {
+    if (!date) return 'N/A';
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  }
+
   exit() {
     if (this.playerName && this.playerName.length > 0) {
       this.liveMatchService.exitMatch(

@@ -1,9 +1,180 @@
-.example-button-row .mat-mdc-button-base {
-  margin: 8px 8px 8px 0;
-  border-radius: 40px;
+/* ============================================================
+   Room / Dashboard page - mobile-first icon-tile dashboard.
+
+   Replaces the previous plain vertical stack of identically-styled pill
+   buttons. Responsive column counts for the tile grids are handled by
+   Tailwind utility classes directly in the template (grid-cols-2
+   sm:grid-cols-3 lg:grid-cols-4 - Tailwind is loaded via the CDN script
+   in index.html). Everything Tailwind doesn't cover - tile
+   elevation/sizing, hero button, accent colors, section dividers - lives
+   here.
+   ============================================================ */
+
+/* Centers content and caps its width so a 4-column grid doesn't stay
+   pinned to a narrow mobile-width column on large desktop screens. */
+.dashboard-container {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.main {
+@media (min-width: 1024px) {
+  .dashboard-container {
+    max-width: 860px;
+  }
+}
+
+/* --- Header --- */
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.app-logo {
+  width: 72px;
+  height: 72px;
+}
+
+.app-title {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 2rem;
+  color: #4527a0;
+  margin: 8px 0 2px;
+}
+
+.app-tagline {
+  color: #757575;
+  font-size: 0.9rem;
+  margin: 0 0 8px;
+}
+
+/* --- Hero CTA (Create New Match) - deliberately icon-free/text-only
+   (unlike the tiles below) so it visually stands out as the one
+   "special" primary action on the page. --- */
+.hero-cta.mat-mdc-button-base {
   width: 100%;
-  height: 100%;
+  height: 64px;
+  border-radius: 20px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 28px;
+  box-shadow: 0 4px 14px rgba(69, 39, 160, 0.35);
+}
+
+/* --- Section labels/dividers --- */
+.dashboard-section {
+  margin-bottom: 28px;
+}
+
+.section-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #616161;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 12px 4px;
+}
+
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.section-divider-icon {
+  color: #b26a00;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* Developer Tools' label reuses .section-label's sizing/weight but in
+   the same amber accent as its tiles, reinforcing (visually only - see
+   the *ngIf="!isProdEnv" in the template for the actual gating) that
+   this is a distinct, dev-only group of actions. */
+.dev-tools-label {
+  color: #b26a00;
+  margin: 0;
+}
+
+/* --- Icon-tile grid --- */
+/* Shared base for both Explore and Developer Tools tiles. min-height
+   (not a fixed height) so 2-line-wrapped labels on narrow mobile tiles
+   never get clipped, while still guaranteeing a comfortable >=88px
+   touch target per mobile tap-target accessibility guidance. */
+.dashboard-tile.mat-mdc-button-base {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 96px;
+  height: auto !important;
+  width: 100% !important;
+  border-radius: 18px;
+  padding: 12px 8px;
+  white-space: normal;
+  text-align: center;
+  background-color: #f5f5f5;
+  color: #303030;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.tile-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+  color: #5e35b1;
+}
+
+.tile-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+/* Developer Tools tiles get an amber accent instead of Explore's purple,
+   reinforcing "this is a different, dev-only kind of action" purely
+   visually - actual visibility is still driven solely by
+   *ngIf="!isProdEnv" on the section in the template; this is styling
+   only, not a visibility mechanism. */
+.dev-tile.mat-mdc-button-base {
+  background-color: #fff8e1;
+}
+
+.dev-tile .tile-icon {
+  color: #b26a00;
+}
+
+/* --- Room-id banner / Exit Room button --- */
+/* Intentionally NOT a visual focus of this redesign - see the matching
+   comments in room.component.html. Only ever render when
+   roomService.currentRoom is non-null, which doesn't happen today since
+   room creation/joining is bypassed app-wide. Just enough spacing here
+   so they don't collide with the new container's padding if that flow
+   is ever reactivated. */
+.room-banner {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.exit-room-wrap {
+  text-align: center;
+  margin-top: 8px;
+}
+
+.exit-room-btn.mat-mdc-button-base {
+  background-color: red;
+}
+
+/* --- Footer --- */
+.version-footer {
+  text-align: center;
+  margin-top: 28px;
+  color: #9e9e9e;
+  font-size: 0.8rem;
 }

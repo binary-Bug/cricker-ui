@@ -2,6 +2,10 @@ import { Component, Input, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { LoadMatchService } from '../../services/load-match.service';
 import { LoadMatchDTO } from '../../models/LoadMatchDTO.interface';
 import { PlayerMvpBreakdown } from '../../models/mvp.interface';
@@ -12,7 +16,15 @@ import { Router } from '@angular/router';
 @Component({
   selector: 'app-match-list',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatCardModule],
+  imports: [
+    CommonModule,
+    MatButtonModule,
+    MatCardModule,
+    MatIconModule,
+    MatFormFieldModule,
+    MatInputModule,
+    ReactiveFormsModule,
+  ],
   templateUrl: './match-list.component.html',
   styleUrl: './match-list.component.css',
 })
@@ -34,6 +46,12 @@ export class MatchListComponent implements OnInit {
   @Input('backTarget') backTarget: string = 'allPlayers';
 
   public matchesList: LoadMatchDTO[] = [];
+  // Client-side team-name search - standalone /allMatches usage only (see
+  // *ngIf="!isPlayerList" on the search field in the template). No extra
+  // Firestore reads: filters the already-fetched matchesList in memory,
+  // same pattern as PlayerListComponent's search.
+  public searchString = new FormControl('');
+
   constructor(
     public loadMatchService: LoadMatchService,
     public router: Router,
@@ -55,6 +73,24 @@ export class MatchListComponent implements OnInit {
     });
   }
 
+  /**
+   * matchesList filtered by the current search term (team1/team2 name,
+   * case-insensitive substring match). Returns the full list unchanged
+   * when the search box is empty. Used by the template in place of
+   * iterating matchesList directly.
+   */
+  get filteredMatches(): LoadMatchDTO[] {
+    const term = (this.searchString.value || '').trim().toLowerCase();
+    if (!term) return this.matchesList;
+    return this.matchesList.filter((match) => {
+      const team1: string = match.data?.['teamData']?.['team1']?.['name'] ?? '';
+      const team2: string = match.data?.['teamData']?.['team2']?.['name'] ?? '';
+      return (
+        team1.toLowerCase().includes(term) || team2.toLowerCase().includes(term)
+      );
+    });
+  }
+
   navigateToMatch(matchId: string): void {
     if (this.playerName && this.playerName.length > 0) {
       // Carry backTarget through as 'from' so match-details' exit() can
@@ -71,6 +107,22 @@ export class MatchListComponent implements OnInit {
     } else {
       this.router.navigateByUrl('match-details?id=' + matchId);
     }
+  }
+
+  /**
+   * True if `teamName` was the winning team in this match, so the
+   * template can highlight it (green/bold) and mute the other team -
+   * a more meaningful visual differentiation than an arbitrary per-team
+   * color, and lets the winner be spotted at a glance without reading
+   * the smaller result badge text. There's no dedicated "winner" field
+   * on the match doc, but MatchResult is always written in the fixed
+   * format "{TeamName} wins by N runs/wicket(s)" (see
+   * MatchCompleteDialog.checkMatchResult) or "Match Tied" - so a simple
+   * startsWith check is reliable without needing new stored data.
+   */
+  isWinningTeam(match: LoadMatchDTO, teamName: string): boolean {
+    const result: string = match.data?.['MatchResult'] ?? '';
+    return !!teamName && result.trim().startsWith(teamName.trim());
   }
 
   /**

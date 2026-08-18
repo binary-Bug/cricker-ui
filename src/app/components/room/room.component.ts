@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RoomService } from '../../services/room.service';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AdminCodeDialog } from '../dailogs/admin-code.dialog';
@@ -13,7 +14,11 @@ import { VersionService } from '../../services/version.service';
 @Component({
   selector: 'app-room',
   standalone: true,
-  imports: [CommonModule, MatButtonModule],
+  // MatIconModule powers the <mat-icon> ligature icons used throughout
+  // the dashboard's tile grids (Explore + Developer Tools sections) -
+  // same ligature-name pattern already used in stats/match-details/
+  // player-list components (e.g. <mat-icon>search</mat-icon>).
+  imports: [CommonModule, MatButtonModule, MatIconModule],
   templateUrl: './room.component.html',
   styleUrl: './room.component.css',
 })

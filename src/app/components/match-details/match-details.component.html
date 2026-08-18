@@ -1,145 +1,188 @@
-<mat-tab-group (selectedTabChange)="toggleTab($event)">
-  <mat-tab label="Match Info"
-    ><!--
-      Team-name heading previously had no guard at all, so it read
-      matchService.teamData[...] eagerly on first render - before the
-      match finished loading (or when LoadMatchService couldn't find the
-      requested match id at all, e.g. a stale/bad link), teamData could be
-      undefined and this threw a hard "Cannot read properties of undefined"
-      error. Gating on isMatchLoaded (and excluding the not-found case)
-      keeps this in sync with the table below it and prevents that crash
-      class entirely.
-    -->
-    <div
-      *ngIf="isMatchLoaded && !matchService.matchNotFound"
-      style="display: grid; justify-content: center"
+<div class="match-details-container">
+  <div class="match-details-header">
+    <button
+      mat-mini-fab
+      color="primary"
+      aria-label="Exit match details"
+      (click)="exit()"
     >
-      <h2
-        class="infoHeader"
-        style="margin-bottom: 10px; margin-top: 10px; display: block"
-      >
-        <b>{{
-          matchService.teamData[matchService.currentRoles["bat"]].name
-        }}</b>
-        vs
-        <b>{{
-          matchService.teamData[matchService.currentRoles["ball"]].name
-        }}</b>
-      </h2>
-      <h2 class="infoHeader" style="color: forestgreen">
-        {{ matchService.matchResult }}
-      </h2>
-    </div>
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1 class="match-details-title">Match Details</h1>
+  </div>
 
-    <!--
-      Shown when LoadMatchService looked for the requested match id and
-      couldn't find it (bad/stale link, deleted match, etc.) instead of
-      letting the page crash trying to render data that was never loaded.
-    -->
-    <div
-      *ngIf="matchService.matchNotFound"
-      style="display: grid; justify-content: center; text-align: center"
-    >
-      <h2 class="infoHeader" style="margin-top: 10px">
-        Stumped! 🏏 We couldn't dig up this match.
-      </h2>
-      <p>Looks like this scorecard has gone for a duck - it may have been removed, or the link isn't quite right.</p>
-    </div>
-    <table
-      *ngIf="isMatchLoaded && !matchService.matchNotFound"
-      class="mat-elevation-z8"
-    >
-      <tr>
-        <td class="detailHeader">Toss Result</td>
-        <td>
-          {{ matchService.teamData[matchService.tossWinner + ""]["name"] }} won
-          the toss and elected to {{ matchService.tossResult }} first
-        </td>
-      </tr>
-      <tr>
-        <td class="detailHeader">Match Result</td>
-        <td>
-          {{ matchService.matchResult }}
-        </td>
-      </tr>
-      <tr>
-        <td class="detailHeader">Overs Played</td>
-        <td>
-          {{ matchService.totalOvers }}
-        </td>
-      </tr>
-      <tr>
-        <td class="detailHeader">Players per Team</td>
-        <td>
-          {{ matchService.totalPlayers }}
-        </td>
-      </tr>
+  <!-- match-tab-group: scoping class for the pill-style tab-bar restyle
+       below (:host ::ng-deep .match-tab-group ...) - same pattern used on
+       player-details' tab bar, replicated here under its own class name
+       since component styles aren't shared across files. Only the tab
+       header chrome is restyled - Score Card tab content is untouched. -->
+  <mat-tab-group
+    class="match-tab-group"
+    (selectedTabChange)="toggleTab($event)"
+  >
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon class="tab-label-icon">info</mat-icon>
+        Match Info
+      </ng-template>
       <!--
-        Match Date row: when innings-1's first ball timestamp is available
-        (either derived live from oversPlayedData, or loaded from a saved
-        match), render it as an expand/collapse panel so users can drill
-        into the innings/match ball timestamps without cluttering the
-        default view. Older matches saved before this feature has no such
-        timestamp, so we fall back to the original plain row for them.
+        Team-name heading previously had no guard at all, so it read
+        matchService.teamData[...] eagerly on first render - before the
+        match finished loading (or when LoadMatchService couldn't find the
+        requested match id at all, e.g. a stale/bad link), teamData could be
+        undefined and this threw a hard "Cannot read properties of undefined"
+        error. Gating on isMatchLoaded (and excluding the not-found case)
+        keeps this in sync with the info card below it and prevents that
+        crash class entirely.
       -->
-      <tr *ngIf="!matchService.inningsOneFirstBallTime">
-        <td class="detailHeader">Match Date</td>
-        <td>
-          {{ matchService.matchDate }}
-        </td>
-      </tr>
-      <tr *ngIf="matchService.inningsOneFirstBallTime">
-        <td colspan="2" style="padding: 0; border: none">
-          <mat-expansion-panel class="headers-align">
-            <mat-expansion-panel-header>
-              <mat-panel-title> Match Date </mat-panel-title>
-              <mat-panel-description>
-                {{ matchService.matchDate }} &middot; Start Time:
-                {{ matchService.inningsOneFirstBallTime.toLocaleTimeString() }}
-              </mat-panel-description>
-            </mat-expansion-panel-header>
-            <table>
-              <tr>
-                <td class="detailHeader">Match Start / First Ball (Innings 1)</td>
-                <td>
-                  {{
-                    matchService.inningsOneFirstBallTime.toLocaleTimeString() ||
-                      'N/A'
-                  }}
-                </td>
-              </tr>
-              <tr>
-                <td class="detailHeader">Last Ball (Innings 1)</td>
-                <td>
-                  {{
-                    matchService.inningsOneLastBallTime?.toLocaleTimeString() ||
-                      'N/A'
-                  }}
-                </td>
-              </tr>
-              <tr>
-                <td class="detailHeader">Innings 2 Start / First Ball</td>
-                <td>
-                  {{
-                    matchService.inningsTwoFirstBallTime?.toLocaleTimeString() ||
-                      'N/A'
-                  }}
-                </td>
-              </tr>
-              <tr>
-                <td class="detailHeader">Last Ball (Innings 2 / Match End)</td>
-                <td>
-                  {{
-                    matchService.inningsTwoLastBallTime?.toLocaleTimeString() ||
-                      'N/A'
-                  }}
-                </td>
-              </tr>
-            </table>
-          </mat-expansion-panel>
-        </td>
-      </tr>
-    </table>
+      <div
+        *ngIf="!isMatchLoaded && !matchService.matchNotFound"
+        class="match-loading-state"
+      >
+        <p>Loading match...</p>
+      </div>
+
+      <div
+        *ngIf="isMatchLoaded && !matchService.matchNotFound"
+        class="match-hero-card"
+      >
+        <div
+          class="match-hero-team-row"
+          [class.match-team-winner]="isWinningTeam('team1')"
+        >
+          <span class="match-hero-team-name">{{
+            matchService.teamData["team1"].name
+          }}</span>
+          <span class="match-hero-team-score">
+            {{ matchService.teamData["team1"].runsScored }}/{{
+              matchService.teamData["team1"].wicketsLost
+            }}
+            <span class="match-hero-team-overs"
+              >({{ matchService.teamData["team1"].oversPlayed }} ov)</span
+            >
+          </span>
+        </div>
+        <div
+          class="match-hero-team-row"
+          [class.match-team-winner]="isWinningTeam('team2')"
+        >
+          <span class="match-hero-team-name">{{
+            matchService.teamData["team2"].name
+          }}</span>
+          <span class="match-hero-team-score">
+            {{ matchService.teamData["team2"].runsScored }}/{{
+              matchService.teamData["team2"].wicketsLost
+            }}
+            <span class="match-hero-team-overs"
+              >({{ matchService.teamData["team2"].oversPlayed }} ov)</span
+            >
+          </span>
+        </div>
+
+        <div class="match-hero-result-row">
+          <span class="match-result-badge">{{
+            matchService.matchResult
+          }}</span>
+        </div>
+      </div>
+
+      <!--
+        Shown when LoadMatchService looked for the requested match id and
+        couldn't find it (bad/stale link, deleted match, etc.) instead of
+        letting the page crash trying to render data that was never loaded.
+      -->
+      <div
+        *ngIf="matchService.matchNotFound"
+        class="match-not-found-state"
+      >
+        <mat-icon class="match-not-found-icon">sports_cricket</mat-icon>
+        <h2>Stumped! 🏏 We couldn't dig up this match.</h2>
+        <p>
+          Looks like this scorecard has gone for a duck - it may have been
+          removed, or the link isn't quite right.
+        </p>
+      </div>
+
+      <div
+        *ngIf="isMatchLoaded && !matchService.matchNotFound"
+        class="match-info-card"
+      >
+        <div class="match-detail-row">
+          <span class="match-detail-label">Toss Result</span>
+          <span class="match-detail-value"
+            >{{ matchService.teamData[matchService.tossWinner + ""]["name"] }}
+            won the toss and elected to {{ matchService.tossResult }}
+            first</span
+          >
+        </div>
+        <div class="match-detail-row">
+          <span class="match-detail-label">Overs Played</span>
+          <span class="match-detail-value">{{ matchService.totalOvers }}</span>
+        </div>
+        <div class="match-detail-row">
+          <span class="match-detail-label">Players per Team</span>
+          <span class="match-detail-value">{{
+            matchService.totalPlayers
+          }}</span>
+        </div>
+        <!--
+          Match Date row: when innings-1's first ball timestamp is available
+          (either derived live from oversPlayedData, or loaded from a saved
+          match), render it as an expand/collapse panel so users can drill
+          into the innings/match ball timestamps without cluttering the
+          default view. Older matches saved before this feature has no such
+          timestamp, so we fall back to the original plain row for them.
+        -->
+        <div
+          class="match-detail-row"
+          *ngIf="!matchService.inningsOneFirstBallTime"
+        >
+          <span class="match-detail-label">Match Date</span>
+          <span class="match-detail-value">{{
+            formatMatchDate(matchService.matchDate)
+          }}</span>
+        </div>
+        <mat-expansion-panel
+          class="match-date-panel"
+          *ngIf="matchService.inningsOneFirstBallTime"
+        >
+          <mat-expansion-panel-header>
+            <mat-panel-title>Match Date</mat-panel-title>
+            <mat-panel-description>
+              {{ formatMatchDate(matchService.matchDate) }} &middot; Start
+              Time: {{ formatTime(matchService.inningsOneFirstBallTime) }}
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <div class="match-detail-row">
+            <span class="match-detail-label"
+              >Match Start / First Ball (Innings 1)</span
+            >
+            <span class="match-detail-value">{{
+              formatTime(matchService.inningsOneFirstBallTime)
+            }}</span>
+          </div>
+          <div class="match-detail-row">
+            <span class="match-detail-label">Last Ball (Innings 1)</span>
+            <span class="match-detail-value">{{
+              formatTime(matchService.inningsOneLastBallTime)
+            }}</span>
+          </div>
+          <div class="match-detail-row">
+            <span class="match-detail-label">Innings 2 Start / First Ball</span>
+            <span class="match-detail-value">{{
+              formatTime(matchService.inningsTwoFirstBallTime)
+            }}</span>
+          </div>
+          <div class="match-detail-row">
+            <span class="match-detail-label"
+              >Last Ball (Innings 2 / Match End)</span
+            >
+            <span class="match-detail-value">{{
+              formatTime(matchService.inningsTwoLastBallTime)
+            }}</span>
+          </div>
+        </mat-expansion-panel>
+      </div>
 
     <!--
       MVP / Man of the Match section - placed below the main match-info
@@ -247,14 +290,13 @@
       </div>
       <div class="share-card-result">{{ matchService.matchResult }}</div>
     </div>
-
-    <div style="justify-content: center; display: flex">
-      <button mat-raised-button class="mb-4 mt-4" color="warn" (click)="exit()">
-        Exit
-      </button>
-    </div>
   </mat-tab>
-  <mat-tab label="Score Card">
+  <mat-tab>
+    <ng-template matTabLabel>
+      <mat-icon class="tab-label-icon">table_chart</mat-icon>
+      Score Card
+    </ng-template>
     <app-scorecard style="z-index: 2500"></app-scorecard>
   </mat-tab>
-</mat-tab-group>
+  </mat-tab-group>
+</div>

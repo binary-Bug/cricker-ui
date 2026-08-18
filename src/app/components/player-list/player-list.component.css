@@ -1,1 +1,278 @@
+/* ============================================================
+   All Players directory page.
+
+   Redesigned from a plain vertical mat-card stack into a mobile-first
+   grid of tappable player cards (colored initials avatar, key stats,
+   MoM/MVP badges). Responsive column count is handled by Tailwind
+   utility classes directly in the template (grid-cols-1 sm:grid-cols-2
+   lg:grid-cols-3 - same pattern already used in player-details and the
+   room dashboard). Badge colors intentionally match the app-wide
+   convention established there: gold/amber = Man of the Match, blue =
+   MVP points.
+   ============================================================ */
+
+/* --- Header --- */
+.players-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+}
+
+.players-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.players-title {
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: #4527a0;
+  margin: 0;
+}
+
+.players-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background-color: #ede7f6;
+  color: #4527a0;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* --- Search + sort toolbar ---
+   Stacks vertically on narrow screens (search full-width above the sort
+   toggle) and sits side-by-side once there's enough room, matching the
+   mobile-first approach used throughout the rest of this redesign.
+   align-items: center keeps the sort control's own width centered in
+   the toolbar on mobile (search field still spans full width via its
+   own explicit width: 100%, independent of this) - flex-start left the
+   sort control hugging the left edge with a large empty gap on the
+   right; center balances the leftover space evenly on both sides. */
+.players-toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 12px 14px;
+}
+
+.players-search-field {
+  width: 100%;
+}
+
+/* At the row breakpoint, the search field must be allowed to grow/shrink
+   (flex: 1 1 auto + min-width: 0) instead of keeping its mobile
+   `width: 100%` - a fixed 100% width on a row flex item fights the
+   sort-wrap for space using its full container width as the flex-basis,
+   which either overflows or forces disproportionate shrinking depending
+   on viewport size. That mismatch (not the "below 640px" stacked layout)
+   was the actual cause of the sort control looking broken/misaligned on
+   larger screens. flex-wrap is kept as a safety net for narrow row
+   widths where both controls still don't quite fit. */
+@media (min-width: 640px) {
+  .players-toolbar {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .players-search-field {
+    width: auto;
+    flex: 1 1 220px;
+    min-width: 0;
+  }
+
+  .players-sort-wrap {
+    flex-shrink: 0;
+  }
+}
+
+.search-prefix-icon {
+  margin-right: 4px;
+  color: #9e9e9e;
+}
+
+/* Small "Sort by" label + icon above the toggle group so it reads as a
+   sort control at a glance, instead of an unlabeled row of buttons. */
+.players-sort-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.players-sort-label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #757575;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.sort-label-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+.players-sort-group.mat-button-toggle-group {
+  border-radius: 999px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* --- Player grid + cards --- */
+.players-grid {
+  padding: 0 12px 24px;
+}
+
+.player-card.mat-mdc-card {
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.player-card.mat-mdc-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14);
+}
+
+/* Card is a role="button" element (see player-list.component.html) rather
+   than a native <button>, so it needs an explicit focus-visible style for
+   keyboard navigation accessibility. */
+.player-card.mat-mdc-card:focus-visible {
+  outline: 2px solid #5e35b1;
+  outline-offset: 2px;
+}
+
+/* Deterministic colored initials avatar - color comes from
+   getAvatarColor(player.name) (a fixed palette, hashed off the name) so
+   the same player always gets the same color across the app. */
+.player-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.player-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.player-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.player-card-name {
+  font-weight: 600;
+  font-size: 1.02rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.player-matches-played {
+  color: #757575;
+  font-size: 0.82rem;
+}
+
+/* MVP points badge - always shown (player.mvpPoints is a lifetime
+   aggregate, unlike match-list's per-match badge which is only present
+   for matches where the player made that match's top 5). Same blue
+   accent as match-list.component.css's .match-mvp-badge, kept uniform
+   across the whole app regardless of how it's sourced. */
+.player-mvp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.78em;
+  font-weight: 600;
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  border: 1px solid #90caf9;
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+/* Man of the Match badge - gold/amber accent, reserved exclusively for
+   MoM, matching player-details.component.css's .mom-badge and
+   match-list.component.css's .match-mom-badge conventions. Only shown
+   when player.momCount > 0. */
+.player-mom-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.78em;
+  font-weight: 700;
+  background-color: #fff3cd;
+  color: #7a5b00;
+  border: 1px solid #ffe08a;
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+.player-mom-badge-icon {
+  font-size: 1.05em;
+  line-height: 1;
+}
+
+.player-card-chevron {
+  color: #bdbdbd;
+  flex-shrink: 0;
+}
+
+/* --- Empty state (no search results) --- */
+.players-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 16px;
+  color: #757575;
+  text-align: center;
+}
+
+.players-empty-icon {
+  font-size: 40px;
+  width: 40px;
+  height: 40px;
+  color: #bdbdbd;
+}
 

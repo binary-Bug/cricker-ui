@@ -1,65 +1,164 @@
-<div
-  class="grid grid-cols-3 place-items-start gap-4"
-  style="height: 60px; padding-top: 10px; padding-left: 5px"
->
-  <div>
-    <button mat-mini-fab color="primary" (click)="back()">
-      <img
-        src="https://img.icons8.com/?size=100&id=65a5j6IY0Vy2&format=png&color=FFFFFF"
-        style="width: 40px"
-      />
+<!--
+  All Matches page (also embedded, read-only-style, inside player-details'
+  "Matches Played" tab via isPlayerList=true + matchIds filtering - see
+  match-list.component.ts's ngOnInit). Standalone usage is reached from 3
+  entry points (room "View All Matches"/"View All Test Matches", and
+  match-details' exit-with-no-player-context flow) - all render through
+  this same component/template.
+-->
+<div class="matches-container">
+  <div class="matches-header">
+    <button
+      mat-mini-fab
+      color="primary"
+      aria-label="Back"
+      (click)="back()"
+    >
+      <mat-icon>arrow_back</mat-icon>
     </button>
+
+    <div class="matches-title-wrap">
+      <h1 class="matches-title">All Matches</h1>
+      <span class="matches-count-badge">{{ filteredMatches.length }}</span>
+    </div>
   </div>
 
-  <div class="col-span-2">
-    <h1 style="text-align: center; margin-top: 5px; margin-bottom: 5px">
-      All Matches
-    </h1>
-  </div>
-</div>
+  <!-- Search is standalone-page-only - the embedded player-details usage
+       is already scoped to one player's own (typically short) match
+       list, so a search control there would just add clutter. -->
+  <mat-form-field
+    *ngIf="!isPlayerList"
+    appearance="outline"
+    class="matches-search-field"
+    subscriptSizing="dynamic"
+  >
+    <mat-icon matPrefix class="search-prefix-icon">search</mat-icon>
+    <input
+      matInput
+      [formControl]="searchString"
+      type="text"
+      placeholder="Search by team name..."
+    />
+    <button
+      *ngIf="searchString.value"
+      matSuffix
+      mat-icon-button
+      aria-label="Clear search"
+      (click)="searchString.setValue('')"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-form-field>
 
-<ng-container *ngFor="let match of matchesList">
-  <mat-card appearance="outlined" class="match-card">
-    <mat-card-content>
-      <div class="match-card-row">
-        <span class="match-teams">
-          {{ match.data["teamData"]["team1"]["name"] }}
-          <span class="vs-label">vs</span>
-          {{ match.data["teamData"]["team2"]["name"] }}
-        </span>
-        <span class="match-date">{{ match.data["MatchDate"] }}</span>
-      </div>
-      <div class="match-result-row">
-        <span class="match-result">{{ match.data["MatchResult"] }}</span>
-      </div>
-    </mat-card-content>
-    <mat-card-actions class="match-card-actions">
-      <div class="match-badges-group">
-        <span
-          *ngIf="isPlayerList && isPlayerMomForMatch(match)"
-          class="match-mom-badge"
-          title="Man of the Match"
-        >
-          🏆 MoM
-        </span>
-        <span
-          *ngIf="isPlayerList && getPlayerMvpPoints(match) !== undefined"
-          class="match-mvp-badge"
-          [class.clickable]="getPlayerMvpBreakdown(match)"
-          [title]="
-            getPlayerMvpBreakdown(match)
-              ? 'View MVP breakdown'
-              : 'MVP points earned this match'
+  <div
+    *ngIf="filteredMatches.length > 0; else emptyOrLoadingState"
+    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 matches-grid"
+    [class.matches-grid-embedded]="isPlayerList"
+  >
+    <mat-card
+      *ngFor="let match of filteredMatches"
+      appearance="outlined"
+      class="match-card"
+      role="button"
+      tabindex="0"
+      (click)="navigateToMatch(match.id)"
+      (keydown.enter)="navigateToMatch(match.id)"
+      (keydown.space)="navigateToMatch(match.id)"
+    >
+      <mat-card-content>
+        <div
+          class="match-team-row"
+          [class.match-team-winner]="
+            isWinningTeam(match, match.data['teamData']['team1']['name'])
           "
-          (click)="openPlayerMvpBreakdown(match)"
         >
-          ⭐ {{ getPlayerMvpPoints(match) }} pts
-        </span>
+          <span class="match-team-name">
+            <mat-icon
+              *ngIf="isWinningTeam(match, match.data['teamData']['team1']['name'])"
+              class="match-winner-check"
+              aria-hidden="false"
+              aria-label="Winner"
+              >check_circle</mat-icon
+            >{{ match.data["teamData"]["team1"]["name"] }}</span
+          >
+          <span class="match-team-score">
+            {{ match.data["teamData"]["team1"]["runsScored"] }}/{{
+              match.data["teamData"]["team1"]["wicketsLost"]
+            }}
+            <span class="match-team-overs"
+              >({{ match.data["teamData"]["team1"]["oversPlayed"] }} ov)</span
+            >
+          </span>
+        </div>
+        <div
+          class="match-team-row"
+          [class.match-team-winner]="
+            isWinningTeam(match, match.data['teamData']['team2']['name'])
+          "
+        >
+          <span class="match-team-name">
+            <mat-icon
+              *ngIf="isWinningTeam(match, match.data['teamData']['team2']['name'])"
+              class="match-winner-check"
+              aria-hidden="false"
+              aria-label="Winner"
+              >check_circle</mat-icon
+            >{{ match.data["teamData"]["team2"]["name"] }}</span
+          >
+          <span class="match-team-score">
+            {{ match.data["teamData"]["team2"]["runsScored"] }}/{{
+              match.data["teamData"]["team2"]["wicketsLost"]
+            }}
+            <span class="match-team-overs"
+              >({{ match.data["teamData"]["team2"]["oversPlayed"] }} ov)</span
+            >
+          </span>
+        </div>
+
+        <div class="match-footer-row">
+          <span class="match-date">{{ match.data["MatchDate"] }}</span>
+          <span class="match-result-badge">{{
+            match.data["MatchResult"]
+          }}</span>
+        </div>
+      </mat-card-content>
+      <mat-card-actions class="match-card-actions">
+        <div class="match-badges-group">
+          <span
+            *ngIf="isPlayerList && isPlayerMomForMatch(match)"
+            class="match-mom-badge"
+            title="Man of the Match"
+          >
+            🏆 MoM
+          </span>
+          <span
+            *ngIf="isPlayerList && getPlayerMvpPoints(match) !== undefined"
+            class="match-mvp-badge"
+            [class.clickable]="getPlayerMvpBreakdown(match)"
+            [title]="
+              getPlayerMvpBreakdown(match)
+                ? 'View MVP breakdown'
+                : 'MVP points earned this match'
+            "
+            (click)="$event.stopPropagation(); openPlayerMvpBreakdown(match)"
+          >
+            ⭐ {{ getPlayerMvpPoints(match) }} pts
+          </span>
+        </div>
+        <mat-icon class="match-card-chevron">chevron_right</mat-icon>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+
+  <ng-template #emptyOrLoadingState>
+    <div class="matches-empty-state" *ngIf="matchesList.length > 0; else loadingState">
+      <mat-icon class="matches-empty-icon">search_off</mat-icon>
+      <p>No matches found{{ searchString.value ? " for \"" + searchString.value + "\"" : "" }}.</p>
+    </div>
+    <ng-template #loadingState>
+      <div class="matches-empty-state">
+        <p>Loading matches...</p>
       </div>
-      <button mat-mini-fab color="accent" (click)="navigateToMatch(match.id)">
-        <img src="assets/icon-external-link.png" style="width: 18px" />
-      </button>
-    </mat-card-actions>
-  </mat-card>
-  <br />
-</ng-container>
+    </ng-template>
+  </ng-template>
+</div>

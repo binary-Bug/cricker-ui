@@ -1,31 +1,171 @@
-.match-card {
-  border-radius: 14px;
+/* ============================================================
+   All Matches page (also embedded inside player-details' "Matches Played"
+   tab - see match-list.component.html's header comment). Redesigned to
+   match the room dashboard / All Players / Player Details visual
+   language: a centered max-width container, purple header accent, pill
+   search bar (standalone usage only), whole-card-clickable match cards
+   with per-team score lines and a colored result badge.
+   ============================================================ */
+
+/* Wider than the 640/860px convention used on room/player-list/
+   player-details, since each card now carries 2 score lines and reads
+   better with more breathing room in a 3-column grid. */
+.matches-container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 12px 12px 32px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.match-card-row {
+@media (min-width: 1024px) {
+  .matches-container {
+    max-width: 1100px;
+  }
+}
+
+/* --- Header --- */
+.matches-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 2px;
+}
+
+.matches-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.matches-title {
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: #4527a0;
+  margin: 0;
+}
+
+.matches-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background-color: #ede7f6;
+  color: #4527a0;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* --- Search bar (standalone /allMatches usage only) --- */
+.matches-search-field {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.search-prefix-icon {
+  margin-right: 4px;
+  color: #9e9e9e;
+}
+
+/* --- Match grid + cards --- */
+.matches-grid {
+  margin-top: 16px;
+}
+
+/* Embedded usage (player-details' "Matches Played" tab) is nested inside
+   that page's own ~860px-max container - Tailwind's grid-cols-2/lg:
+   breakpoints are viewport-width based, not container-width based, so
+   without this override 3 narrow match cards would get squeezed into
+   that narrower space on a wide desktop viewport. Force single column
+   there regardless of viewport size. */
+.matches-grid.matches-grid-embedded {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.match-card {
+  border-radius: 16px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.match-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14);
+}
+
+/* Card is a role="button" element (see match-list.component.html) rather
+   than a native <button>, so it needs an explicit focus-visible style for
+   keyboard navigation accessibility - same convention as player-list's
+   .player-card. */
+.match-card:focus-visible {
+  outline: 2px solid #5e35b1;
+  outline-offset: 2px;
+}
+
+.match-team-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+  flex-wrap: wrap;
+}
+
+.match-team-row + .match-team-row {
+  margin-top: 4px;
+}
+
+.match-team-name {
+  font-weight: 600;
+  font-size: 1.12em;
+  line-height: 1.3;
+  color: #263238;
+}
+
+.match-team-score {
+  font-weight: 600;
+  font-size: 1em;
+  color: #4527a0;
+  white-space: nowrap;
+}
+
+.match-team-overs {
+  font-weight: 400;
+  color: #757575;
+  font-size: 0.85em;
+  margin-left: 2px;
+}
+
+/* Winning team cue - deliberately NOT a color change. The green result
+   badge below is already the single, clear "who won" signal; recoloring
+   the team name AND score green as well (an earlier iteration) competed
+   with that badge and looked redundant/messy. Instead, just bump the
+   winner's name to a heavier weight and prefix it with a small checkmark
+   icon - a subtle cue that doesn't duplicate the pill's color coding. */
+.match-team-winner .match-team-name {
+  font-weight: 700;
+}
+
+.match-winner-check {
+  color: #2e7d32;
+  font-size: 1em;
+  width: 1em;
+  height: 1em;
+  vertical-align: text-bottom;
+  margin-right: 2px;
+}
+
+.match-footer-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
   gap: 6px 12px;
-}
-
-.match-card-row-secondary,
-.match-result-row {
+  flex-wrap: wrap;
   margin-top: 10px;
-}
-
-.match-teams {
-  font-weight: 600;
-  font-size: 1.05em;
-  line-height: 1.3;
-}
-
-.vs-label {
-  color: #9e9e9e;
-  font-weight: 400;
-  font-size: 0.85em;
-  margin: 0 2px;
 }
 
 .match-date {
@@ -34,15 +174,24 @@
   white-space: nowrap;
 }
 
-.match-result {
-  color: forestgreen;
-  font-weight: 500;
-  font-size: 0.9em;
+/* Colored pill badge - consistent with the MoM/MVP badge language
+   established elsewhere, replacing the old plain colored text. */
+.match-result-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8em;
+  font-weight: 600;
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+  border-radius: 999px;
+  padding: 3px 12px;
+  white-space: nowrap;
 }
 
 /* Actions row: badges group (when present) pinned to the far left, the
-   open-match button pinned to the far right via space-between - see
-   .match-badges-group below for why the button stays put even when no
+   chevron affordance pinned to the far right via space-between - see
+   .match-badges-group below for why the chevron stays put even when no
    badges are shown. */
 .match-card-actions {
   display: flex !important;
@@ -52,9 +201,14 @@
   padding-right: 8px;
 }
 
+.match-card-chevron {
+  color: #bdbdbd;
+  flex-shrink: 0;
+}
+
 /* Groups the MoM + MVP points badges together on the left of the actions
-   row, so the open-match button on the right always has a single sibling
-   to space-between against, even when both badges are hidden (this div
+   row, so the chevron on the right always has a single sibling to
+   space-between against, even when both badges are hidden (this div
    still renders, just empty). */
 .match-badges-group {
   display: flex;
@@ -89,7 +243,10 @@
    falling back to their career mvpPointsHistory) - but is only clickable
    (opens the full MvpBreakdownDialog) when the richer topFive breakdown
    is actually available. Blue accent - every MVP points badge uses this
-   same color regardless of clickability; gold is reserved for MoM only. */
+   same color regardless of clickability; gold is reserved for MoM only.
+   Its click handler calls $event.stopPropagation() (see the .html file)
+   since the card itself is now clickable too - without that, tapping the
+   badge would also trigger match navigation. */
 .match-mvp-badge {
   display: inline-flex;
   align-items: center;
@@ -113,4 +270,23 @@
 .match-mvp-badge.clickable:hover {
   transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+/* --- Empty / loading states --- */
+.matches-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 48px 16px;
+  color: #757575;
+  text-align: center;
+}
+
+.matches-empty-icon {
+  font-size: 40px;
+  width: 40px;
+  height: 40px;
+  color: #bdbdbd;
 }

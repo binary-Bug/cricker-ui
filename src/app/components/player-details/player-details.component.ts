@@ -6,6 +6,7 @@ import { Player } from '../../models/player.interface';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { UtilityService } from '../../services/utility.service';
 import { MatchListComponent } from '../match-list/match-list.component';
@@ -19,6 +20,7 @@ import { MatchListComponent } from '../match-list/match-list.component';
     MatCardModule,
     MatButtonModule,
     MatButtonToggleModule,
+    MatIconModule,
     MatchListComponent,
   ],
   templateUrl: './player-details.component.html',
@@ -32,7 +34,7 @@ export class PlayerDetailsComponent implements OnInit {
   // direct/bookmarked links that don't set a 'from' param. Only whitelisted
   // values are honored - we never navigate to an arbitrary query-param value.
   backTarget: string = 'allPlayers';
-  overviewStats: { label: string; value: any }[] = [];
+  overviewStats: { label: string; value: any; accent: string }[] = [];
   batsmenStats: { label: string; value: any }[] = [];
   extendedBattingStats: { label: string; value: any }[] = [];
   bowlerStats: { label: string; value: any }[] = [];
@@ -43,7 +45,7 @@ export class PlayerDetailsComponent implements OnInit {
     private route: ActivatedRoute,
     private playerService: PlayerService,
     public router: Router,
-    private utilityService: UtilityService
+    public utilityService: UtilityService
   ) {}
   async ngOnInit(): Promise<void> {
     this.route.queryParams.subscribe(async (qp) => {
@@ -74,17 +76,38 @@ export class PlayerDetailsComponent implements OnInit {
       ? this.currentPlayer.matchesPlayed
       : 0;
 
+    // accent drives each overview tile's color (see .stat-tile-* variants
+    // in player-details.component.css) - reuses the same color language
+    // established by the MVP/MoM badges elsewhere in the app (blue = MVP,
+    // gold = Man of the Match), plus green/muted-red for win/loss record.
     this.overviewStats = [
-      { label: 'Matches Played', value: this.currentPlayer?.matchesPlayed },
-      { label: 'Matches Won', value: this.currentPlayer?.won },
-      { label: 'Matches Lost', value: this.currentPlayer?.lost },
-      { label: 'MVP Points', value: this.currentPlayer?.mvpPoints ?? 0 },
-      { label: 'Man of the Match', value: this.currentPlayer?.momCount ?? 0 },
+      {
+        label: 'Matches Played',
+        value: this.currentPlayer?.matchesPlayed,
+        accent: 'neutral',
+      },
+      { label: 'Matches Won', value: this.currentPlayer?.won, accent: 'won' },
+      {
+        label: 'Matches Lost',
+        value: this.currentPlayer?.lost,
+        accent: 'lost',
+      },
+      {
+        label: 'MVP Points',
+        value: this.currentPlayer?.mvpPoints ?? 0,
+        accent: 'mvp',
+      },
+      {
+        label: 'Man of the Match',
+        value: this.currentPlayer?.momCount ?? 0,
+        accent: 'mom',
+      },
       {
         label: 'Avg MVP Points',
         value: matchesPlayed
           ? ((this.currentPlayer?.mvpPoints ?? 0) / matchesPlayed).toFixed(1)
           : '0.0',
+        accent: 'mvp',
       },
     ];
 
