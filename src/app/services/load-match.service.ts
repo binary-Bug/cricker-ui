@@ -66,6 +66,16 @@ export class LoadMatchService {
       this.matches = [];
       this.recentMatchViewCache.clear();
     });
+    // Switching between prod/test mode (dev-only "View All Test Matches"
+    // buttons) points getAllMatches()/loadMatch() at a different
+    // Firestore collection - without this, the cache would keep serving
+    // whichever env's data was fetched first regardless of the new mode.
+    // See ModeService.modeChanged$'s doc comment for why this is a no-op
+    // in prod builds (mode never actually changes there).
+    this.modeService.modeChanged$.subscribe(() => {
+      this.matches = [];
+      this.recentMatchViewCache.clear();
+    });
   }
   firestore = inject(Firestore);
 

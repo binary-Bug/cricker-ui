@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 /**
@@ -38,11 +39,25 @@ import { environment } from '../../environments/environment';
 export class ModeService {
   private _mode: 'prod' | 'test' = environment.isProdEnv ? 'prod' : 'test';
 
+  // Fired only when setMode() actually changes the value - lets
+  // LoadMatchService/PlayerService clear their in-memory caches exactly
+  // when switching prod/test would otherwise risk showing cross-env
+  // data (e.g. Room's dev-only "View All Test Matches" vs "View All
+  // Matches" buttons - see their doc comments). In a prod build the
+  // dev-only mode-switching buttons are hidden and setMode() is only
+  // ever called with 'prod' (already the starting value), so this never
+  // fires there and prod's caches are never needlessly cleared/refetched
+  // just from navigating back to a list.
+  private readonly _modeChanged$ = new Subject<'prod' | 'test'>();
+  readonly modeChanged$ = this._modeChanged$.asObservable();
+
   get mode(): 'prod' | 'test' {
     return this._mode;
   }
 
   setMode(mode: 'prod' | 'test'): void {
+    if (mode === this._mode) return;
     this._mode = mode;
+    this._modeChanged$.next(mode);
   }
 }

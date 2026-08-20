@@ -208,7 +208,11 @@ export class MatchListComponent implements OnInit, OnChanges {
 
 
   back(): void {
-    this.loadMatchService.matches = []; // Clear the matches array in the service
+    // Cache clearing on env/mode switches is now handled centrally by
+    // ModeService.modeChanged$ (see LoadMatchService's subscription) -
+    // clearing loadMatchService.matches here unconditionally used to
+    // force a full Firestore re-fetch on every single "back" tap, even
+    // in prod where the mode never actually changes.
     if (this.isPlayerList) {
       this.router.navigateByUrl(this.backTarget);
     } else {

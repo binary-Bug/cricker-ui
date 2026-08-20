@@ -49,6 +49,15 @@ export class PlayerService {
     this.eventHandlerService.MatchSaveCompleteEvent$().subscribe(() => {
       this.players = [];
     });
+    // Switching between prod/test mode (dev-only "View All Test Players"
+    // button) points getAllPlayers() at a different Firestore collection -
+    // without this, the cache would keep serving whichever env's roster
+    // was fetched first regardless of the new mode. See
+    // ModeService.modeChanged$'s doc comment for why this is a no-op in
+    // prod builds (mode never actually changes there).
+    this.modeService.modeChanged$.subscribe(() => {
+      this.players = [];
+    });
   }
 
   async getAllPlayers(): Promise<Player[]> {
