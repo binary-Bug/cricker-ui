@@ -17,6 +17,20 @@ import { SpinnerService } from '../../services/spinner.service';
 /** Sort keys offered by the sort toggle on the All Players page. */
 type PlayerSortKey = 'matchesPlayed' | 'mvpPoints' | 'momCount' | 'name';
 
+/**
+ * Everything a player-card needs to render, computed ONCE per
+ * list/search/sort change rather than re-derived by calling
+ * utilityService.getAvatarColor()/getInitials() directly from the
+ * template - those ran on every Angular change-detection cycle for
+ * every card, which is real, avoidable main-thread work unrelated to
+ * whether the player's name has actually changed.
+ */
+interface PlayerCardViewModel {
+  player: Player;
+  avatarColor: string;
+  initials: string;
+}
+
 @Component({
   selector: 'app-player-list',
   standalone: true,
@@ -35,7 +49,8 @@ type PlayerSortKey = 'matchesPlayed' | 'mvpPoints' | 'momCount' | 'name';
   styleUrl: './player-list.component.css',
 })
 export class PlayerListComponent {
-  public playerList!: Promise<Player[]>;
+  /** Precomputed cards for the template - see updateList(). */
+  public cards: PlayerCardViewModel[] = [];
   searchString = new FormControl('');
   sortBy = new FormControl<PlayerSortKey>('matchesPlayed');
 
@@ -70,7 +85,7 @@ export class PlayerListComponent {
     const isColdFetch = this.playerService.players.length === 0;
     const fetch = this.playerService.getAllPlayers();
     const tracked = isColdFetch ? this.spinnerService.wrap(fetch) : fetch;
-    this.playerList = tracked.then((players) => {
+    tracked.then((players) => {
       const term = (this.searchString.value ?? '').trim();
       const filteredNames = this.autoCompleteService._filter(
         term,
@@ -79,8 +94,16 @@ export class PlayerListComponent {
       const filtered = filteredNames.map(
         (name) => this.playerService.getPlayer(name)
       ) as Player[];
-      return this.sortPlayers(filtered);
+      this.cards = this.sortPlayers(filtered).map((player) => ({
+        player,
+        avatarColor: this.utilityService.getAvatarColor(player.name),
+        initials: this.utilityService.getInitials(player.name),
+      }));
     });
+  }
+
+  trackByPlayerName(_index: number, card: PlayerCardViewModel): string {
+    return card.player.name;
   }
 
   private sortPlayers(players: Player[]): Player[] {

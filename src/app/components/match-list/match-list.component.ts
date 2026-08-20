@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
@@ -13,6 +13,24 @@ import { MvpBreakdownDialog } from '../dailogs/mvp-breakdown.dialog';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { SpinnerService } from '../../services/spinner.service';
+
+/**
+ * Everything a match-card needs to render, computed ONCE per
+ * matchesList/search change rather than re-derived by calling methods
+ * (isWinningTeam(), getPlayerMvpPoints(), etc.) directly from the
+ * template - those ran on every single Angular change-detection cycle
+ * for every card, which is real, avoidable main-thread work that isn't
+ * needed for a page displaying data that (once loaded) never changes
+ * until the underlying list itself changes.
+ */
+interface MatchCardViewModel {
+  match: LoadMatchDTO;
+  team1IsWinner: boolean;
+  team2IsWinner: boolean;
+  isPlayerMom: boolean;
+  playerMvpPoints: number | undefined;
+  playerMvpBreakdown: PlayerMvpBreakdown | undefined;
+}
 
 @Component({
   selector: 'app-match-list',
@@ -29,7 +47,7 @@ import { SpinnerService } from '../../services/spinner.service';
   templateUrl: './match-list.component.html',
   styleUrl: './match-list.component.css',
 })
-export class MatchListComponent implements OnInit {
+export class MatchListComponent implements OnInit, OnChanges {
   @Input('matchIds') matchIds: string[] | undefined = [];
   @Input('isPlayerList') isPlayerList: boolean = false;
   @Input('playerName') playerName: string | undefined = '';
@@ -52,13 +70,17 @@ export class MatchListComponent implements OnInit {
   // Firestore reads: filters the already-fetched matchesList in memory,
   // same pattern as PlayerListComponent's search.
   public searchString = new FormControl('');
+  /** Precomputed cards for the template - see recomputeCards(). */
+  public cards: MatchCardViewModel[] = [];
 
   constructor(
     public loadMatchService: LoadMatchService,
     public router: Router,
     private dialog: MatDialog,
     private spinnerService: SpinnerService
-  ) {}
+  ) {
+    this.searchString.valueChanges.subscribe(() => this.recomputeCards());
+  }
 
   ngOnInit(): void {
     // Only show the global spinner when this is a genuine cold fetch (the
@@ -76,25 +98,62 @@ export class MatchListComponent implements OnInit {
           this.matchIds?.includes(match.id)
         );
       }
+      this.recomputeCards();
     });
   }
 
   /**
-   * matchesList filtered by the current search term (team1/team2 name,
-   * case-insensitive substring match). Returns the full list unchanged
-   * when the search box is empty. Used by the template in place of
-   * iterating matchesList directly.
+   * Handles this component instance being reused for a different player
+   * (e.g. player-details switching currentPlayer while staying on the
+   * same route/component instance) - playerName/matchIds/mvpPointsHistory
+   * changing needs cards recomputed the same way the old
+   * recompute-on-every-template-access getter used to react to it. A
+   * no-op (harmlessly recomputes an empty cards array) if this fires
+   * before ngOnInit's initial fetch has resolved.
    */
-  get filteredMatches(): LoadMatchDTO[] {
+  ngOnChanges(): void {
+    this.recomputeCards();
+  }
+
+  /**
+   * Rebuilds `cards` from matchesList + the current search term - the
+   * ONLY place isWinningTeam()/isPlayerMomForMatch()/getPlayerMvpPoints()/
+   * getPlayerMvpBreakdown() are still called, so their cost scales with
+   * how often the underlying data actually changes, not with Angular's
+   * change-detection frequency.
+   */
+  private recomputeCards(): void {
     const term = (this.searchString.value || '').trim().toLowerCase();
-    if (!term) return this.matchesList;
-    return this.matchesList.filter((match) => {
-      const team1: string = match.data?.['teamData']?.['team1']?.['name'] ?? '';
-      const team2: string = match.data?.['teamData']?.['team2']?.['name'] ?? '';
-      return (
-        team1.toLowerCase().includes(term) || team2.toLowerCase().includes(term)
-      );
-    });
+    const filtered = !term
+      ? this.matchesList
+      : this.matchesList.filter((match) => {
+          const team1: string =
+            match.data?.['teamData']?.['team1']?.['name'] ?? '';
+          const team2: string =
+            match.data?.['teamData']?.['team2']?.['name'] ?? '';
+          return (
+            team1.toLowerCase().includes(term) ||
+            team2.toLowerCase().includes(term)
+          );
+        });
+    this.cards = filtered.map((match) => ({
+      match,
+      team1IsWinner: this.isWinningTeam(
+        match,
+        match.data?.['teamData']?.['team1']?.['name']
+      ),
+      team2IsWinner: this.isWinningTeam(
+        match,
+        match.data?.['teamData']?.['team2']?.['name']
+      ),
+      isPlayerMom: this.isPlayerMomForMatch(match),
+      playerMvpPoints: this.getPlayerMvpPoints(match),
+      playerMvpBreakdown: this.getPlayerMvpBreakdown(match),
+    }));
+  }
+
+  trackByMatchId(_index: number, card: MatchCardViewModel): string {
+    return card.match.id;
   }
 
   navigateToMatch(matchId: string): void {

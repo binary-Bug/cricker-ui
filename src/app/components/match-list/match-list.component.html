@@ -19,7 +19,7 @@
 
     <div class="matches-title-wrap">
       <h1 class="matches-title">All Matches</h1>
-      <span class="matches-count-badge">{{ filteredMatches.length }}</span>
+      <span class="matches-count-badge">{{ cards.length }}</span>
     </div>
   </div>
 
@@ -51,98 +51,94 @@
   </mat-form-field>
 
   <div
-    *ngIf="filteredMatches.length > 0; else emptyOrLoadingState"
+    *ngIf="cards.length > 0; else emptyOrLoadingState"
     class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 matches-grid"
     [class.matches-grid-embedded]="isPlayerList"
   >
     <mat-card
-      *ngFor="let match of filteredMatches"
+      *ngFor="let card of cards; trackBy: trackByMatchId"
       appearance="outlined"
       class="match-card"
       role="button"
       tabindex="0"
-      (click)="navigateToMatch(match.id)"
-      (keydown.enter)="navigateToMatch(match.id)"
-      (keydown.space)="navigateToMatch(match.id)"
+      (click)="navigateToMatch(card.match.id)"
+      (keydown.enter)="navigateToMatch(card.match.id)"
+      (keydown.space)="navigateToMatch(card.match.id)"
     >
       <mat-card-content>
         <div
           class="match-team-row"
-          [class.match-team-winner]="
-            isWinningTeam(match, match.data['teamData']['team1']['name'])
-          "
+          [class.match-team-winner]="card.team1IsWinner"
         >
           <span class="match-team-name">
             <mat-icon
-              *ngIf="isWinningTeam(match, match.data['teamData']['team1']['name'])"
+              *ngIf="card.team1IsWinner"
               class="match-winner-check"
               aria-hidden="false"
               aria-label="Winner"
               >check_circle</mat-icon
-            >{{ match.data["teamData"]["team1"]["name"] }}</span
+            >{{ card.match.data["teamData"]["team1"]["name"] }}</span
           >
           <span class="match-team-score">
-            {{ match.data["teamData"]["team1"]["runsScored"] }}/{{
-              match.data["teamData"]["team1"]["wicketsLost"]
+            {{ card.match.data["teamData"]["team1"]["runsScored"] }}/{{
+              card.match.data["teamData"]["team1"]["wicketsLost"]
             }}
             <span class="match-team-overs"
-              >({{ match.data["teamData"]["team1"]["oversPlayed"] }} ov)</span
+              >({{ card.match.data["teamData"]["team1"]["oversPlayed"] }} ov)</span
             >
           </span>
         </div>
         <div
           class="match-team-row"
-          [class.match-team-winner]="
-            isWinningTeam(match, match.data['teamData']['team2']['name'])
-          "
+          [class.match-team-winner]="card.team2IsWinner"
         >
           <span class="match-team-name">
             <mat-icon
-              *ngIf="isWinningTeam(match, match.data['teamData']['team2']['name'])"
+              *ngIf="card.team2IsWinner"
               class="match-winner-check"
               aria-hidden="false"
               aria-label="Winner"
               >check_circle</mat-icon
-            >{{ match.data["teamData"]["team2"]["name"] }}</span
+            >{{ card.match.data["teamData"]["team2"]["name"] }}</span
           >
           <span class="match-team-score">
-            {{ match.data["teamData"]["team2"]["runsScored"] }}/{{
-              match.data["teamData"]["team2"]["wicketsLost"]
+            {{ card.match.data["teamData"]["team2"]["runsScored"] }}/{{
+              card.match.data["teamData"]["team2"]["wicketsLost"]
             }}
             <span class="match-team-overs"
-              >({{ match.data["teamData"]["team2"]["oversPlayed"] }} ov)</span
+              >({{ card.match.data["teamData"]["team2"]["oversPlayed"] }} ov)</span
             >
           </span>
         </div>
 
         <div class="match-footer-row">
-          <span class="match-date">{{ match.data["MatchDate"] }}</span>
+          <span class="match-date">{{ card.match.data["MatchDate"] }}</span>
           <span class="match-result-badge">{{
-            match.data["MatchResult"]
+            card.match.data["MatchResult"]
           }}</span>
         </div>
       </mat-card-content>
       <mat-card-actions class="match-card-actions">
         <div class="match-badges-group">
           <span
-            *ngIf="isPlayerList && isPlayerMomForMatch(match)"
+            *ngIf="isPlayerList && card.isPlayerMom"
             class="match-mom-badge"
             title="Man of the Match"
           >
             🏆 MoM
           </span>
           <span
-            *ngIf="isPlayerList && getPlayerMvpPoints(match) !== undefined"
+            *ngIf="isPlayerList && card.playerMvpPoints !== undefined"
             class="match-mvp-badge"
-            [class.clickable]="getPlayerMvpBreakdown(match)"
+            [class.clickable]="card.playerMvpBreakdown"
             [title]="
-              getPlayerMvpBreakdown(match)
+              card.playerMvpBreakdown
                 ? 'View MVP breakdown'
                 : 'MVP points earned this match'
             "
-            (click)="$event.stopPropagation(); openPlayerMvpBreakdown(match)"
+            (click)="$event.stopPropagation(); openPlayerMvpBreakdown(card.match)"
           >
-            ⭐ {{ getPlayerMvpPoints(match) }} pts
+            ⭐ {{ card.playerMvpPoints }} pts
           </span>
         </div>
         <mat-icon class="match-card-chevron">chevron_right</mat-icon>

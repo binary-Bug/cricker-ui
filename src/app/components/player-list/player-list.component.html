@@ -23,9 +23,7 @@
 
   <div class="players-title-wrap">
     <h1 class="players-title">All Players</h1>
-    <span class="players-count-badge">{{
-      (playerList | async)?.length ?? 0
-    }}</span>
+    <span class="players-count-badge">{{ cards.length }}</span>
   </div>
 </div>
 
@@ -76,46 +74,45 @@
   </div>
 </div>
 
-<ng-container *ngIf="playerList | async as players">
+<ng-container *ngIf="cards.length > 0; else emptyState">
   <div
-    *ngIf="players.length > 0; else emptyState"
     class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 players-grid"
   >
     <mat-card
-      *ngFor="let player of players"
+      *ngFor="let card of cards; trackBy: trackByPlayerName"
       appearance="outlined"
       class="player-card"
       role="button"
       tabindex="0"
-      [attr.aria-label]="'View stats for ' + player.name"
-      (click)="navigateToPlayerDetails(player.name)"
-      (keydown.enter)="navigateToPlayerDetails(player.name)"
-      (keydown.space)="navigateToPlayerDetails(player.name)"
+      [attr.aria-label]="'View stats for ' + card.player.name"
+      (click)="navigateToPlayerDetails(card.player.name)"
+      (keydown.enter)="navigateToPlayerDetails(card.player.name)"
+      (keydown.space)="navigateToPlayerDetails(card.player.name)"
     >
       <div
         class="player-avatar"
-        [style.background-color]="utilityService.getAvatarColor(player.name)"
+        [style.background-color]="card.avatarColor"
       >
-        {{ utilityService.getInitials(player.name) }}
+        {{ card.initials }}
       </div>
 
       <div class="player-card-body">
         <div class="player-name-row">
-          <span class="player-card-name">{{ player.name }}</span>
+          <span class="player-card-name">{{ card.player.name }}</span>
           <span
-            *ngIf="player.momCount > 0"
+            *ngIf="card.player.momCount > 0"
             class="player-mom-badge"
-            title="Man of the Match {{ player.momCount }} time(s)"
+            title="Man of the Match {{ card.player.momCount }} time(s)"
           >
             <span class="player-mom-badge-icon">🏆</span>
-            <span>x{{ player.momCount }}</span>
+            <span>x{{ card.player.momCount }}</span>
           </span>
         </div>
         <div class="player-card-meta">
           <span class="player-matches-played"
-            >Matches Played: {{ player.matchesPlayed }}</span
+            >Matches Played: {{ card.player.matchesPlayed }}</span
           >
-          <span class="player-mvp-badge">⭐ {{ player.mvpPoints }} MVP</span>
+          <span class="player-mvp-badge">⭐ {{ card.player.mvpPoints }} MVP</span>
         </div>
       </div>
 
