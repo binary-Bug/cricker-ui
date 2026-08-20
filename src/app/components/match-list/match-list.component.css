@@ -18,6 +18,20 @@
   box-sizing: border-box;
 }
 
+/* Embedded usage (player-details' "Matches Played" tab, isPlayerList=true)
+   already sits inside that page's own padded container, so this
+   component's own outer padding would just double up unnecessarily -
+   zero it out here. Driven by a real class binding ([class.matches-
+   container-embedded]="isPlayerList" in the .html), not the ng-reflect-*
+   debug attribute (see explanation below), so it works in production too. */
+.matches-container.matches-container-embedded {
+  padding: 0;
+}
+
+.matches-header.matches-header-embedded {
+  padding: 0;
+}
+
 @media (min-width: 1024px) {
   .matches-container {
     max-width: 1100px;

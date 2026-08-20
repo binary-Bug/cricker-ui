@@ -6,8 +6,8 @@
   match-details' exit-with-no-player-context flow) - all render through
   this same component/template.
 -->
-<div class="matches-container">
-  <div class="matches-header">
+<div class="matches-container" [class.matches-container-embedded]="isPlayerList">
+  <div class="matches-header " [class.matches-header-embedded]="isPlayerList">
     <button
       mat-mini-fab
       color="primary"

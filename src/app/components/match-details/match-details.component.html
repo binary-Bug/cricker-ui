@@ -107,51 +107,74 @@
         *ngIf="isMatchLoaded && !matchService.matchNotFound"
         class="match-info-card"
       >
-        <div class="match-detail-row">
-          <span class="match-detail-label">Toss Result</span>
-          <span class="match-detail-value"
-            >{{ matchService.teamData[matchService.tossWinner + ""]["name"] }}
+        <!-- Toss Result reads as a full sentence, not a short scannable
+             fact like the items below, so it keeps its own icon-prefixed
+             row rather than being squeezed into the stat strip. -->
+        <div class="match-info-sentence-row">
+          <mat-icon class="match-info-icon">casino</mat-icon>
+          <span class="match-info-sentence"
+            >{{
+              matchService.teamData[matchService.tossWinner + ""]["name"]
+            }}
             won the toss and elected to {{ matchService.tossResult }}
             first</span
           >
         </div>
-        <div class="match-detail-row">
-          <span class="match-detail-label">Overs Played</span>
-          <span class="match-detail-value">{{ matchService.totalOvers }}</span>
-        </div>
-        <div class="match-detail-row">
-          <span class="match-detail-label">Players per Team</span>
-          <span class="match-detail-value">{{
-            matchService.totalPlayers
-          }}</span>
-        </div>
-        <!--
-          Match Date row: when innings-1's first ball timestamp is available
-          (either derived live from oversPlayedData, or loaded from a saved
-          match), render it as an expand/collapse panel so users can drill
-          into the innings/match ball timestamps without cluttering the
-          default view. Older matches saved before this feature has no such
-          timestamp, so we fall back to the original plain row for them.
-        -->
-        <div
-          class="match-detail-row"
-          *ngIf="!matchService.inningsOneFirstBallTime"
-        >
-          <span class="match-detail-label">Match Date</span>
-          <span class="match-detail-value">{{
-            formatMatchDate(matchService.matchDate)
-          }}</span>
+
+        <!-- Overs Played / Players per Team / Match Date (when no ball
+             timestamps are available) are short numeric facts, so they're
+             grouped into an icon-led stat strip - value large/bold, label
+             a small caption underneath - so they can be scanned at a
+             glance rather than read line by line like the sentence above. -->
+        <div class="match-stat-strip">
+          <div class="match-stat-item">
+            <mat-icon class="match-stat-icon">schedule</mat-icon>
+            <span class="match-stat-value">{{ matchService.totalOvers }}</span>
+            <span class="match-stat-label">Overs Played</span>
+          </div>
+          <div class="match-stat-item">
+            <mat-icon class="match-stat-icon">groups</mat-icon>
+            <span class="match-stat-value">{{
+              matchService.totalPlayers
+            }}</span>
+            <span class="match-stat-label">Players per Team</span>
+          </div>
+          <!--
+            Match Date: when innings-1's first ball timestamp is NOT
+            available (older matches saved before that feature existed),
+            it's just another quick fact, so it joins the stat strip here.
+            When the timestamp IS available, it instead renders as the
+            expand/collapse panel below so users can drill into the
+            innings/match ball timestamps without cluttering this glance
+            view.
+          -->
+          <div
+            class="match-stat-item"
+            *ngIf="!matchService.inningsOneFirstBallTime"
+          >
+            <mat-icon class="match-stat-icon">event</mat-icon>
+            <span class="match-stat-value">{{
+              formatMatchDate(matchService.matchDate)
+            }}</span>
+            <span class="match-stat-label">Match Date</span>
+          </div>
         </div>
         <mat-expansion-panel
           class="match-date-panel"
           *ngIf="matchService.inningsOneFirstBallTime"
         >
           <mat-expansion-panel-header>
-            <mat-panel-title>Match Date</mat-panel-title>
-            <mat-panel-description>
-              {{ formatMatchDate(matchService.matchDate) }} &middot; Start
-              Time: {{ formatTime(matchService.inningsOneFirstBallTime) }}
-            </mat-panel-description>
+            <mat-panel-title class="match-date-panel-title">
+              <mat-icon class="match-info-icon">event</mat-icon>
+              <span class="match-date-panel-text">
+                <span class="match-date-panel-heading">Match Date</span>
+                <span class="match-date-panel-sub"
+                  >{{ formatMatchDate(matchService.matchDate) }} &middot;
+                  Start Time:
+                  {{ formatTime(matchService.inningsOneFirstBallTime) }}</span
+                >
+              </span>
+            </mat-panel-title>
           </mat-expansion-panel-header>
           <div class="match-detail-row">
             <span class="match-detail-label"
