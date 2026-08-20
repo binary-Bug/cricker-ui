@@ -1,5 +1,5 @@
 import { ApplicationConfig } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 
 import { routes } from './app.routes';
@@ -19,7 +19,20 @@ const firebaseConfig = {
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRouter(routes),
+    // Without this, the router leaves the window's scroll position exactly
+    // where it was on the previous page (e.g. scrolled partway down
+    // allPlayers) - so navigating to a NEW route (player-details, match-
+    // details, etc.) opened with that same scroll offset instead of at the
+    // top, making it look like the page loaded "mid-scroll". 'top' resets
+    // scroll on every route path change; 'enabled' still lets fragment/
+    // anchor links (#some-id) work if ever used.
+    provideRouter(
+      routes,
+      withInMemoryScrolling({
+        scrollPositionRestoration: 'top',
+        anchorScrolling: 'enabled',
+      })
+    ),
   provideHttpClient(),
     provideAnimationsAsync(),
     provideFirebaseApp(() => initializeApp(firebaseConfig)),
