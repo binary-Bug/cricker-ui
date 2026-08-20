@@ -51,6 +51,25 @@
   letter-spacing: 0.5px;
 }
 
+/* Escape hatch for a slow/stuck API call - lets the user bail out and
+   return home instead of being stuck behind the overlay indefinitely. */
+.spinner-cancel-btn {
+  margin-top: 4px;
+  padding: 6px 18px;
+  border-radius: 20px;
+  border: 1px solid #4527a0;
+  background: transparent;
+  color: #4527a0;
+  font-weight: 600;
+  font-size: 0.85em;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+}
+
+.spinner-cancel-btn:hover {
+  background: rgba(69, 39, 160, 0.08);
+}
+
 /* Bat swings back, then strikes through the ball's position (~40% mark,
    timed to line up with the ball's launch below), then resets. */
 @keyframes spinner-bat-swing {

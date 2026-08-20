@@ -42,6 +42,21 @@ export class SpinnerService {
   }
 
   /**
+   * Immediately hides the overlay regardless of how many outstanding
+   * show() calls haven't been matched by a hide() yet - used by the
+   * overlay's Cancel button so a user isn't stuck waiting on a slow/stuck
+   * API call. The underlying awaited promise(s) aren't actually aborted
+   * (the Firestore SDK calls this app uses don't support that) - they'll
+   * still resolve in the background and call their own hide() as normal,
+   * which is a harmless no-op once count is already 0. This is purely an
+   * escape hatch for the UI, not a real request cancellation.
+   */
+  forceHide(): void {
+    this.count = 0;
+    this._isLoading$.next(false);
+  }
+
+  /**
    * Wraps a single awaited call with show()/hide(), including on error, so
    * call sites don't need their own try/finally boilerplate. Usage:
    * `const data = await this.spinnerService.wrap(someService.getThing());`
