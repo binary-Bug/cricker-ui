@@ -10,6 +10,24 @@
    here.
    ============================================================ */
 
+/* Centers the whole dashboard vertically in the viewport - added because
+   in prod mode the Developer Tools section (below) is hidden, leaving
+   noticeably less content, which otherwise sat pinned to the top with a
+   large empty gap below it. min-height (not height) means this only
+   pulls the content toward center when there's spare room - if the
+   content is ever taller than the viewport (e.g. dev mode on a small
+   phone screen), this element just grows to fit it via min-height's
+   auto-height fallback, and justify-content has no extra space to
+   distribute, so it naturally behaves as top-aligned/scrollable instead
+   of clipping anything off-screen. */
+:host {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
 /* Centers content and caps its width so a 4-column grid doesn't stay
    pinned to a narrow mobile-width column on large desktop screens. */
 .dashboard-container {
