@@ -12,6 +12,7 @@ import { MatInputModule } from '@angular/material/input';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AutoCompleteService } from '../../services/auto-complete.service';
 import { UtilityService } from '../../services/utility.service';
+import { SpinnerService } from '../../services/spinner.service';
 
 /** Sort keys offered by the sort toggle on the All Players page. */
 type PlayerSortKey = 'matchesPlayed' | 'mvpPoints' | 'momCount' | 'name';
@@ -42,7 +43,8 @@ export class PlayerListComponent {
     public playerService: PlayerService,
     public router: Router,
     public utilityService: UtilityService,
-    private autoCompleteService: AutoCompleteService
+    private autoCompleteService: AutoCompleteService,
+    private spinnerService: SpinnerService
   ) {
     this.updateList();
     this.searchString.valueChanges.subscribe(() => this.updateList());
@@ -60,10 +62,15 @@ export class PlayerListComponent {
    * applying the current search term and sort key. Both the search box
    * and the sort toggle call this - neither triggers a Firestore
    * refetch since PlayerService.getAllPlayers() serves from its
-   * in-memory cache once populated.
+   * in-memory cache once populated. Only the genuine first (cold) fetch
+   * is wrapped in the global spinner - subsequent calls from search/sort
+   * changes resolve from cache and must not flash the overlay.
    */
   private updateList(): void {
-    this.playerList = this.playerService.getAllPlayers().then((players) => {
+    const isColdFetch = this.playerService.players.length === 0;
+    const fetch = this.playerService.getAllPlayers();
+    const tracked = isColdFetch ? this.spinnerService.wrap(fetch) : fetch;
+    this.playerList = tracked.then((players) => {
       const term = (this.searchString.value ?? '').trim();
       const filteredNames = this.autoCompleteService._filter(
         term,

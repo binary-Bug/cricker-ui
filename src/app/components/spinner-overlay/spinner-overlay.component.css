@@ -1,0 +1,115 @@
+/* Full-screen backdrop - sits above everything, including the existing
+   #confetti element (which uses z-index: -1) and Material dialogs
+   (~1000-1100), so it can never be hidden behind other UI. */
+.spinner-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.88);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.spinner-scene {
+  position: relative;
+  width: 140px;
+  height: 100px;
+}
+
+.spinner-ball {
+  position: absolute;
+  left: 8px;
+  top: 46px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #ff8a80, #c62828);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+  animation: spinner-ball-fly 1.2s ease-in-out infinite;
+}
+
+.spinner-bat {
+  position: absolute;
+  left: 60px;
+  top: 6px;
+  font-size: 56px;
+  line-height: 1;
+  transform-origin: 30% 80%;
+  animation: spinner-bat-swing 1.2s ease-in-out infinite;
+}
+
+.spinner-label {
+  margin: 0;
+  color: #4527a0;
+  font-weight: 600;
+  font-size: 0.95em;
+  letter-spacing: 0.5px;
+}
+
+/* Bat swings back, then strikes through the ball's position (~40% mark,
+   timed to line up with the ball's launch below), then resets. */
+@keyframes spinner-bat-swing {
+  0%,
+  30% {
+    transform: rotate(-55deg);
+  }
+  42% {
+    transform: rotate(15deg);
+  }
+  60%,
+  100% {
+    transform: rotate(-55deg);
+  }
+}
+
+/* Ball sits still until contact (~40%), then flies off across the scene
+   and fades out before looping back to its resting spot. */
+@keyframes spinner-ball-fly {
+  0%,
+  40% {
+    left: 8px;
+    top: 46px;
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  75% {
+    left: 128px;
+    top: 4px;
+    opacity: 1;
+    transform: scale(0.85) rotate(300deg);
+  }
+  85%,
+  100% {
+    left: 128px;
+    top: 4px;
+    opacity: 0;
+    transform: scale(0.85) rotate(300deg);
+  }
+}
+
+/* Users who've asked for less motion get a simple pulsing state instead
+   of the swing/fly loop. */
+@media (prefers-reduced-motion: reduce) {
+  .spinner-bat {
+    animation: none;
+  }
+
+  .spinner-ball {
+    animation: spinner-ball-pulse 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes spinner-ball-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}

@@ -3,6 +3,7 @@ import {
   Component,
   Input,
   OnChanges,
+  OnDestroy,
   OnInit,
   SimpleChanges,
   ViewChild,
@@ -16,10 +17,9 @@ import { Bowler } from '../../models/bowler.interface';
 import { MatAccordion, MatExpansionModule } from '@angular/material/expansion';
 import { MatTabsModule } from '@angular/material/tabs';
 import { LiveMatchService } from '../../services/live-match.service';
-import { ActivatedRoute } from '@angular/router';
-import { LoadMatchService } from '../../services/load-match.service';
 import { EventHandlerService } from '../../services/event-handler.service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Subscription } from 'rxjs';
 
 import { Pipe, PipeTransform } from '@angular/core';
 import { BALL_DATA } from '../../models/ball_data.class';
@@ -66,16 +66,15 @@ export class CalculateTotalRunsInOver implements PipeTransform {
   styleUrl: './scorecard.component.css',
 })
 export class ScorecardComponent
-  implements OnInit, OnChanges, AfterContentChecked
+  implements OnInit, OnChanges, AfterContentChecked, OnDestroy
 {
   constructor(
     public matchService: MatchService,
     public liveMatchService: LiveMatchService,
-    private route: ActivatedRoute,
-    private loadMatchService: LoadMatchService,
     private eventHandlerService: EventHandlerService,
     private partnershipService: PartnershipService
   ) {}
+  private subscriptions: Subscription[] = [];
 
   @Input('isActive') isActive!: boolean;
   @ViewChild('FIBatsmenTable') FIBatsmenTable!: MatTable<Batsmen>;
@@ -84,7 +83,6 @@ export class ScorecardComponent
   @ViewChild('SIBowlerTable') SIBowlerTable!: MatTable<Bowler>;
 
   _isActive: boolean = false;
-  isLoad: boolean = false;
   isOversPanelExpanded: boolean = false;
   FIBattingTeamKey: string = this.matchService.currentRoles['bat'];
   SIBattingTeamKey: string = this.matchService.currentRoles['ball'];
@@ -166,16 +164,23 @@ export class ScorecardComponent
   }
 
   async ngOnInit(): Promise<void> {
-    this.route.url.subscribe((url) => {
-      if (url[0].path === 'match-details') {
-        this.route.queryParams.subscribe(async (qp) => {
-          this.isLoad = true;
-          await this.loadMatchService.loadMatch(qp['id']);
-          this.populateDataFromMatchService();
-        });
-      }
-    });
+    // Match data loading itself is now triggered by MatchDetailsComponent
+    // (the always-eagerly-created parent), not here - this component may
+    // be constructed lazily (see the Score Card tab's matTabContent in
+    // match-details.component.html) well after that load has already
+    // finished, or well before it via the 'live' route's own flow, so it
+    // just reacts: populate immediately from whatever's already on
+    // MatchService, then again whenever a load completes.
     this.populateDataFromMatchService();
+    this.subscriptions.push(
+      this.eventHandlerService.MatchLoadCompleteEvent$().subscribe(() => {
+        this.populateDataFromMatchService();
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
   ngOnChanges(changes: SimpleChanges): void {

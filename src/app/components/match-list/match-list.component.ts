@@ -12,6 +12,7 @@ import { PlayerMvpBreakdown } from '../../models/mvp.interface';
 import { MvpBreakdownDialog } from '../dailogs/mvp-breakdown.dialog';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { SpinnerService } from '../../services/spinner.service';
 
 @Component({
   selector: 'app-match-list',
@@ -55,15 +56,20 @@ export class MatchListComponent implements OnInit {
   constructor(
     public loadMatchService: LoadMatchService,
     public router: Router,
-    private dialog: MatDialog
-  ) {
-    loadMatchService.getAllMatches().then((matches) => {
-      this.matchesList = matches;
-    });
-  }
+    private dialog: MatDialog,
+    private spinnerService: SpinnerService
+  ) {}
 
   ngOnInit(): void {
-    this.loadMatchService.getAllMatches().then((matches) => {
+    // Only show the global spinner when this is a genuine cold fetch (the
+    // service's own cache is still empty) - if getAllMatches() is already
+    // warm (from this or any other component having loaded it this
+    // session), resolve it directly without wrapping in the spinner so
+    // re-visiting this page never flashes the overlay.
+    const isColdFetch = this.loadMatchService.matches.length === 0;
+    const fetch = this.loadMatchService.getAllMatches();
+    const tracked = isColdFetch ? this.spinnerService.wrap(fetch) : fetch;
+    tracked.then((matches) => {
       this.matchesList = matches;
       if (this.matchIds && this.matchIds?.length > 0) {
         this.matchesList = this.matchesList.filter((match) =>

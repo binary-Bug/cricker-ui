@@ -10,6 +10,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { UtilityService } from '../../services/utility.service';
 import { MatchListComponent } from '../match-list/match-list.component';
+import { SpinnerService } from '../../services/spinner.service';
+import { RecentlyViewedService } from '../../services/recently-viewed.service';
 
 @Component({
   selector: 'app-player-details',
@@ -45,16 +47,26 @@ export class PlayerDetailsComponent implements OnInit {
     private route: ActivatedRoute,
     private playerService: PlayerService,
     public router: Router,
-    public utilityService: UtilityService
+    public utilityService: UtilityService,
+    private spinnerService: SpinnerService,
+    private recentlyViewedService: RecentlyViewedService
   ) {}
   async ngOnInit(): Promise<void> {
     this.route.queryParams.subscribe(async (qp) => {
       this.backTarget = qp['from'] === 'stats' ? 'stats' : 'allPlayers';
-      this.currentPlayer = (await this.playerService.getAllPlayers()).find(
-        (player) => {
-          return player.name === qp['name'];
-        }
-      );
+      // Only wrap the global spinner around a genuine cold fetch - once
+      // the roster is cached (this or any other page having loaded it
+      // this session), navigating between different players' detail
+      // pages resolves instantly and must not flash the overlay.
+      const isColdFetch = this.playerService.players.length === 0;
+      const fetch = this.playerService.getAllPlayers();
+      const tracked = isColdFetch ? this.spinnerService.wrap(fetch) : fetch;
+      this.currentPlayer = (await tracked).find((player) => {
+        return player.name === qp['name'];
+      });
+      if (this.currentPlayer) {
+        this.recentlyViewedService.recordPlayer(this.currentPlayer.name);
+      }
       this.initializeStatsArray();
       this.selectedStatOption =
         this.currentPlayer?.runsScored &&

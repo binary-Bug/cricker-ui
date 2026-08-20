@@ -17,6 +17,7 @@ import { Bowler } from '../models/bowler.interface';
 import { Fielder } from '../models/fielder.interface';
 import { UtilityService } from './utility.service';
 import { MatchMvpSummary } from '../models/mvp.interface';
+import { EventHandlerService } from './event-handler.service';
 
 @Injectable({
   providedIn: 'root',
@@ -32,48 +33,55 @@ export class PlayerService {
   matchService = inject(MatchService);
   modeService = inject(ModeService);
   utilityService = inject(UtilityService);
+  private eventHandlerService = inject(EventHandlerService);
+  // Shared in-flight request so concurrent callers before the first fetch
+  // resolves await the same Firestore read instead of each slipping past
+  // the `this.players.length > 0` check and firing their own duplicate
+  // getDocs() call.
+  private pendingGetAllPlayers: Promise<Player[]> | null = null;
+
+  constructor() {
+    // Once a match is saved, every player's stats doc may have changed
+    // (matchesPlayed, runsScored, mvpPoints, etc. all get rewritten - see
+    // savePlayerData()), so the cached roster is stale - clear it so the
+    // next getAllPlayers() call re-fetches from Firestore instead of
+    // serving outdated stats.
+    this.eventHandlerService.MatchSaveCompleteEvent$().subscribe(() => {
+      this.players = [];
+    });
+  }
 
   async getAllPlayers(): Promise<Player[]> {
-    if (this.players.length > 0)
-      return new Promise<Player[]>((resolve) => {
-        resolve(this.players);
-      });
-    else {
-      if (this.modeService.mode === 'prod') {
-        (
-          await getDocs(
-            query(
-              collection(this.firestore, 'PlayerData'),
-              orderBy('matchesPlayed', 'desc')
-            )
-          )
-        ).docs.map((player) => {
-          const playerObj = player.data() as Player;
-          this.normalizePlayerNumericFields(playerObj);
-          this.players.push(playerObj);
-        });
-        return new Promise<Player[]>((resolve) => {
-          resolve(this.players);
-        });
-      } else {
-        (
-          await getDocs(
-            query(
-              collection(this.firestore, 'Test_PlayerData'),
-              orderBy('matchesPlayed', 'desc')
-            )
-          )
-        ).docs.map((player) => {
-          const playerObj = player.data() as Player;
-          this.normalizePlayerNumericFields(playerObj);
-          this.players.push(playerObj);
-        });
-        return new Promise<Player[]>((resolve) => {
-          resolve(this.players);
-        });
-      }
+    if (this.players.length > 0) {
+      return this.players;
     }
+    if (this.pendingGetAllPlayers) {
+      return this.pendingGetAllPlayers;
+    }
+    this.pendingGetAllPlayers = this.fetchAllPlayers().finally(() => {
+      this.pendingGetAllPlayers = null;
+    });
+    return this.pendingGetAllPlayers;
   }
+
+  private async fetchAllPlayers(): Promise<Player[]> {
+    const collectionName =
+      this.modeService.mode === 'prod' ? 'PlayerData' : 'Test_PlayerData';
+    (
+      await getDocs(
+        query(
+          collection(this.firestore, collectionName),
+          orderBy('matchesPlayed', 'desc')
+        )
+      )
+    ).docs.map((player) => {
+      const playerObj = player.data() as Player;
+      this.normalizePlayerNumericFields(playerObj);
+      this.players.push(playerObj);
+    });
+    return this.players;
+  }
+
 
   public getPlayer(playerName: string): Player | undefined {
     if (this.players.length > 0) {

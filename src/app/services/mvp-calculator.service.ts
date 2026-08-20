@@ -120,6 +120,10 @@ export class MvpCalculatorService {
    * re-fetch on every match (the rulebook doesn't change mid-session).
    */
   private cachedWeights: MvpWeightsConfig | null = null;
+  // Shared in-flight request so concurrent callers before the first fetch
+  // resolves await the same Firestore read instead of each firing their
+  // own duplicate getDocs() call.
+  private pendingLoadWeights: Promise<MvpWeightsConfig> | null = null;
 
   /**
    * Loads the MVP scoring rulebook from the "MvpConfig" collection.
@@ -131,7 +135,14 @@ export class MvpCalculatorService {
    */
   async loadWeights(): Promise<MvpWeightsConfig> {
     if (this.cachedWeights) return this.cachedWeights;
+    if (this.pendingLoadWeights) return this.pendingLoadWeights;
+    this.pendingLoadWeights = this.fetchWeights().finally(() => {
+      this.pendingLoadWeights = null;
+    });
+    return this.pendingLoadWeights;
+  }
 
+  private async fetchWeights(): Promise<MvpWeightsConfig> {
     // Start from a deep copy of the defaults so we always have a complete,
     // valid config even if Firestore has nothing (or errors out) below.
     const weights: MvpWeightsConfig = JSON.parse(

@@ -1,0 +1,18 @@
+<!--
+  Full-screen loading overlay. Only rendered while SpinnerService.isLoading$
+  is true (see SpinnerService's doc comment for exactly which calls drive
+  this). The bat/ball animation is pure CSS (see .css) - no new dependency
+  or binary asset.
+-->
+<div
+  class="spinner-overlay"
+  *ngIf="spinnerService.isLoading$ | async"
+  role="status"
+  aria-live="polite"
+>
+  <div class="spinner-scene">
+    <span class="spinner-ball"></span>
+    <span class="spinner-bat">🏏</span>
+  </div>
+  <p class="spinner-label">Loading...</p>
+</div>

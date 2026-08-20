@@ -15,6 +15,7 @@ import { UtilityService } from '../../services/utility.service';
 import { MatDialog } from '@angular/material/dialog';
 import { MvpCalculatorService } from '../../services/mvp-calculator.service';
 import { MvpHelpDialog } from '../dailogs/mvp-help.dialog';
+import { SpinnerService } from '../../services/spinner.service';
 
 interface StatType {
   value: string;
@@ -121,9 +122,16 @@ export class StatsComponent implements OnInit {
     public router: Router,
     private utilityService: UtilityService,
     private mvpCalculatorService: MvpCalculatorService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private spinnerService: SpinnerService
   ) {
-    playerService.getAllPlayers().then((players) => {
+    // Only wrap the genuine cold fetch in the global spinner - if the
+    // roster is already cached (e.g. /allPlayers was visited first this
+    // session), this resolves instantly and must not flash the overlay.
+    const isColdFetch = this.playerService.players.length === 0;
+    const fetch = playerService.getAllPlayers();
+    const tracked = isColdFetch ? this.spinnerService.wrap(fetch) : fetch;
+    tracked.then((players) => {
       this.playersData = players as any;
 
       this.calculateSR();

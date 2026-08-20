@@ -25,6 +25,7 @@ import { MvpCalculatorService } from '../../services/mvp-calculator.service';
 import { MvpHelpDialog } from '../dailogs/mvp-help.dialog';
 import { MvpBreakdownDialog } from '../dailogs/mvp-breakdown.dialog';
 import { PlayerMvpBreakdown } from '../../models/mvp.interface';
+import { LoadMatchService } from '../../services/load-match.service';
 
 @Component({
   selector: 'app-match-details',
@@ -50,7 +51,8 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
     private playerService: PlayerService,
     private mvpCalculatorService: MvpCalculatorService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private loadMatchService: LoadMatchService
   ) {}
   private subscriptions: Subscription[] = [];
   public isMatchLoaded: boolean = false;
@@ -85,6 +87,14 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
           this.playerName = qp['playerName'];
           this.playerDetailsBackTarget =
             qp['from'] === 'stats' ? 'stats' : 'allPlayers';
+          // Triggering the actual match load here (rather than leaving it
+          // to ScorecardComponent, which used to be the only thing that
+          // called this) decouples Match Info's data from the Score Card
+          // tab's construction - see scorecard.component.ts's matching
+          // comment. This is safe unguarded (no extra route-path check
+          // needed) since MatchDetailsComponent is only ever instantiated
+          // on the 'match-details' route itself.
+          await this.loadMatchService.loadMatch(qp['id']);
         });
       }
     });
@@ -117,9 +127,20 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
   ngAfterViewChecked(): void {
     if (!this.hasAttemptedSharePrerender && this.shareCardRef) {
       this.hasAttemptedSharePrerender = true;
-      this.prerenderShareCard();
+      // html2canvas synchronously rasterizes the whole #shareCard DOM
+      // subtree, which can block the main thread for a real chunk of
+      // time. #shareCard appears the instant match data loads - i.e. in
+      // the SAME tick as the rest of match-details' content when that
+      // data comes from cache (see LoadMatchService's recentMatchViewCache)
+      // - so calling this synchronously here would block the browser from
+      // ever painting the match details the user just navigated to,
+      // making the route transition look stuck. Deferring one macrotask
+      // lets the browser paint what's already rendered first, then run
+      // this "nice to have ahead of time" work in the background.
+      setTimeout(() => this.prerenderShareCard(), 0);
     }
   }
+
 
   private async prerenderShareCard(): Promise<void> {
     if (!this.shareCardRef) return;

@@ -319,7 +319,21 @@
       <mat-icon class="tab-label-icon">table_chart</mat-icon>
       Score Card
     </ng-template>
-    <app-scorecard style="z-index: 2500"></app-scorecard>
+    <!--
+      matTabContent defers constructing <app-scorecard> until this tab is
+      actually selected (Match Info is the default/first tab). Without
+      this, ScorecardComponent - a much heavier subtree than Match Info
+      (4 mat-tables + an accordion, all built/rendered even while hidden
+      behind display:none) - was being fully constructed and rendered on
+      EVERY match-details load regardless of which tab the user was
+      looking at, which is what made this page noticeably less snappy
+      than e.g. player-details on a cache hit. Match Info's own data load
+      no longer depends on this component being created at all - see
+      MatchDetailsComponent.ngOnInit()/ScorecardComponent.ngOnInit().
+    -->
+    <ng-template matTabContent>
+      <app-scorecard style="z-index: 2500"></app-scorecard>
+    </ng-template>
   </mat-tab>
   </mat-tab-group>
 </div>

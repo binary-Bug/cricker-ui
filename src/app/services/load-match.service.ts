@@ -16,6 +16,34 @@ import { Team } from '../models/team.interface';
 import { EventHandlerService } from './event-handler.service';
 import { PlayerService } from './player.service';
 import { MvpCalculatorService } from './mvp-calculator.service';
+import { MatchMvpSummary } from '../models/mvp.interface';
+import { RecentlyViewedService } from './recently-viewed.service';
+import { SpinnerService } from './spinner.service';
+
+/**
+ * Decoded view-model snapshot of everything loadMatch() assigns onto
+ * MatchService for one match - cached (max 5, LRU) keyed by matchId so
+ * re-visiting an already-viewed match's details skips re-deriving this
+ * from the matches list (see recentMatchViewCache below).
+ */
+interface MatchViewSnapshot {
+  tossWinner: string | null;
+  tossResult: string | null;
+  matchResult: string | null;
+  totalPlayers: number | null;
+  totalOvers: number | null;
+  matchDate: string | null;
+  team1: Team;
+  team2: Team;
+  mvpSummary: MatchMvpSummary | undefined;
+  loadedInningsOneFirstBallTime: Date | null;
+  loadedInningsOneLastBallTime: Date | null;
+  loadedInningsTwoFirstBallTime: Date | null;
+  loadedInningsTwoLastBallTime: Date | null;
+}
+
+/** How many recently-viewed matches' decoded state to keep cached. */
+const MAX_RECENT_MATCH_VIEWS = 5;
 
 @Injectable({
   providedIn: 'root',
@@ -26,53 +54,106 @@ export class LoadMatchService {
     private modeService: ModeService,
     private eventHandlerService: EventHandlerService,
     private playerService: PlayerService,
-    private mvpCalculatorService: MvpCalculatorService
-  ) {}
+    private mvpCalculatorService: MvpCalculatorService,
+    private recentlyViewedService: RecentlyViewedService,
+    private spinnerService: SpinnerService
+  ) {
+    // A newly saved match adds a new document to the matches collection
+    // and its snapshot-cached view (if any, from re-viewing it while it
+    // was still in progress) may be stale - clear both so the next
+    // getAllMatches()/loadMatch() re-fetches fresh data.
+    this.eventHandlerService.MatchSaveCompleteEvent$().subscribe(() => {
+      this.matches = [];
+      this.recentMatchViewCache.clear();
+    });
+  }
   firestore = inject(Firestore);
 
   matches: LoadMatchDTO[] = [];
+  // Shared in-flight request so concurrent callers (e.g. a component's
+  // constructor AND its ngOnInit both calling getAllMatches() before the
+  // first fetch resolves) await the same Firestore read instead of each
+  // firing their own duplicate getDocs() call.
+  private pendingGetAllMatches: Promise<LoadMatchDTO[]> | null = null;
+  // Insertion-order Map used as a simple LRU (max MAX_RECENT_MATCH_VIEWS) -
+  // re-set an existing key to bump it to "most recent".
+  private recentMatchViewCache = new Map<string, MatchViewSnapshot>();
+
 
   async getAllMatches(): Promise<LoadMatchDTO[]> {
-    if (this.matches.length === 0) {
-      if (this.modeService.mode === 'prod') {
-        let matchesObj: LoadMatchDTO[] = [];
-        (
-          await getDocs(
-            query(
-              collection(this.firestore, 'MatchData'),
-              orderBy('FireBaseDate', 'desc')
-            )
-          )
-        ).docs.map((m) => {
-          matchesObj.push({ id: m.id, data: m.data() });
-        });
-        return new Promise<LoadMatchDTO[]>((resolve) => {
-          resolve(matchesObj);
-        });
-      } else {
-        let matchesObj: LoadMatchDTO[] = [];
-        (
-          await getDocs(
-            query(
-              collection(this.firestore, 'Test_MatchData'),
-              orderBy('FireBaseDate', 'desc')
-            )
-          )
-        ).docs.map((m) => {
-          matchesObj.push({ id: m.id, data: m.data() });
-        });
-        return new Promise<LoadMatchDTO[]>((resolve) => {
-          resolve(matchesObj);
-        });
-      }
-    } else {
-      return new Promise<LoadMatchDTO[]>((resolve) => {
-        resolve(this.matches);
-      });
+    if (this.matches.length > 0) {
+      return this.matches;
     }
+    if (this.pendingGetAllMatches) {
+      return this.pendingGetAllMatches;
+    }
+    this.pendingGetAllMatches = this.fetchAllMatches().finally(() => {
+      this.pendingGetAllMatches = null;
+    });
+    return this.pendingGetAllMatches;
+  }
+
+  private async fetchAllMatches(): Promise<LoadMatchDTO[]> {
+    const collectionName =
+      this.modeService.mode === 'prod' ? 'MatchData' : 'Test_MatchData';
+    const matchesObj: LoadMatchDTO[] = [];
+    (
+      await getDocs(
+        query(
+          collection(this.firestore, collectionName),
+          orderBy('FireBaseDate', 'desc')
+        )
+      )
+    ).docs.map((m) => {
+      matchesObj.push({ id: m.id, data: m.data() });
+    });
+    // Bug fix: this used to only ever populate a LOCAL matchesObj and
+    // never assign it to this.matches, so the length-check cache above
+    // never actually took effect - every call refetched the whole
+    // collection. Assigning here is what makes the cache real.
+    this.matches = matchesObj;
+    return this.matches;
   }
 
   async loadMatch(matchId: string): Promise<void> {
+    // Force at least one microtask hop before doing ANYTHING below - a
+    // cache hit (see recentMatchViewCache) has no real `await` in its
+    // branch, so without this, calling code like ScorecardComponent's
+    // `await loadMatchService.loadMatch(...)` (invoked from ngOnInit
+    // while MatchDetailsComponent's parent view is still mid-change-
+    // detection) would run NotifyMatchLoadCompleteEvent() synchronously
+    // in the SAME digest that already read isMatchLoaded as false,
+    // flipping it to true before Angular's dev-mode checkNoChanges
+    // re-verification pass - triggering NG0100
+    // (ExpressionChangedAfterItHasBeenCheckedError) and visibly stalling
+    // the route transition. Yielding here keeps cache hits and real
+    // Firestore reads timing-equivalent from every caller's perspective.
+    await Promise.resolve();
+
+    const cached = this.recentMatchViewCache.get(matchId);
+    if (cached) {
+      // Bump to most-recently-used and apply directly - skips re-fetching
+      // getAllMatches() and re-deriving mvp/timestamp fields entirely, and
+      // deliberately does NOT go through the spinner - it's instant.
+      this.recentMatchViewCache.delete(matchId);
+      this.recentMatchViewCache.set(matchId, cached);
+      this.matchService.matchNotFound = false;
+      this.applySnapshotToMatchService(cached);
+      this.mapOversPlayedData();
+      this.matchService.setCurrentRoles();
+      this.recentlyViewedService.recordMatch(matchId);
+      this.eventHandlerService.NotifyMatchLoadCompleteEvent();
+      return;
+    }
+
+    // Not cached yet for this match - this is the genuine cold path (a
+    // Firestore read the first time, or just an uncached derivation if
+    // getAllMatches() itself is already warm), so it's the one wrapped in
+    // the global spinner.
+    await this.spinnerService.wrap(this.loadMatchCold(matchId));
+  }
+
+  private async loadMatchCold(matchId: string): Promise<void> {
     let matches = await this.getAllMatches();
     let matchToLoad = matches.find((match) => {
       return match['id'] === matchId;
@@ -132,11 +213,66 @@ export class LoadMatchService {
       matchToLoad?.data['InningsTwoLastBallTime']
     );
 
+    this.cacheMatchView(matchId);
     this.mapOversPlayedData();
     this.matchService.setCurrentRoles();
+    this.recentlyViewedService.recordMatch(matchId);
     //console.log('load completed for {' + matchId + '} from service');
     this.eventHandlerService.NotifyMatchLoadCompleteEvent();
   }
+
+  /** Snapshots the fields loadMatch() just derived onto MatchService, for recentMatchViewCache. */
+  private cacheMatchView(matchId: string): void {
+    const snapshot: MatchViewSnapshot = {
+      tossWinner: this.matchService.tossWinner,
+      tossResult: this.matchService.tossResult,
+      matchResult: this.matchService.matchResult,
+      totalPlayers: this.matchService.totalPlayers,
+      totalOvers: this.matchService.totalOvers,
+      matchDate: this.matchService.matchDate,
+      team1: this.matchService.teamData['team1'],
+      team2: this.matchService.teamData['team2'],
+      mvpSummary: this.matchService.mvpSummary,
+      loadedInningsOneFirstBallTime:
+        this.matchService.loadedInningsOneFirstBallTime,
+      loadedInningsOneLastBallTime:
+        this.matchService.loadedInningsOneLastBallTime,
+      loadedInningsTwoFirstBallTime:
+        this.matchService.loadedInningsTwoFirstBallTime,
+      loadedInningsTwoLastBallTime:
+        this.matchService.loadedInningsTwoLastBallTime,
+    };
+    this.recentMatchViewCache.set(matchId, snapshot);
+    if (this.recentMatchViewCache.size > MAX_RECENT_MATCH_VIEWS) {
+      const oldestKey = this.recentMatchViewCache.keys().next().value;
+      if (oldestKey !== undefined) {
+        this.recentMatchViewCache.delete(oldestKey);
+      }
+    }
+  }
+
+  /** Reapplies a cached MatchViewSnapshot onto MatchService (cache-hit path of loadMatch()). */
+  private applySnapshotToMatchService(snapshot: MatchViewSnapshot): void {
+    this.matchService.tossWinner = snapshot.tossWinner;
+    this.matchService.tossResult = snapshot.tossResult;
+    this.matchService.matchResult = snapshot.matchResult;
+    this.matchService.totalPlayers = snapshot.totalPlayers;
+    this.matchService.totalOvers = snapshot.totalOvers;
+    this.matchService.matchDate = snapshot.matchDate;
+    this.matchService.teamData['team1'] = snapshot.team1;
+    this.matchService.teamData['team2'] = snapshot.team2;
+    this.matchService.mvpSummary = snapshot.mvpSummary;
+    this.matchService.isMatchLoadedFromHistory = true;
+    this.matchService.loadedInningsOneFirstBallTime =
+      snapshot.loadedInningsOneFirstBallTime;
+    this.matchService.loadedInningsOneLastBallTime =
+      snapshot.loadedInningsOneLastBallTime;
+    this.matchService.loadedInningsTwoFirstBallTime =
+      snapshot.loadedInningsTwoFirstBallTime;
+    this.matchService.loadedInningsTwoLastBallTime =
+      snapshot.loadedInningsTwoLastBallTime;
+  }
+
 
   /**
    * Firestore returns Timestamp fields (not JS Date) when a document is
@@ -195,7 +331,13 @@ export class LoadMatchService {
       const chronologicalMatches = [...matches].reverse();
       for (const match of chronologicalMatches) {
         this.modeService.setMode('prod');
-        await this.loadMatch(match.id);
+        // Uses loadMatchCold() directly (bypassing the public loadMatch())
+        // - this admin backfill loop replays every historical match
+        // sequentially, and routing each one through the spinner would
+        // just flicker show/hide once per match instead of giving useful
+        // feedback; this is a background bulk operation, not a
+        // user-facing gating read (see plan's spinner-wiring exclusions).
+        await this.loadMatchCold(match.id);
         console.log(match.id + ' - match loaded in loop');
         console.log('loading players data from firebase');
         await this.playerService.getAllPlayers();
