@@ -329,10 +329,6 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
     }
   }
 
-  toggleTab(event: any): void {
-    this.handleOnToggleEvent(event.index);
-  }
-
   /**
    * True if `teamKey` ('team1'/'team2') is the winning team, so the
    * template can show a small non-color checkmark cue next to their name
@@ -387,29 +383,5 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
           this.playerDetailsBackTarget
       );
     } else this.liveMatchService.exitMatch('allMatches');
-  }
-
-  handleOnToggleEvent(index: number): void {
-    if (index === 1) {
-      setTimeout(() => {
-        let ele = document.getElementById('mat-tab-content-scorecard');
-        if (ele) {
-          ele.style.display = 'initial';
-        }
-        let ele2 = document.getElementById('scorecardSpinner');
-        if (ele2) {
-          ele2.style.display = 'none';
-        }
-      }, 500);
-    } else {
-      let ele = document.getElementById('mat-tab-content-scorecard');
-      if (ele) {
-        ele.style.display = 'none';
-      }
-      let ele2 = document.getElementById('scorecardSpinner');
-      if (ele2) {
-        ele2.style.display = 'block';
-      }
-    }
   }
 }

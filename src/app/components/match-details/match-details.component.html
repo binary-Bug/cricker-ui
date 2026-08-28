@@ -16,10 +16,7 @@
        player-details' tab bar, replicated here under its own class name
        since component styles aren't shared across files. Only the tab
        header chrome is restyled - Score Card tab content is untouched. -->
-  <mat-tab-group
-    class="match-tab-group"
-    (selectedTabChange)="toggleTab($event)"
-  >
+  <mat-tab-group class="match-tab-group">
     <mat-tab>
       <ng-template matTabLabel>
         <mat-icon class="tab-label-icon">info</mat-icon>

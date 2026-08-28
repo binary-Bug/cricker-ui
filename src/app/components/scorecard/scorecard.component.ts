@@ -1,6 +1,7 @@
 import {
   AfterContentChecked,
   Component,
+  HostListener,
   Input,
   OnChanges,
   OnDestroy,
@@ -16,13 +17,19 @@ import { Batsmen } from '../../models/batsmen.interface';
 import { Bowler } from '../../models/bowler.interface';
 import { MatAccordion, MatExpansionModule } from '@angular/material/expansion';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatIconModule } from '@angular/material/icon';
+import {
+  CdkOverlayOrigin,
+  ConnectionPositionPair,
+  OverlayModule,
+} from '@angular/cdk/overlay';
 import { LiveMatchService } from '../../services/live-match.service';
 import { EventHandlerService } from '../../services/event-handler.service';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subscription } from 'rxjs';
 
 import { Pipe, PipeTransform } from '@angular/core';
 import { BALL_DATA } from '../../models/ball_data.class';
+import { Fielder } from '../../models/fielder.interface';
 import { PartnershipService } from '../../services/partnership.service';
 import { InningsBreakdown } from '../../models/partnership.interface';
 @Pipe({
@@ -31,21 +38,28 @@ import { InningsBreakdown } from '../../models/partnership.interface';
   pure: false,
 })
 export class CalculateTotalRunsInOver implements PipeTransform {
-  public static previousOverRuns: number = 0;
-  transform(over: BALL_DATA[], index: number): number {
-    if (index === 0) CalculateTotalRunsInOver.previousOverRuns = 0;
-
-    let value = over.filter((ball) => ball.hasBeenBowled)[
-      over.filter((ball) => ball.hasBeenBowled).length - 1
-    ]?.currentRuns;
-
-    if (value === undefined || value === null || value === 0) {
-      CalculateTotalRunsInOver.previousOverRuns = 0;
-      return 0;
+  /**
+   * Cumulative match runs as of the last bowled ball at or before
+   * `overIndex` (carrying forward through overs with no balls bowled yet).
+   * Looking this up directly (rather than the old static-accumulator
+   * approach) makes the calculation independent of call order, which is
+   * required now that overs can render latest-first and/or only a subset
+   * at a time (see ScorecardComponent.getVisibleOvers).
+   */
+  private cumulativeRunsThrough(overs: BALL_DATA[][], overIndex: number): number {
+    for (let i = overIndex; i >= 0; i--) {
+      const over = overs[i];
+      for (let b = over.length - 1; b >= 0; b--) {
+        if (over[b].hasBeenBowled) return over[b].currentRuns ?? 0;
+      }
     }
-    let returnVal = value - CalculateTotalRunsInOver.previousOverRuns;
-    CalculateTotalRunsInOver.previousOverRuns = value;
-    return returnVal;
+    return 0;
+  }
+
+  transform(overs: BALL_DATA[][], index: number): number {
+    const current = this.cumulativeRunsThrough(overs, index);
+    const previous = index === 0 ? 0 : this.cumulativeRunsThrough(overs, index - 1);
+    return current - previous;
   }
 }
 
@@ -59,7 +73,8 @@ export class CalculateTotalRunsInOver implements PipeTransform {
     MatAccordion,
     MatExpansionModule,
     MatTabsModule,
-    MatProgressSpinnerModule,
+    MatIconModule,
+    OverlayModule,
     CalculateTotalRunsInOver,
   ],
   templateUrl: './scorecard.component.html',
@@ -83,7 +98,183 @@ export class ScorecardComponent
   @ViewChild('SIBowlerTable') SIBowlerTable!: MatTable<Bowler>;
 
   _isActive: boolean = false;
-  isOversPanelExpanded: boolean = false;
+
+  /**
+   * Which innings pill tab is showing. `null` means "follow the match"
+   * (mirrors the old accordion's `[expanded]="!isSecondInning"` behavior,
+   * so the tab auto-switches to Innings 2 the moment live play reaches it)
+   * - once the user manually picks a tab, their choice sticks instead of
+   * being fought back to the live innings on the next change-detection.
+   */
+  private manualInningsSelection: boolean | null = null;
+  get showSecondInnings(): boolean {
+    return this.manualInningsSelection ?? this.matchService.isSecondInning;
+  }
+  selectInningsTab(isSecondInnings: boolean): void {
+    this.manualInningsSelection = isSecondInnings;
+  }
+
+  /** The team currently shown in the sticky mini score header. */
+  get currentBattingTeamName(): string {
+    const teamKey = this.showSecondInnings
+      ? this.SIBattingTeamKey
+      : this.FIBattingTeamKey;
+    return this.matchService.teamData[teamKey]?.name ?? '';
+  }
+
+  /** Touch-friendly fallback for the sticky header's truncated team name -
+   * desktop hover already gets the full name via the native `title` tooltip. */
+  teamNameTooltipOpen = false;
+  toggleTeamNameTooltip(event: Event): void {
+    event.stopPropagation();
+    this.teamNameTooltipOpen = !this.teamNameTooltipOpen;
+  }
+
+  @HostListener('document:click')
+  closeTeamNameTooltip(): void {
+    this.teamNameTooltipOpen = false;
+  }
+
+  /** Lets the batting/bowling tables be tucked away so Overs/Partnerships
+   * are reachable without scrolling past both innings' tables. */
+  inningsTableCollapsed = false;
+  toggleInningsTableCollapsed(): void {
+    this.inningsTableCollapsed = !this.inningsTableCollapsed;
+  }
+
+  /** Color-codes a batsman's strike rate; no color until they've faced a ball. */
+  strikeRateClass(balls: number, strikeRate: number | undefined): string {
+    if (!balls) return '';
+    const sr = strikeRate ?? 0;
+    if (sr >= 130) return 'stat-great';
+    if (sr >= 100) return 'stat-decent';
+    return 'stat-bad';
+  }
+
+  /** Color-codes a bowler's economy; no color until they've bowled a ball. */
+  economyClass(overs: number, economy: number | undefined): string {
+    if (!overs) return '';
+    const eco = economy ?? 0;
+    if (eco < 6) return 'stat-great';
+    if (eco <= 8) return 'stat-decent';
+    return 'stat-bad';
+  }
+
+  /** True once at least one innings has real batting data to show, so the
+   * loading placeholder can be swapped for actual content. */
+  get hasScorecardData(): boolean {
+    return (
+      (this.matchService.teamData[this.FIBattingTeamKey]?.Batsmens?.length ??
+        0) > 0 ||
+      (this.matchService.teamData[this.SIBattingTeamKey]?.Batsmens?.length ??
+        0) > 0
+    );
+  }
+
+  /** How many of the most recent overs render eagerly before "Show earlier
+   * overs" is needed - keeps a long innings' Overs tab light on first open. */
+  readonly oversEagerCount = 3;
+  fiShowAllOvers = false;
+  siShowAllOvers = false;
+
+  /** Latest-first (optionally capped) view of one team's overs for the Overs tab. */
+  getVisibleOvers(
+    teamKey: string,
+    showAll: boolean
+  ): { over: BALL_DATA[]; index: number }[] {
+    const overs = this.matchService.teamData[teamKey].oversPlayedData;
+    const indexed = overs.map((over, index) => ({ over, index })).reverse();
+    return showAll ? indexed : indexed.slice(0, this.oversEagerCount);
+  }
+
+  hasHiddenOvers(teamKey: string, showAll: boolean): boolean {
+    return (
+      !showAll &&
+      this.matchService.teamData[teamKey].oversPlayedData.length >
+        this.oversEagerCount
+    );
+  }
+
+  /** Keeps over rows/ball buttons stable across change detection so the
+   * ball-tap popover's origin element isn't destroyed out from under it. */
+  trackByOverIndex(_index: number, entry: { index: number }): number {
+    return entry.index;
+  }
+
+  /** The ball currently shown in the tap-to-inspect popover, if any. */
+  selectedBall: {
+    ball: BALL_DATA;
+    overIndex: number;
+    ballIndex: number;
+  } | null = null;
+  selectedBallOrigin: CdkOverlayOrigin | null = null;
+  /** Ordered fallbacks so the popover stays anchored to the tapped ball even
+   * near the left/right edges of the screen, instead of the CDK "push"
+   * fallback shoving it far away when a centered position doesn't fit. */
+  readonly ballPopoverPositions: ConnectionPositionPair[] = [
+    { originX: 'center', originY: 'top', overlayX: 'center', overlayY: 'bottom', offsetY: -6 },
+    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -6 },
+    { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -6 },
+    { originX: 'center', originY: 'bottom', overlayX: 'center', overlayY: 'top', offsetY: 6 },
+    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 6 },
+    { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 6 },
+  ];
+
+  openBallDetail(
+    origin: CdkOverlayOrigin,
+    ball: BALL_DATA,
+    overIndex: number,
+    ballIndex: number
+  ): void {
+    if (!ball.hasBeenBowled) return;
+    if (this.selectedBall?.ball === ball) {
+      this.closeBallDetail();
+      return;
+    }
+    this.selectedBallOrigin = origin;
+    this.selectedBall = { ball, overIndex, ballIndex };
+  }
+
+  closeBallDetail(): void {
+    this.selectedBall = null;
+    this.selectedBallOrigin = null;
+  }
+
+  /** Human-readable outcome line for the ball-detail popover. */
+  ballOutcomeText(ball: BALL_DATA): string {
+    const label = (ball.label || '').trim();
+    if (ball.class === 'four') return 'FOUR';
+    if (ball.class === 'six') return 'SIX';
+    if (ball.class === 'wicket') return 'WICKET';
+    if (ball.class === 'dot') return 'Dot ball';
+    if (label.endsWith('wd')) return `Wide + ${label.replace('wd', '') || '0'} run(s)`;
+    if (label.endsWith('nb')) return `No ball + ${label.replace('nb', '') || '0'} run(s)`;
+    if (label.endsWith(' LB')) return `${label.replace(' LB', '')} leg bye(s)`;
+    if (label.endsWith(' PR')) return `${label.replace(' PR', '')} penalty run(s)`;
+    if (label.endsWith(' B')) return `${label.replace(' B', '')} bye(s)`;
+    return label ? `${label} run(s)` : '-';
+  }
+
+  /** Fielders with at least one catch/run-out/stumping, for the fielding strip. */
+  getActiveFielders(teamKey: string): Fielder[] {
+    return (this.matchService.teamData[teamKey]?.Fielders ?? []).filter(
+      (f) => f.catches || f.runOuts || f.stumpOuts
+    );
+  }
+
+  /** Total 4s/6s hit in an innings, summed from the batsmen table. */
+  boundaryCounts(teamKey: string): { fours: number; sixes: number } {
+    const batsmen = this.matchService.teamData[teamKey]?.Batsmens ?? [];
+    return batsmen.reduce(
+      (totals, b) => {
+        totals.fours += b.fours ?? 0;
+        totals.sixes += b.six ?? 0;
+        return totals;
+      },
+      { fours: 0, sixes: 0 }
+    );
+  }
+
   FIBattingTeamKey: string = this.matchService.currentRoles['bat'];
   SIBattingTeamKey: string = this.matchService.currentRoles['ball'];
   fiDataSourceBatsmen =
@@ -143,10 +334,13 @@ export class ScorecardComponent
   }
 
   renderTableData(): void {
-    this.FIBatsmenTable!.renderRows();
-    this.FIBowlerTable!.renderRows();
-    this.SIBatsmenTable!.renderRows();
-    this.SIBowlerTable!.renderRows();
+    // Only the active innings pill tab's tables actually exist in the DOM
+    // (the other pair is *ngIf-removed, not just hidden), so this must be
+    // null-safe rather than assuming all 4 ViewChilds are always present.
+    this.FIBatsmenTable?.renderRows();
+    this.FIBowlerTable?.renderRows();
+    this.SIBatsmenTable?.renderRows();
+    this.SIBowlerTable?.renderRows();
   }
 
   populateDataFromMatchService(): void {
@@ -188,120 +382,5 @@ export class ScorecardComponent
   }
   ngAfterContentChecked(): void {
     if (this._isActive) this.renderTableData();
-  }
-  toggleTab(event: any): void {
-    this.handleOnToggleEvent(event.index);
-  }
-
-  oversPanelHeaderClicked(isOversPanel: boolean): void {
-    if (isOversPanel) {
-      this.isOversPanelExpanded = !this.isOversPanelExpanded;
-      if (this.isOversPanelExpanded) {
-        setTimeout(() => {
-          let ot1 = document.getElementById('mat-tab-content-over-team1');
-          if (ot1) {
-            ot1.style.display = 'grid';
-          }
-
-          let ot1spinner = document.getElementById('oversTab1Spinner');
-          if (ot1spinner) {
-            ot1spinner.style.display = 'none';
-          }
-
-          let ot2 = document.getElementById('mat-tab-content-over-team2');
-          if (ot2) {
-            ot2.style.display = 'grid';
-          }
-
-          let ot2spinner = document.getElementById('oversTab2Spinner');
-          if (ot2spinner) {
-            ot2spinner.style.display = 'none';
-          }
-        }, 600);
-      } else {
-        let ot1 = document.getElementById('mat-tab-content-over-team1');
-        if (ot1) {
-          ot1.style.display = 'none';
-        }
-        let ot1spinner = document.getElementById('oversTab1Spinner');
-        if (ot1spinner) {
-          ot1spinner.style.display = 'block';
-        }
-
-        let ot2 = document.getElementById('mat-tab-content-over-team2');
-        if (ot2) {
-          ot2.style.display = 'none';
-        }
-        let ot2spinner = document.getElementById('oversTab2Spinner');
-        if (ot2spinner) {
-          ot2spinner.style.display = 'block';
-        }
-      }
-    } else {
-      if (this.isOversPanelExpanded) {
-        this.isOversPanelExpanded = false;
-        let ot1 = document.getElementById('mat-tab-content-over-team1');
-        if (ot1) {
-          ot1.style.display = 'none';
-        }
-        let ot1spinner = document.getElementById('oversTab1Spinner');
-        if (ot1spinner) {
-          ot1spinner.style.display = 'block';
-        }
-
-        let ot2 = document.getElementById('mat-tab-content-over-team2');
-        if (ot2) {
-          ot2.style.display = 'none';
-        }
-        let ot2spinner = document.getElementById('oversTab2Spinner');
-        if (ot2spinner) {
-          ot2spinner.style.display = 'block';
-        }
-      }
-    }
-  }
-
-  handleOnToggleEvent(index: number): void {
-    if (index === 1) {
-      let ot1 = document.getElementById('mat-tab-content-over-team1');
-      if (ot1) {
-        ot1.style.display = 'none';
-      }
-      let ot1spinner = document.getElementById('oversTab1Spinner');
-      if (ot1spinner) {
-        ot1spinner.style.display = 'block';
-      }
-      setTimeout(() => {
-        let ot2 = document.getElementById('mat-tab-content-over-team2');
-        if (ot2) {
-          ot2.style.display = 'grid';
-        }
-
-        let ot2spinner = document.getElementById('oversTab2Spinner');
-        if (ot2spinner) {
-          ot2spinner.style.display = 'none';
-        }
-      }, 600);
-    } else {
-      let ot2 = document.getElementById('mat-tab-content-over-team2');
-      if (ot2) {
-        ot2.style.display = 'none';
-      }
-      let ot2spinner = document.getElementById('oversTab2Spinner');
-      if (ot2spinner) {
-        ot2spinner.style.display = 'block';
-      }
-      setTimeout(() => {
-        let ot1 = document.getElementById('mat-tab-content-over-team1');
-        if (ot1) {
-          ot1.style.display = 'grid';
-        }
-
-        let ot1spinner = document.getElementById('oversTab1Spinner');
-        if (ot1spinner) {
-          ot1spinner.style.display = 'none';
-        }
-      }, 600);
-    }
   }
 }

@@ -1,553 +1,662 @@
-<mat-spinner
-  id="scorecardSpinner"
-  diameter="50"
-  style="margin-top: 300px; margin-left: 175px"
-></mat-spinner>
-<mat-accordion id="mat-tab-content-scorecard" style="display: none">
-  <mat-expansion-panel
-    class="headers-align"
-    [expanded]="!matchService.isSecondInning"
-  >
-    <mat-expansion-panel-header (click)="oversPanelHeaderClicked(false)">
-      <mat-panel-title>
-        {{ matchService.teamData[FIBattingTeamKey].name }}
-      </mat-panel-title>
-      <mat-panel-description>
-        <div>
-          <span>1st Innings</span>
-        </div>
-        <div>
-          <span>
-            {{ matchService.teamData[FIBattingTeamKey].runsScored }}/{{
-              matchService.teamData[FIBattingTeamKey].wicketsLost
+<div class="scorecard-root">
+  <div class="scorecard-loading" *ngIf="!hasScorecardData">
+    <mat-icon class="scorecard-loading-icon">sports_cricket</mat-icon>
+    <span>Loading scorecard...</span>
+  </div>
+
+  <ng-container *ngIf="hasScorecardData">
+    <div class="innings-pill-bar">
+      <button
+        type="button"
+        class="innings-pill"
+        [class.innings-pill-active]="!showSecondInnings"
+        (click)="selectInningsTab(false)"
+      >
+        Innings 1
+      </button>
+      <button
+        type="button"
+        class="innings-pill"
+        [class.innings-pill-active]="showSecondInnings"
+        (click)="selectInningsTab(true)"
+      >
+        Innings 2
+      </button>
+    </div>
+
+    <div class="innings-sticky-header">
+      <div class="innings-sticky-team">
+        <span
+          class="innings-sticky-name"
+          [attr.title]="currentBattingTeamName"
+          (click)="toggleTeamNameTooltip($event)"
+          >{{ currentBattingTeamName }}</span
+        >
+        <span class="innings-sticky-name-tooltip" *ngIf="teamNameTooltipOpen">{{
+          currentBattingTeamName
+        }}</span>
+        <span class="innings-sticky-score">
+          {{
+            matchService.teamData[
+              showSecondInnings ? SIBattingTeamKey : FIBattingTeamKey
+            ].runsScored
+          }}/{{
+            matchService.teamData[
+              showSecondInnings ? SIBattingTeamKey : FIBattingTeamKey
+            ].wicketsLost
+          }}
+          <span class="innings-sticky-overs"
+            >({{
+              matchService.teamData[
+                showSecondInnings ? SIBattingTeamKey : FIBattingTeamKey
+              ].oversPlayed | number : "1.1-1"
             }}
-          </span>
-        </div>
-      </mat-panel-description>
-    </mat-expansion-panel-header>
-    <table
-      mat-table
-      #FIBatsmenTable
-      [dataSource]="fiDataSourceBatsmen"
-      class="mat-elevation-z8"
-      style="background-color: azure"
-    >
-      <ng-container matColumnDef="nameBat">
-        <th mat-header-cell *matHeaderCellDef>Batsmen</th>
-        <td (click)="openStat(element.name)" mat-cell *matCellDef="let element">
-          {{ element.name }} {{ "( " + element.status + " )" }}
-        </td>
-      </ng-container>
-
-      <ng-container matColumnDef="runs">
-        <th mat-header-cell *matHeaderCellDef>R</th>
-        <td mat-cell *matCellDef="let element">{{ element.runs }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="balls">
-        <th mat-header-cell *matHeaderCellDef>B</th>
-        <td mat-cell *matCellDef="let element">{{ element.balls }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="4s">
-        <th mat-header-cell *matHeaderCellDef>4s</th>
-        <td mat-cell *matCellDef="let element">{{ element.fours }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="6s">
-        <th mat-header-cell *matHeaderCellDef>6s</th>
-        <td mat-cell *matCellDef="let element">{{ element.six }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="S/R">
-        <th mat-header-cell *matHeaderCellDef>S/R</th>
-        <td mat-cell *matCellDef="let element" style="font-weight: bold">
-          {{ element.strikeRate | number : "1.0-2" }}
-        </td>
-      </ng-container>
-
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-    </table>
-
-    <h1></h1>
-    <div class="w-[100%] flex justify-between items-center">
-      <div class="ml-4">
-        <h3 style="display: inline">
-          <b>
-            {{ matchService.teamData[FIBattingTeamKey].runsScored }}
-            /
-            {{ matchService.teamData[FIBattingTeamKey].wicketsLost }}
-          </b>
-        </h3>
-        <br />
-        <h5 style="display: inline">
-          {{
-            matchService.teamData[FIBattingTeamKey].oversPlayed
-              | number : "1.1-1"
-          }}
-          Overs
-        </h5>
-      </div>
-      <div>
-        <h5 style="margin-bottom: 0">
-          Extras (W:{{ matchService.teamData[FIBattingTeamKey].extras["w"] }},
-          NB:{{ matchService.teamData[FIBattingTeamKey].extras["nb"] }}, LB:{{
-            matchService.teamData[FIBattingTeamKey].extras["lb"]
-          }}, B:{{ matchService.teamData[FIBattingTeamKey].extras["b"] }})
-        </h5>
-      </div>
-      <div class="mr-4">
-        <h5 style="margin-bottom: 0">
-          Run Rate:
-          {{
-            matchService.teamData[FIBattingTeamKey].runRate | number : "1.1-2"
-          }}
-        </h5>
-      </div>
-    </div>
-    <div
-      *ngIf="inningsBreakdown(FIBattingTeamKey) as fiBreakdown"
-      class="fow-row"
-    >
-      <ng-container *ngIf="fiBreakdown.fallOfWickets.length > 0">
-        <b>FoW:</b>
-        <span *ngFor="let fow of fiBreakdown.fallOfWickets; let last = last">
-          {{ fow.wicketNumber }}-{{ fow.teamScore }} ({{ fow.batsmanOut }},
-          {{ fow.overs }} ov){{ last ? "" : ", " }}
+            ov)</span
+          >
         </span>
-      </ng-container>
+      </div>
+      <div class="innings-sticky-rates">
+        <span class="innings-sticky-crr"
+          >CRR
+          {{
+            matchService.teamData[
+              showSecondInnings ? SIBattingTeamKey : FIBattingTeamKey
+            ].runRate | number : "1.1-2"
+          }}</span
+        >
+        <span
+          class="innings-sticky-rrr"
+          *ngIf="showSecondInnings && matchService.isSecondInning"
+          >RRR
+          {{
+            matchService.teamData[SIBattingTeamKey].requiredRunRate
+              | number : "1.1-2"
+          }}</span
+        >
+      </div>
+      <button
+        type="button"
+        class="innings-collapse-toggle"
+        (click)="toggleInningsTableCollapsed()"
+        [attr.aria-expanded]="!inningsTableCollapsed"
+        [attr.aria-label]="
+          inningsTableCollapsed ? 'Show batting and bowling tables' : 'Hide batting and bowling tables'
+        "
+      >
+        <mat-icon>{{
+          inningsTableCollapsed ? 'expand_more' : 'expand_less'
+        }}</mat-icon>
+      </button>
     </div>
-    <h1></h1>
 
-    <table
-      mat-table
-      #FIBowlerTable
-      [dataSource]="fiDataSourceBowler"
-      class="mat-elevation-z8"
-      style="background-color: rgb(250, 232, 232)"
-    >
-      <ng-container matColumnDef="nameBowl">
-        <th mat-header-cell *matHeaderCellDef>Bowler</th>
-        <td (click)="openStat(element.name)" mat-cell *matCellDef="let element">
-          {{ element.name }}
-        </td>
-      </ng-container>
+    <!-- Innings 1 -->
+    <div class="innings-panel" *ngIf="!showSecondInnings && !inningsTableCollapsed">
+      <div class="boundary-summary" *ngIf="boundaryCounts(FIBattingTeamKey) as fiBoundaries">
+        <span class="boundary-chip boundary-chip-fours">{{ fiBoundaries.fours }} x 4s</span>
+        <span class="boundary-chip boundary-chip-sixes">{{ fiBoundaries.sixes }} x 6s</span>
+      </div>
+      <div class="scorecard-table-wrap">
+        <table
+          mat-table
+          #FIBatsmenTable
+          [dataSource]="fiDataSourceBatsmen"
+          class="scorecard-table"
+        >
+          <ng-container matColumnDef="nameBat">
+            <th mat-header-cell *matHeaderCellDef>Batsmen</th>
+            <td
+              (click)="openStat(element.name)"
+              mat-cell
+              *matCellDef="let element"
+              class="player-cell"
+            >
+              <span class="player-name">{{ element.name }}</span>
+              <span class="player-status">({{ element.status }})</span>
+            </td>
+          </ng-container>
 
-      <ng-container matColumnDef="runs">
-        <th mat-header-cell *matHeaderCellDef>R</th>
-        <td mat-cell *matCellDef="let element">{{ element.runs }}</td>
-      </ng-container>
+          <ng-container matColumnDef="runs">
+            <th mat-header-cell *matHeaderCellDef>R</th>
+            <td mat-cell *matCellDef="let element" class="stat-number">{{ element.runs }}</td>
+          </ng-container>
 
-      <ng-container matColumnDef="overs">
-        <th mat-header-cell *matHeaderCellDef>O</th>
-        <td mat-cell *matCellDef="let element">
-          {{ element.overs | number : "1.1-1" }}
-        </td>
-      </ng-container>
+          <ng-container matColumnDef="balls">
+            <th mat-header-cell *matHeaderCellDef>B</th>
+            <td mat-cell *matCellDef="let element" class="stat-number">{{ element.balls }}</td>
+          </ng-container>
 
-      <ng-container matColumnDef="wickets">
-        <th mat-header-cell *matHeaderCellDef>W</th>
-        <td mat-cell *matCellDef="let element">{{ element.wickets }}</td>
-      </ng-container>
+          <ng-container matColumnDef="4s">
+            <th mat-header-cell *matHeaderCellDef>4s</th>
+            <td mat-cell *matCellDef="let element" class="stat-number">{{ element.fours }}</td>
+          </ng-container>
 
-      <ng-container matColumnDef="eco">
-        <th mat-header-cell *matHeaderCellDef>Eco.</th>
-        <td mat-cell *matCellDef="let element">
-          {{ element.economy | number : "1.1-2" }}
-        </td>
-      </ng-container>
+          <ng-container matColumnDef="6s">
+            <th mat-header-cell *matHeaderCellDef>6s</th>
+            <td mat-cell *matCellDef="let element" class="stat-number">{{ element.six }}</td>
+          </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="displayedColumnsBowler"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumnsBowler"></tr>
-    </table>
-  </mat-expansion-panel>
-  <div style="height: 1px; background-color: #0000001a"></div>
-  <mat-expansion-panel
-    class="headers-align"
-    [expanded]="matchService.isSecondInning"
-  >
-    <mat-expansion-panel-header (click)="oversPanelHeaderClicked(false)">
-      <mat-panel-title>
-        {{ matchService.teamData[SIBattingTeamKey].name }}
-      </mat-panel-title>
-      <mat-panel-description>
-        <div>
-          <span>2nd Innings</span>
-        </div>
-        <div>
-          <span>
-            {{ matchService.teamData[SIBattingTeamKey].runsScored }}/{{
-              matchService.teamData[SIBattingTeamKey].wicketsLost
-            }}
+          <ng-container matColumnDef="S/R">
+            <th mat-header-cell *matHeaderCellDef>S/R</th>
+            <td
+              mat-cell
+              *matCellDef="let element"
+              class="stat-number stat-badge"
+              [ngClass]="strikeRateClass(element.balls, element.strikeRate)"
+            >
+              {{ element.strikeRate | number : "1.0-2" }}
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+
+      <div class="innings-extras-row">
+        Extras (W:{{ matchService.teamData[FIBattingTeamKey].extras["w"] }},
+        NB:{{ matchService.teamData[FIBattingTeamKey].extras["nb"] }}, LB:{{
+          matchService.teamData[FIBattingTeamKey].extras["lb"]
+        }}, B:{{ matchService.teamData[FIBattingTeamKey].extras["b"] }})
+      </div>
+
+      <div
+        *ngIf="inningsBreakdown(FIBattingTeamKey) as fiBreakdown"
+        class="fow-row"
+      >
+        <ng-container *ngIf="fiBreakdown.fallOfWickets.length > 0">
+          <span class="fow-row-label">FoW</span>
+          <span class="fow-chip" *ngFor="let fow of fiBreakdown.fallOfWickets">
+            {{ fow.wicketNumber }}-{{ fow.teamScore }} ({{ fow.batsmanOut
+            }}{{ fow.dismissal ? ", " + fow.dismissal : "" }}, {{ fow.overs }} ov)
           </span>
-        </div>
-      </mat-panel-description>
-    </mat-expansion-panel-header>
-    <table
-      mat-table
-      #SIBatsmenTable
-      [dataSource]="siDataSourceBatsmen"
-      class="mat-elevation-z8"
-      style="background-color: rgb(250, 232, 232)"
-    >
-      <ng-container matColumnDef="nameBat">
-        <th mat-header-cell *matHeaderCellDef>Batsmen</th>
-        <td (click)="openStat(element.name)" mat-cell *matCellDef="let element">
-          {{ element.name }} {{ "( " + element.status + " )" }}
-        </td>
-      </ng-container>
-
-      <ng-container matColumnDef="runs">
-        <th mat-header-cell *matHeaderCellDef>R</th>
-        <td mat-cell *matCellDef="let element">{{ element.runs }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="balls">
-        <th mat-header-cell *matHeaderCellDef>B</th>
-        <td mat-cell *matCellDef="let element">{{ element.balls }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="4s">
-        <th mat-header-cell *matHeaderCellDef>4s</th>
-        <td mat-cell *matCellDef="let element">{{ element.fours }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="6s">
-        <th mat-header-cell *matHeaderCellDef>6s</th>
-        <td mat-cell *matCellDef="let element">{{ element.six }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="S/R">
-        <th mat-header-cell *matHeaderCellDef>S/R</th>
-        <td mat-cell *matCellDef="let element" style="font-weight: bold">
-          {{ element.strikeRate | number : "1.0-2" }}
-        </td>
-      </ng-container>
-
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-    </table>
-
-    <h1></h1>
-    <div class="w-[100%] flex justify-between items-center">
-      <div class="ml-4">
-        <h3 style="display: inline">
-          <b>
-            {{ matchService.teamData[SIBattingTeamKey].runsScored }}
-            /
-            {{ matchService.teamData[SIBattingTeamKey].wicketsLost }}
-          </b>
-        </h3>
-        <br />
-        <h5 style="display: inline">
-          {{
-            matchService.teamData[SIBattingTeamKey].oversPlayed
-              | number : "1.1-1"
-          }}
-          Overs
-        </h5>
+        </ng-container>
       </div>
-      <div>
-        <h5 style="margin-bottom: 0">
-          Extras (W:{{ matchService.teamData[SIBattingTeamKey].extras["w"] }},
-          NB:{{ matchService.teamData[SIBattingTeamKey].extras["nb"] }}, LB:{{
-            matchService.teamData[SIBattingTeamKey].extras["lb"]
-          }}, B:{{ matchService.teamData[SIBattingTeamKey].extras["b"] }})
-        </h5>
+
+      <div class="scorecard-table-wrap">
+        <table
+          mat-table
+          #FIBowlerTable
+          [dataSource]="fiDataSourceBowler"
+          class="scorecard-table scorecard-table-bowler"
+        >
+          <ng-container matColumnDef="nameBowl">
+            <th mat-header-cell *matHeaderCellDef>Bowler</th>
+            <td
+              (click)="openStat(element.name)"
+              mat-cell
+              *matCellDef="let element"
+              class="player-cell"
+            >
+              <span class="player-name">{{ element.name }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="runs">
+            <th mat-header-cell *matHeaderCellDef>R</th>
+            <td mat-cell *matCellDef="let element" class="stat-number">{{ element.runs }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="overs">
+            <th mat-header-cell *matHeaderCellDef>O</th>
+            <td mat-cell *matCellDef="let element" class="stat-number">
+              {{ element.overs | number : "1.1-1" }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="wickets">
+            <th mat-header-cell *matHeaderCellDef>W</th>
+            <td mat-cell *matCellDef="let element" class="stat-number">{{ element.wickets }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="eco">
+            <th mat-header-cell *matHeaderCellDef>Eco.</th>
+            <td
+              mat-cell
+              *matCellDef="let element"
+              class="stat-number stat-badge"
+              [ngClass]="economyClass(element.overs, element.economy)"
+            >
+              {{ element.economy | number : "1.1-2" }}
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumnsBowler"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumnsBowler"
+          ></tr>
+        </table>
       </div>
-      <div class="mr-4">
-        <h5 style="margin-bottom: 0">
-          Run Rate:
-          {{
-            matchService.teamData[SIBattingTeamKey].runRate | number : "1.1-2"
-          }}
-        </h5>
-      </div>
-    </div>
-    <div
-      *ngIf="inningsBreakdown(SIBattingTeamKey) as siBreakdown"
-      class="fow-row"
-    >
-      <ng-container *ngIf="siBreakdown.fallOfWickets.length > 0">
-        <b>FoW:</b>
-        <span *ngFor="let fow of siBreakdown.fallOfWickets; let last = last">
-          {{ fow.wicketNumber }}-{{ fow.teamScore }} ({{ fow.batsmanOut }},
-          {{ fow.overs }} ov){{ last ? "" : ", " }}
+
+      <div class="fielding-strip" *ngIf="getActiveFielders(SIBattingTeamKey).length">
+        <span class="fielding-strip-label">Fielding</span>
+        <span class="fielding-chip" *ngFor="let f of getActiveFielders(SIBattingTeamKey)">
+          {{ f.name }}
+          <ng-container *ngIf="f.catches">- {{ f.catches }} catch{{ f.catches > 1 ? 'es' : '' }}</ng-container>
+          <ng-container *ngIf="f.runOuts">- {{ f.runOuts }} run out{{ f.runOuts > 1 ? 's' : '' }}</ng-container>
+          <ng-container *ngIf="f.stumpOuts">- {{ f.stumpOuts }} stumping{{ f.stumpOuts > 1 ? 's' : '' }}</ng-container>
         </span>
-      </ng-container>
+      </div>
     </div>
-    <h1></h1>
 
-    <table
-      mat-table
-      #SIBowlerTable
-      [dataSource]="siDataSourceBowler"
-      class="mat-elevation-z8"
-      style="background-color: azure"
+    <!-- Innings 2 -->
+    <div class="innings-panel" *ngIf="showSecondInnings && !inningsTableCollapsed">
+      <div class="boundary-summary" *ngIf="boundaryCounts(SIBattingTeamKey) as siBoundaries">
+        <span class="boundary-chip boundary-chip-fours">{{ siBoundaries.fours }} x 4s</span>
+        <span class="boundary-chip boundary-chip-sixes">{{ siBoundaries.sixes }} x 6s</span>
+      </div>
+      <div class="scorecard-table-wrap">
+        <table
+          mat-table
+          #SIBatsmenTable
+          [dataSource]="siDataSourceBatsmen"
+          class="scorecard-table"
+        >
+          <ng-container matColumnDef="nameBat">
+            <th mat-header-cell *matHeaderCellDef>Batsmen</th>
+            <td
+              (click)="openStat(element.name)"
+              mat-cell
+              *matCellDef="let element"
+              class="player-cell"
+            >
+              <span class="player-name">{{ element.name }}</span>
+              <span class="player-status">({{ element.status }})</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="runs">
+            <th mat-header-cell *matHeaderCellDef>R</th>
+            <td mat-cell *matCellDef="let element" class="stat-number">{{ element.runs }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="balls">
+            <th mat-header-cell *matHeaderCellDef>B</th>
+            <td mat-cell *matCellDef="let element" class="stat-number">{{ element.balls }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="4s">
+            <th mat-header-cell *matHeaderCellDef>4s</th>
+            <td mat-cell *matCellDef="let element" class="stat-number">{{ element.fours }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="6s">
+            <th mat-header-cell *matHeaderCellDef>6s</th>
+            <td mat-cell *matCellDef="let element" class="stat-number">{{ element.six }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="S/R">
+            <th mat-header-cell *matHeaderCellDef>S/R</th>
+            <td
+              mat-cell
+              *matCellDef="let element"
+              class="stat-number stat-badge"
+              [ngClass]="strikeRateClass(element.balls, element.strikeRate)"
+            >
+              {{ element.strikeRate | number : "1.0-2" }}
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+
+      <div class="innings-extras-row">
+        Extras (W:{{ matchService.teamData[SIBattingTeamKey].extras["w"] }},
+        NB:{{ matchService.teamData[SIBattingTeamKey].extras["nb"] }}, LB:{{
+          matchService.teamData[SIBattingTeamKey].extras["lb"]
+        }}, B:{{ matchService.teamData[SIBattingTeamKey].extras["b"] }})
+      </div>
+
+      <div
+        *ngIf="inningsBreakdown(SIBattingTeamKey) as siBreakdown"
+        class="fow-row"
+      >
+        <ng-container *ngIf="siBreakdown.fallOfWickets.length > 0">
+          <span class="fow-row-label">FoW</span>
+          <span class="fow-chip" *ngFor="let fow of siBreakdown.fallOfWickets">
+            {{ fow.wicketNumber }}-{{ fow.teamScore }} ({{ fow.batsmanOut
+            }}{{ fow.dismissal ? ", " + fow.dismissal : "" }}, {{ fow.overs }} ov)
+          </span>
+        </ng-container>
+      </div>
+
+      <div class="scorecard-table-wrap">
+        <table
+          mat-table
+          #SIBowlerTable
+          [dataSource]="siDataSourceBowler"
+          class="scorecard-table scorecard-table-bowler"
+        >
+          <ng-container matColumnDef="nameBowl">
+            <th mat-header-cell *matHeaderCellDef>Bowler</th>
+            <td
+              (click)="openStat(element.name)"
+              mat-cell
+              *matCellDef="let element"
+              class="player-cell"
+            >
+              <span class="player-name">{{ element.name }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="runs">
+            <th mat-header-cell *matHeaderCellDef>R</th>
+            <td mat-cell *matCellDef="let element" class="stat-number">{{ element.runs }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="overs">
+            <th mat-header-cell *matHeaderCellDef>O</th>
+            <td mat-cell *matCellDef="let element" class="stat-number">
+              {{ element.overs | number : "1.1-1" }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="wickets">
+            <th mat-header-cell *matHeaderCellDef>W</th>
+            <td mat-cell *matCellDef="let element" class="stat-number">{{ element.wickets }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="eco">
+            <th mat-header-cell *matHeaderCellDef>Eco.</th>
+            <td
+              mat-cell
+              *matCellDef="let element"
+              class="stat-number stat-badge"
+              [ngClass]="economyClass(element.overs, element.economy)"
+            >
+              {{ element.economy | number : "1.1-2" }}
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumnsBowler"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumnsBowler"
+          ></tr>
+        </table>
+      </div>
+
+      <div class="fielding-strip" *ngIf="getActiveFielders(FIBattingTeamKey).length">
+        <span class="fielding-strip-label">Fielding</span>
+        <span class="fielding-chip" *ngFor="let f of getActiveFielders(FIBattingTeamKey)">
+          {{ f.name }}
+          <ng-container *ngIf="f.catches">- {{ f.catches }} catch{{ f.catches > 1 ? 'es' : '' }}</ng-container>
+          <ng-container *ngIf="f.runOuts">- {{ f.runOuts }} run out{{ f.runOuts > 1 ? 's' : '' }}</ng-container>
+          <ng-container *ngIf="f.stumpOuts">- {{ f.stumpOuts }} stumping{{ f.stumpOuts > 1 ? 's' : '' }}</ng-container>
+        </span>
+      </div>
+    </div>
+
+    <mat-accordion class="scorecard-accordion">
+      <mat-expansion-panel class="scorecard-panel">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <mat-icon class="scorecard-panel-icon">sports_baseball</mat-icon>
+            Overs
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <mat-tab-group class="scorecard-inner-tabs">
+            <mat-tab label="{{ matchService.teamData[FIBattingTeamKey].name }}">
+              <ng-template matTabContent>
+                <div class="overs-list">
+                  <ng-container
+                    *ngFor="let entry of getVisibleOvers(FIBattingTeamKey, fiShowAllOvers); trackBy: trackByOverIndex"
+                  >
+                    <div class="over-header-row">
+                      <span class="over-header-title"
+                        >Over {{ entry.index + 1 }}
+                        <span class="over-header-bowler"
+                          >({{ entry.over[0].currentBowler.name }})</span
+                        >
+                      </span>
+                      <span class="over-runs-chip"
+                        >{{
+                          matchService.teamData[FIBattingTeamKey]
+                            .oversPlayedData
+                            | CalculateTotalRunsInOver : entry.index
+                        }}
+                        runs</span
+                      >
+                    </div>
+                    <div
+                      class="over-balls-grid"
+                      [ngClass]="'grid-cols-' + entry.over.length"
+                    >
+                      <button
+                        *ngFor="let ball of entry.over; let ballIdx = index"
+                        cdkOverlayOrigin
+                        #ballOrigin="cdkOverlayOrigin"
+                        class="{{ ball.class }} over-ball-btn"
+                        mat-mini-fab
+                        color="primary"
+                        [disabled]="ball.hasBeenBowled ? null : 'true'"
+                        (click)="openBallDetail(ballOrigin, ball, entry.index, ballIdx)"
+                      >
+                        {{ ball.label }}
+                      </button>
+                    </div>
+                  </ng-container>
+                  <button
+                    type="button"
+                    class="overs-show-more-btn"
+                    *ngIf="hasHiddenOvers(FIBattingTeamKey, fiShowAllOvers)"
+                    (click)="fiShowAllOvers = true"
+                  >
+                    Show earlier overs
+                  </button>
+                </div>
+              </ng-template>
+            </mat-tab>
+            <mat-tab label="{{ matchService.teamData[SIBattingTeamKey].name }}">
+              <ng-template matTabContent>
+                <div class="overs-list">
+                  <ng-container
+                    *ngFor="let entry of getVisibleOvers(SIBattingTeamKey, siShowAllOvers); trackBy: trackByOverIndex"
+                  >
+                    <div class="over-header-row">
+                      <span class="over-header-title"
+                        >Over {{ entry.index + 1 }}
+                        <span class="over-header-bowler"
+                          >({{ entry.over[0].currentBowler.name }})</span
+                        >
+                      </span>
+                      <span class="over-runs-chip"
+                        >{{
+                          matchService.teamData[SIBattingTeamKey]
+                            .oversPlayedData
+                            | CalculateTotalRunsInOver : entry.index
+                        }}
+                        runs</span
+                      >
+                    </div>
+                    <div
+                      class="over-balls-grid"
+                      [ngClass]="'grid-cols-' + entry.over.length"
+                    >
+                      <button
+                        *ngFor="let ball of entry.over; let ballIdx = index"
+                        cdkOverlayOrigin
+                        #ballOrigin="cdkOverlayOrigin"
+                        class="{{ ball.class }} over-ball-btn"
+                        mat-mini-fab
+                        color="primary"
+                        [disabled]="ball.hasBeenBowled ? null : 'true'"
+                        (click)="openBallDetail(ballOrigin, ball, entry.index, ballIdx)"
+                      >
+                        {{ ball.label }}
+                      </button>
+                    </div>
+                  </ng-container>
+                  <button
+                    type="button"
+                    class="overs-show-more-btn"
+                    *ngIf="hasHiddenOvers(SIBattingTeamKey, siShowAllOvers)"
+                    (click)="siShowAllOvers = true"
+                  >
+                    Show earlier overs
+                  </button>
+                </div>
+              </ng-template>
+            </mat-tab>
+          </mat-tab-group>
+        </ng-template>
+      </mat-expansion-panel>
+
+      <mat-expansion-panel class="scorecard-panel">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <mat-icon class="scorecard-panel-icon">groups</mat-icon>
+            Partnerships
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <mat-tab-group class="scorecard-inner-tabs">
+            <mat-tab label="{{ matchService.teamData[FIBattingTeamKey].name }}">
+              <div
+                *ngIf="inningsBreakdown(FIBattingTeamKey) as fiBreakdown"
+                class="partnerships-wrap"
+              >
+                <div
+                  *ngIf="fiBreakdown.partnerships.length === 0"
+                  class="partnerships-empty"
+                >
+                  No partnerships yet.
+                </div>
+                <div
+                  *ngFor="let p of fiBreakdown.partnerships"
+                  class="partnership-card"
+                >
+                  <div class="partnership-card-header">
+                    <span
+                      >{{ ordinal(p.wicketNumber) }} Wicket
+                      <em *ngIf="p.isUnbroken">(unbroken)</em></span
+                    >
+                    <span class="partnership-card-total"
+                      >{{ p.runs }} ({{ p.balls }})</span
+                    >
+                  </div>
+                  <div class="partnership-fow-detail" *ngIf="!p.isUnbroken">
+                    {{ p.batsmanOut }} out - {{ p.brokenAtTeamScore }}/{{
+                      p.wicketNumber
+                    }}
+                    ({{ p.brokenAtOvers }} ov)<span *ngIf="p.dismissal">
+                      , {{ p.dismissal }}</span
+                    >
+                  </div>
+                  <div class="partnership-contributors">
+                    <ng-container
+                      *ngFor="let c of p.contributors; let last = last"
+                    >
+                      <span class="partnership-contributor"
+                        >{{ c.name }} {{ c.runs }}({{ c.balls }})</span
+                      >
+                      <span class="partnership-separator" *ngIf="!last"
+                        >&amp;</span
+                      >
+                    </ng-container>
+                  </div>
+                </div>
+              </div>
+            </mat-tab>
+            <mat-tab label="{{ matchService.teamData[SIBattingTeamKey].name }}">
+              <div
+                *ngIf="inningsBreakdown(SIBattingTeamKey) as siBreakdown"
+                class="partnerships-wrap"
+              >
+                <div
+                  *ngIf="siBreakdown.partnerships.length === 0"
+                  class="partnerships-empty"
+                >
+                  No partnerships yet.
+                </div>
+                <div
+                  *ngFor="let p of siBreakdown.partnerships"
+                  class="partnership-card"
+                >
+                  <div class="partnership-card-header">
+                    <span
+                      >{{ ordinal(p.wicketNumber) }} Wicket
+                      <em *ngIf="p.isUnbroken">(unbroken)</em></span
+                    >
+                    <span class="partnership-card-total"
+                      >{{ p.runs }} ({{ p.balls }})</span
+                    >
+                  </div>
+                  <div class="partnership-fow-detail" *ngIf="!p.isUnbroken">
+                    {{ p.batsmanOut }} out - {{ p.brokenAtTeamScore }}/{{
+                      p.wicketNumber
+                    }}
+                    ({{ p.brokenAtOvers }} ov)<span *ngIf="p.dismissal">
+                      , {{ p.dismissal }}</span
+                    >
+                  </div>
+                  <div class="partnership-contributors">
+                    <ng-container
+                      *ngFor="let c of p.contributors; let last = last"
+                    >
+                      <span class="partnership-contributor"
+                        >{{ c.name }} {{ c.runs }}({{ c.balls }})</span
+                      >
+                      <span class="partnership-separator" *ngIf="!last"
+                        >&amp;</span
+                      >
+                    </ng-container>
+                  </div>
+                </div>
+              </div>
+            </mat-tab>
+          </mat-tab-group>
+        </ng-template>
+      </mat-expansion-panel>
+    </mat-accordion>
+
+    <ng-template
+      cdkConnectedOverlay
+      [cdkConnectedOverlayOrigin]="selectedBallOrigin!"
+      [cdkConnectedOverlayOpen]="!!selectedBall"
+      [cdkConnectedOverlayPositions]="ballPopoverPositions"
+      [cdkConnectedOverlayViewportMargin]="8"
+      [cdkConnectedOverlayHasBackdrop]="true"
+      cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+      (backdropClick)="closeBallDetail()"
+      (detach)="closeBallDetail()"
     >
-      <ng-container matColumnDef="nameBowl">
-        <th mat-header-cell *matHeaderCellDef>Bowler</th>
-        <td (click)="openStat(element.name)" mat-cell *matCellDef="let element">
-          {{ element.name }}
-        </td>
-      </ng-container>
-
-      <ng-container matColumnDef="runs">
-        <th mat-header-cell *matHeaderCellDef>R</th>
-        <td mat-cell *matCellDef="let element">{{ element.runs }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="overs">
-        <th mat-header-cell *matHeaderCellDef>O</th>
-        <td mat-cell *matCellDef="let element">
-          {{ element.overs | number : "1.1-1" }}
-        </td>
-      </ng-container>
-
-      <ng-container matColumnDef="wickets">
-        <th mat-header-cell *matHeaderCellDef>W</th>
-        <td mat-cell *matCellDef="let element">{{ element.wickets }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="eco">
-        <th mat-header-cell *matHeaderCellDef>Eco.</th>
-        <td mat-cell *matCellDef="let element">
-          {{ element.economy | number : "1.1-2" }}
-        </td>
-      </ng-container>
-
-      <tr mat-header-row *matHeaderRowDef="displayedColumnsBowler"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumnsBowler"></tr>
-    </table>
-  </mat-expansion-panel>
-  <div style="height: 1px; background-color: #0000001a"></div>
-  <mat-expansion-panel class="headers-align">
-    <mat-expansion-panel-header (click)="oversPanelHeaderClicked(true)">
-      <mat-panel-title> Overs </mat-panel-title>
-      <mat-panel-description> </mat-panel-description>
-    </mat-expansion-panel-header>
-    <mat-tab-group (selectedTabChange)="toggleTab($event)">
-      <mat-tab label="{{ matchService.teamData[FIBattingTeamKey].name }}">
-        <mat-spinner
-          id="oversTab1Spinner"
-          diameter="30"
-          style="margin-left: 190px; margin-top: 130px"
-        ></mat-spinner>
-        <div
-          id="mat-tab-content-over-team1"
-          class="grid place-items-start pl-[10px]"
-          style="display: none"
-        >
-          <ng-container
-            *ngFor="
-              let over of matchService.teamData[FIBattingTeamKey]
-                .oversPlayedData;
-              index as i
-            "
-          >
-            <div
-              style="
-                align-content: center;
-                height: 35px;
-                font-weight: 500;
-                color: black;
-                font-size: medium;
-                margin-top: 5px;
-              "
-            >
-              Over {{ i + 1 }}
-              <span style="margin-left: 10px; color: gray">
-                ({{ over[0].currentBowler.name }})
-              </span>
-
-              <span> </span>
-
-              <span style="margin-left: 10px; color: gray">
-                ({{ over | CalculateTotalRunsInOver : i }}
-                runs)
-              </span>
-            </div>
-            <div
-              #overView
-              [ngClass]="'grid gap-2 grid-cols-' + over.length"
-              style="margin-top: 10px; height: 50px"
-            >
-              <div *ngFor="let ball of over">
-                <button
-                  class="{{ ball.class }}"
-                  mat-mini-fab
-                  matTooltip="Primary"
-                  color="primary"
-                  style="width: 35px; height: 35px"
-                  [disabled]="ball.hasBeenBowled ? null : 'true'"
-                >
-                  {{ ball.label }}
-                </button>
-              </div>
-            </div>
-          </ng-container>
+      <div class="ball-detail-popover" *ngIf="selectedBall as sb">
+        <div class="ball-detail-header">
+          Over {{ sb.overIndex + 1 }}.{{ sb.ballIndex + 1 }}
+          <span class="ball-detail-outcome">{{ ballOutcomeText(sb.ball) }}</span>
         </div>
-      </mat-tab>
-      <mat-tab label="{{ matchService.teamData[SIBattingTeamKey].name }}">
-        <mat-spinner
-          id="oversTab2Spinner"
-          diameter="30"
-          style="margin-left: 190px; margin-top: 130px"
-        ></mat-spinner>
-        <div
-          id="mat-tab-content-over-team2"
-          class="grid place-items-start pl-[10px]"
-          style="display: none"
-        >
-          <ng-container
-            *ngFor="
-              let over of matchService.teamData[SIBattingTeamKey]
-                .oversPlayedData;
-              index as i
-            "
-          >
-            <div
-              style="
-                align-content: center;
-                height: 35px;
-                font-weight: 500;
-                color: black;
-                font-size: medium;
-                margin-top: 5px;
-              "
-            >
-              Over {{ i + 1 }}
-              <span style="margin-left: 10px; color: gray">
-                ({{ over[0].currentBowler.name }})
-              </span>
+        <div class="ball-detail-row">
+          <span class="ball-detail-label">Batting</span>
+          {{ sb.ball.striker.name }} {{ sb.ball.striker.runs }}({{
+            sb.ball.striker.balls
+          }}) &amp; {{ sb.ball.nonStriker.name }} {{ sb.ball.nonStriker.runs }}({{
+            sb.ball.nonStriker.balls
+          }})
+        </div>
+        <div class="ball-detail-row">
+          <span class="ball-detail-label">Bowler</span>
+          {{ sb.ball.currentBowler.name }} - {{ sb.ball.currentBowler.wickets }}/{{
+            sb.ball.currentBowler.runs
+          }}
+          ({{ sb.ball.currentBowler.overs | number : "1.1-1" }} ov)
+        </div>
+        <div class="ball-detail-row">
+          <span class="ball-detail-label">Partnership</span>
+          {{ sb.ball.currentPatnership.runs }} ({{
+            sb.ball.currentPatnership.balls
+          }}
+          balls)
+        </div>
+        <div class="ball-detail-row">
+          <span class="ball-detail-label">Score</span>
+          {{ sb.ball.currentRuns }}/{{ sb.ball.wicketsLost }}
+        </div>
+      </div>
+    </ng-template>
+  </ng-container>
+</div>
 
-              <span style="margin-left: 10px; color: gray">
-                ({{ over | CalculateTotalRunsInOver : i }}
-                runs)
-              </span>
-            </div>
-            <div
-              #overView
-              [ngClass]="'grid gap-2 grid-cols-' + over.length"
-              style="margin-top: 10px; height: 50px"
-            >
-              <div *ngFor="let ball of over">
-                <button
-                  class="{{ ball.class }}"
-                  mat-mini-fab
-                  matTooltip="Primary"
-                  color="primary"
-                  style="width: 35px; height: 35px"
-                  [disabled]="ball.hasBeenBowled ? null : 'true'"
-                >
-                  {{ ball.label }}
-                </button>
-              </div>
-            </div>
-          </ng-container>
-        </div>
-      </mat-tab>
-    </mat-tab-group>
-  </mat-expansion-panel>
-  <div style="height: 1px; background-color: #0000001a"></div>
-  <mat-expansion-panel class="headers-align">
-    <mat-expansion-panel-header>
-      <mat-panel-title> Partnerships </mat-panel-title>
-      <mat-panel-description> </mat-panel-description>
-    </mat-expansion-panel-header>
-    <mat-tab-group>
-      <mat-tab label="{{ matchService.teamData[FIBattingTeamKey].name }}">
-        <div
-          *ngIf="inningsBreakdown(FIBattingTeamKey) as fiBreakdown"
-          class="partnerships-wrap"
-        >
-          <div
-            *ngIf="fiBreakdown.partnerships.length === 0"
-            class="partnerships-empty"
-          >
-            No partnerships yet.
-          </div>
-          <div
-            *ngFor="let p of fiBreakdown.partnerships"
-            class="partnership-card"
-          >
-            <div class="partnership-card-header">
-              <span
-                >{{ ordinal(p.wicketNumber) }} Wicket
-                <em *ngIf="p.isUnbroken">(unbroken)</em></span
-              >
-              <span class="partnership-card-total"
-                >{{ p.runs }} ({{ p.balls }})</span
-              >
-            </div>
-            <div class="partnership-fow-detail" *ngIf="!p.isUnbroken">
-              {{ p.batsmanOut }} out - {{ p.brokenAtTeamScore }}/{{
-                p.wicketNumber
-              }}
-              ({{ p.brokenAtOvers }} ov)<span *ngIf="p.dismissal">
-                , {{ p.dismissal }}</span
-              >
-            </div>
-            <div class="partnership-contributors">
-              <ng-container
-                *ngFor="let c of p.contributors; let last = last"
-              >
-                <span class="partnership-contributor"
-                  >{{ c.name }} {{ c.runs }}({{ c.balls }})</span
-                >
-                <span class="partnership-separator" *ngIf="!last">&amp;</span>
-              </ng-container>
-            </div>
-          </div>
-        </div>
-      </mat-tab>
-      <mat-tab label="{{ matchService.teamData[SIBattingTeamKey].name }}">
-        <div
-          *ngIf="inningsBreakdown(SIBattingTeamKey) as siBreakdown"
-          class="partnerships-wrap"
-        >
-          <div
-            *ngIf="siBreakdown.partnerships.length === 0"
-            class="partnerships-empty"
-          >
-            No partnerships yet.
-          </div>
-          <div
-            *ngFor="let p of siBreakdown.partnerships"
-            class="partnership-card"
-          >
-            <div class="partnership-card-header">
-              <span
-                >{{ ordinal(p.wicketNumber) }} Wicket
-                <em *ngIf="p.isUnbroken">(unbroken)</em></span
-              >
-              <span class="partnership-card-total"
-                >{{ p.runs }} ({{ p.balls }})</span
-              >
-            </div>
-            <div class="partnership-fow-detail" *ngIf="!p.isUnbroken">
-              {{ p.batsmanOut }} out - {{ p.brokenAtTeamScore }}/{{
-                p.wicketNumber
-              }}
-              ({{ p.brokenAtOvers }} ov)<span *ngIf="p.dismissal">
-                , {{ p.dismissal }}</span
-              >
-            </div>
-            <div class="partnership-contributors">
-              <ng-container
-                *ngFor="let c of p.contributors; let last = last"
-              >
-                <span class="partnership-contributor"
-                  >{{ c.name }} {{ c.runs }}({{ c.balls }})</span
-                >
-                <span class="partnership-separator" *ngIf="!last">&amp;</span>
-              </ng-container>
-            </div>
-          </div>
-        </div>
-      </mat-tab>
-    </mat-tab-group>
-  </mat-expansion-panel>
-  <div style="height: 1px; background-color: #0000003d"></div>
-</mat-accordion>
