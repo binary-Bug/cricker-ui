@@ -24,10 +24,11 @@ import { EventHandlerService } from './event-handler.service';
 })
 export class PlayerService {
   players: Player[] = [];
-  // Persists the stats page's selected stat type (batting/bowling/fielding)
-  // across StatsComponent recreation, e.g. when navigating to player-details
-  // and back, so the selection isn't lost when the component reconstructs.
-  lastSelectedStatType: string = 'batting';
+  // Persists the stats page's selected stat type (overview/batting/bowling/
+  // fielding/mvp) across StatsComponent recreation, e.g. when navigating to
+  // player-details and back, so the selection isn't lost when the component
+  // reconstructs.
+  lastSelectedStatType: string = 'overview';
 
   firestore = inject(Firestore);
   matchService = inject(MatchService);
