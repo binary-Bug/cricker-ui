@@ -335,6 +335,16 @@ td.mat-column-name {
   max-width: 160px;
 }
 
+/* CDK's sticky-column offset is auto-set via inline `left`, measured from
+   getBoundingClientRect() on the rank column. Under the fullscreen rotate
+   transform, that rect is the post-rotation axis-aligned box, so CDK reads
+   the rank cell's rendered height (~56px) as its "width" and leaves a stale
+   gap before Name. Force the real, fixed rank column width instead. */
+.table-fullscreen-rotated th.mat-column-name,
+.table-fullscreen-rotated td.mat-column-name {
+  left: 44px !important;
+}
+
 .rank-cell {
   text-align: center;
   font-weight: 600;
