@@ -405,6 +405,9 @@ td.mat-column-name {
   position: fixed;
   top: 50%;
   left: 50%;
+  /* Fallback only - StatsComponent.measureFullscreenTableSize() sets the real
+     size via inline style (JS-measured window.innerWidth/innerHeight), since
+     100vh/100vw are unreliable on real mobile browsers/WebViews. */
   width: 100vh;
   height: 100vw;
   /* Center via translate, not flex - a flex parent would flex-shrink this

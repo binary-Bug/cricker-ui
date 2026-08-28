@@ -163,7 +163,12 @@
   >
     <mat-icon>close</mat-icon>
   </button>
-  <div class="stats-table-scroll" #tableScroll>
+  <div
+    class="stats-table-scroll"
+    #tableScroll
+    [style.width.px]="isTableFullscreen ? fullscreenTableWidthPx : null"
+    [style.height.px]="isTableFullscreen ? fullscreenTableHeightPx : null"
+  >
     <table
       mat-table
       [dataSource]="dataSource"

@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { PlayerService } from '../../services/player.service';
 import { FormsModule, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -441,18 +441,54 @@ export class StatsComponent implements OnInit {
    * those go stale whenever data/columns change (e.g. differing rank/name
    * widths between filters), which looks like broken/misaligned stickiness.
    * Forces a recompute and snaps the scroll position back to the start.
+   *
+   * Uses a double rAF (not setTimeout(0)) before measuring - setTimeout(0)
+   * can fire before the browser has actually laid out/painted a class or
+   * inline-style change that was just applied (seen on real mobile
+   * browsers/WebViews, which are slower to reflow than desktop devtools
+   * emulation), leaving updateStickyColumnStyles() measuring stale/mid-
+   * transition geometry and producing a gap between the rank/name columns.
    */
   private refreshTableLayout(): void {
     if (this.tableScrollEl) {
       this.tableScrollEl.nativeElement.scrollLeft = 0;
     }
-    setTimeout(() => this.matTableRef?.updateStickyColumnStyles());
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => this.matTableRef?.updateStickyColumnStyles())
+    );
+  }
+
+  /** Real, JS-measured viewport size for the fullscreen-rotated table (px) -
+   * bound via inline style in the template. CSS 100vh/100vw are unreliable
+   * on real mobile browsers/WebViews (dynamic address-bar chrome resizes the
+   * visible viewport without updating vh/vw consistently), which is why the
+   * rotated table renders far narrower than the actual screen on a real
+   * device despite working fine in desktop devtools' mobile emulation. */
+  fullscreenTableWidthPx = 0;
+  fullscreenTableHeightPx = 0;
+
+  private measureFullscreenTableSize(): void {
+    // Swapped because the table is rotated 90deg: its pre-rotation width
+    // becomes the visual height on screen, and vice versa.
+    this.fullscreenTableWidthPx = window.innerHeight;
+    this.fullscreenTableHeightPx = window.innerWidth;
+  }
+
+  /** Keeps the rotated table sized to the actual visible viewport if the
+   * browser/WebView's address bar shows or hides while fullscreen is open. */
+  @HostListener('window:resize')
+  @HostListener('window:orientationchange')
+  onWindowResize(): void {
+    if (!this.isTableFullscreen) return;
+    this.measureFullscreenTableSize();
+    this.refreshTableLayout();
   }
 
   /** Pure CSS overlay+rotate trick, not the native Fullscreen API - requestFullscreen() isn't supported for arbitrary elements on iOS Safari/most iOS WebViews (incl. Median.co). */
   toggleTableFullscreen(): void {
     this.isTableFullscreen = !this.isTableFullscreen;
     document.body.style.overflow = this.isTableFullscreen ? 'hidden' : '';
+    if (this.isTableFullscreen) this.measureFullscreenTableSize();
     this.refreshTableLayout();
   }
 
