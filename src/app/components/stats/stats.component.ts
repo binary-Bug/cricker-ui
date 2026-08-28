@@ -188,8 +188,8 @@ export class StatsComponent implements OnInit {
   isTableFullscreen = false;
 
   searchTerm = new FormControl('');
-  /** Chip toggle: 0 = "All", otherwise a minimum matchesPlayed threshold - keeps rate stats (S/R, Economy, Win %) from being skewed by 1-match samples. */
-  minMatches = new FormControl<number>(0);
+  /** Chip toggle: 0 = "All", otherwise a minimum matchesPlayed threshold - keeps rate stats (S/R, Economy, Win %) from being skewed by 1-match samples. Defaults to 3+ for the same reason. */
+  minMatches = new FormControl<number>(3);
   minMatchesOptions = [
     { value: 0, label: 'All' },
     { value: 3, label: '3+' },

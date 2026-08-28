@@ -110,8 +110,10 @@
               *matCellDef="let element"
               class="player-cell"
             >
-              <span class="player-name">{{ element.name }}</span>
-              <span class="player-status">({{ element.status }})</span>
+              <div class="player-cell-inner">
+                <span class="player-name">{{ element.name }}</span>
+                <span class="player-status">({{ element.status }})</span>
+              </div>
             </td>
           </ng-container>
 
@@ -187,7 +189,9 @@
               *matCellDef="let element"
               class="player-cell"
             >
-              <span class="player-name">{{ element.name }}</span>
+              <div class="player-cell-inner">
+                <span class="player-name">{{ element.name }}</span>
+              </div>
             </td>
           </ng-container>
 
@@ -260,8 +264,10 @@
               *matCellDef="let element"
               class="player-cell"
             >
-              <span class="player-name">{{ element.name }}</span>
-              <span class="player-status">({{ element.status }})</span>
+              <div class="player-cell-inner">
+                <span class="player-name">{{ element.name }}</span>
+                <span class="player-status">({{ element.status }})</span>
+              </div>
             </td>
           </ng-container>
 
@@ -337,7 +343,9 @@
               *matCellDef="let element"
               class="player-cell"
             >
-              <span class="player-name">{{ element.name }}</span>
+              <div class="player-cell-inner">
+                <span class="player-name">{{ element.name }}</span>
+              </div>
             </td>
           </ng-container>
 

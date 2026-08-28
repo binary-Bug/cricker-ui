@@ -287,6 +287,10 @@
 
 table {
   width: 100%;
+  /* Angular Material's mat-table never resets the browser's default table
+     border-spacing (2px) - left as-is, each row's background band leaves a
+     gap before/after its own border-bottom instead of ending flush with it. */
+  border-collapse: collapse;
 }
 
 th.mat-mdc-header-cell {
@@ -341,7 +345,14 @@ td.mat-column-name {
   font-size: 1.1rem;
 }
 
+/* display:flex must NOT go directly on the <td> - it would drop the cell out
+   of table-cell layout, breaking row-height sync/borders/vertical centering
+   for just this column. Flex lives on the inner wrapper instead. */
 .name-cell {
+  vertical-align: middle;
+}
+
+.name-cell-inner {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -388,16 +399,18 @@ td.mat-column-name {
   z-index: 1000;
   margin: 0;
   border-radius: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .table-fullscreen-rotated .stats-table-scroll {
-  transform: rotate(90deg);
-  transform-origin: center center;
+  position: fixed;
+  top: 50%;
+  left: 50%;
   width: 100vh;
   height: 100vw;
+  /* Center via translate, not flex - a flex parent would flex-shrink this
+     (intentionally oversized, pre-rotation) box back down to the viewport's
+     narrow width, wasting most of the extra room rotation is meant to add. */
+  transform: translate(-50%, -50%) rotate(90deg);
 }
 
 .table-fullscreen-exit-btn {

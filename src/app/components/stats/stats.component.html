@@ -187,12 +187,14 @@
       <ng-container matColumnDef="name" sticky>
         <th mat-header-cell *matHeaderCellDef>Name</th>
         <td mat-cell *matCellDef="let row" class="name-cell">
-          <span
-            class="name-cell-avatar"
-            [style.background-color]="utilityService.getAvatarColor(row.name)"
-            >{{ utilityService.getInitials(row.name) }}</span
-          >
-          <span class="name-cell-text">{{ row.name }}</span>
+          <div class="name-cell-inner">
+            <span
+              class="name-cell-avatar"
+              [style.background-color]="utilityService.getAvatarColor(row.name)"
+              >{{ utilityService.getInitials(row.name) }}</span
+            >
+            <span class="name-cell-text">{{ row.name }}</span>
+          </div>
         </td>
       </ng-container>
 
