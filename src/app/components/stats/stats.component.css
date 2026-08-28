@@ -403,17 +403,20 @@ td.mat-column-name {
 
 .table-fullscreen-rotated .stats-table-scroll {
   position: fixed;
-  top: 50%;
-  left: 50%;
+  top: 0;
+  left: 0;
   /* Fallback only - StatsComponent.measureFullscreenTableSize() sets the real
      size via inline style (JS-measured window.innerWidth/innerHeight), since
      100vh/100vw are unreliable on real mobile browsers/WebViews. */
   width: 100vh;
   height: 100vw;
-  /* Center via translate, not flex - a flex parent would flex-shrink this
-     (intentionally oversized, pre-rotation) box back down to the viewport's
-     narrow width, wasting most of the extra room rotation is meant to add. */
-  transform: translate(-50%, -50%) rotate(90deg);
+  /* Anchor at the top-left corner and rotate+shift back into place, instead
+     of centering with top/left:50% + translate(-50%,-50%) - this is the
+     standard "rotate to fill viewport" recipe and is less sensitive to how a
+     given mobile browser/WebView resolves percentage transforms/positioning
+     on a fixed element than the center-based version was. */
+  transform-origin: top left;
+  transform: rotate(90deg) translateY(-100%);
 }
 
 .table-fullscreen-exit-btn {
