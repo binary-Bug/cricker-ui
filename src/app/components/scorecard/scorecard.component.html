@@ -441,7 +441,7 @@
                         mat-mini-fab
                         color="primary"
                         [disabled]="ball.hasBeenBowled ? null : 'true'"
-                        (click)="openBallDetail(ballOrigin, ball, entry.index, ballIdx)"
+                        (click)="openBallDetail(ballOrigin, ball, entry.index, ballIdx, FIBattingTeamKey)"
                       >
                         {{ ball.label }}
                       </button>
@@ -492,7 +492,7 @@
                         mat-mini-fab
                         color="primary"
                         [disabled]="ball.hasBeenBowled ? null : 'true'"
-                        (click)="openBallDetail(ballOrigin, ball, entry.index, ballIdx)"
+                        (click)="openBallDetail(ballOrigin, ball, entry.index, ballIdx, SIBattingTeamKey)"
                       >
                         {{ ball.label }}
                       </button>
@@ -638,12 +638,12 @@
           <span class="ball-detail-outcome">{{ ballOutcomeText(sb.ball) }}</span>
         </div>
         <div class="ball-detail-row">
-          <span class="ball-detail-label">Batting</span>
-          {{ sb.ball.striker.name }} {{ sb.ball.striker.runs }}({{
-            sb.ball.striker.balls
-          }}) &amp; {{ sb.ball.nonStriker.name }} {{ sb.ball.nonStriker.runs }}({{
-            sb.ball.nonStriker.balls
-          }})
+          <span class="ball-detail-label">On strike</span>
+          {{ sb.onStrike.name }} {{ sb.onStrike.runs }}({{ sb.onStrike.balls }})
+        </div>
+        <div class="ball-detail-row">
+          <span class="ball-detail-label">Non-strike</span>
+          {{ sb.nonStrike.name }} {{ sb.nonStrike.runs }}({{ sb.nonStrike.balls }})
         </div>
         <div class="ball-detail-row">
           <span class="ball-detail-label">Bowler</span>

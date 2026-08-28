@@ -201,11 +201,17 @@ export class ScorecardComponent
     return entry.index;
   }
 
-  /** The ball currently shown in the tap-to-inspect popover, if any. */
+  /** The ball currently shown in the tap-to-inspect popover, if any.
+   * `onStrike`/`nonStrike` are the batsmen as they stood BEFORE this ball was
+   * bowled - `ball.striker`/`ball.nonStriker` instead store the pair AFTER
+   * the delivery (post strike-rotation), which names the wrong batsman as
+   * facing it whenever the ball rotated strike. */
   selectedBall: {
     ball: BALL_DATA;
     overIndex: number;
     ballIndex: number;
+    onStrike: Batsmen;
+    nonStrike: Batsmen;
   } | null = null;
   selectedBallOrigin: CdkOverlayOrigin | null = null;
   /** Ordered fallbacks so the popover stays anchored to the tapped ball even
@@ -220,11 +226,44 @@ export class ScorecardComponent
     { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 6 },
   ];
 
+  /** Walks backwards from (overIndex, ballIndex) to the previous bowled ball
+   * in this innings and returns ITS striker/nonStriker - that's the batting
+   * pair as it stood right before the tapped ball, since nothing else
+   * changes strike between one ball completing and the next one starting -
+   * EXCEPT crossing an over boundary, which always rotates strike once more
+   * regardless of the last ball's runs (ends change every over; see
+   * ScoringActionsComponent.checkForOverCompletion's unconditional
+   * swapStriker() call, which isn't itself written into any ball snapshot).
+   * Falls back to the tapped ball's own striker/nonStriker when it's the
+   * very first bowled ball of the innings (no earlier snapshot to use). */
+  private getPreBallBatsmen(
+    teamKey: string,
+    overIndex: number,
+    ballIndex: number
+  ): { onStrike: Batsmen; nonStrike: Batsmen } {
+    const overs = this.matchService.teamData[teamKey].oversPlayedData;
+    for (let oi = overIndex; oi >= 0; oi--) {
+      const over = overs[oi];
+      const startBi = oi === overIndex ? ballIndex - 1 : over.length - 1;
+      for (let bi = startBi; bi >= 0; bi--) {
+        if (over[bi].hasBeenBowled) {
+          const crossedOverBoundary = oi !== overIndex;
+          return crossedOverBoundary
+            ? { onStrike: over[bi].nonStriker, nonStrike: over[bi].striker }
+            : { onStrike: over[bi].striker, nonStrike: over[bi].nonStriker };
+        }
+      }
+    }
+    const tappedBall = overs[overIndex][ballIndex];
+    return { onStrike: tappedBall.striker, nonStrike: tappedBall.nonStriker };
+  }
+
   openBallDetail(
     origin: CdkOverlayOrigin,
     ball: BALL_DATA,
     overIndex: number,
-    ballIndex: number
+    ballIndex: number,
+    teamKey: string
   ): void {
     if (!ball.hasBeenBowled) return;
     if (this.selectedBall?.ball === ball) {
@@ -232,7 +271,12 @@ export class ScorecardComponent
       return;
     }
     this.selectedBallOrigin = origin;
-    this.selectedBall = { ball, overIndex, ballIndex };
+    this.selectedBall = {
+      ball,
+      overIndex,
+      ballIndex,
+      ...this.getPreBallBatsmen(teamKey, overIndex, ballIndex),
+    };
   }
 
   closeBallDetail(): void {
