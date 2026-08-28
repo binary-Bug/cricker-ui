@@ -45,7 +45,12 @@ export class RoomComponent {
   }
   roomService = inject(RoomService);
   openCodeDialog(): void {
-    const dialogRef = this.dialog.open(AdminCodeDialog);
+    // Caps the dialog at a comfortable reading width on desktop while
+    // staying near-full-width (90vw) on narrow mobile screens.
+    const dialogRef = this.dialog.open(AdminCodeDialog, {
+      width: '90vw',
+      maxWidth: '400px',
+    });
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
