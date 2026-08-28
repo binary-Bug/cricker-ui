@@ -148,6 +148,7 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
       const canvas = await html2canvas(this.shareCardRef.nativeElement, {
         backgroundColor: '#ffffff',
         scale: 2,
+        logging: false,
       });
       this.cachedShareBlob = await new Promise((resolve) =>
         canvas.toBlob((b) => resolve(b), 'image/png')
@@ -266,6 +267,7 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
           const canvas = await html2canvas(this.shareCardRef!.nativeElement, {
             backgroundColor: '#ffffff',
             scale: 2,
+            logging: false,
           });
           return new Promise<Blob | null>((resolve) =>
             canvas.toBlob((b) => resolve(b), 'image/png')
