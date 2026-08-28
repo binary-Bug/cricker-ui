@@ -166,7 +166,9 @@
 }
 
 .match-hero-result-row {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-top: 24px;
 }
 

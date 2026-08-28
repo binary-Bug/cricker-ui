@@ -80,6 +80,13 @@
           <span class="match-result-badge">{{
             matchService.matchResult
           }}</span>
+          <button
+            mat-icon-button
+            title="Share match info"
+            (click)="shareMatchInfo()"
+          >
+            <mat-icon>share</mat-icon>
+          </button>
         </div>
       </div>
 

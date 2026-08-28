@@ -329,6 +329,74 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
     }
   }
 
+  /** Plain-text match summary for shareMatchInfo(): teams, date/start time,
+   * overs, result, Man of the Match (if any), then a link back to this
+   * match - in that order, ending with the current page URL. */
+  private buildMatchShareText(): string {
+    const team1 = this.matchService.teamData['team1'];
+    const team2 = this.matchService.teamData['team2'];
+    const dateTime = this.matchService.inningsOneFirstBallTime
+      ? `${this.formatMatchDate(this.matchService.matchDate)} \u00b7 Start Time: ${this.formatTime(this.matchService.inningsOneFirstBallTime)}`
+      : this.formatMatchDate(this.matchService.matchDate);
+    const momName = this.matchService.mvpSummary?.manOfTheMatch;
+
+    const lines = [
+      `\ud83c\udfcf ${team1?.name} vs ${team2?.name}`,
+      `\ud83d\udcc5 ${dateTime}`,
+      `Overs: ${this.matchService.totalOvers}`,
+      '',
+      `${this.matchService.matchResult}`,
+    ];
+    if (momName) {
+      lines.push('', `\ud83c\udfc6 Man of the Match: ${momName}`);
+    }
+    lines.push('', '\ud83d\udcca View Complete Scorecard:', window.location.href);
+    return lines.join('\n');
+  }
+
+  /**
+   * Shares a plain-text match summary + link (see buildMatchShareText()),
+   * using the same priority order as shareMomCard() above:
+   *   0. Median/GoNative JS Bridge - used only inside the Median-built
+   *      wrapper app, where navigator.share is often unavailable/unreliable.
+   *   1. Web Share API (navigator.share) - the primary mobile-browser path.
+   *   2. Clipboard copy - universal fallback for desktop browsers without
+   *      Web Share support.
+   */
+  async shareMatchInfo(): Promise<void> {
+    const text = this.buildMatchShareText();
+
+    const bridge = this.getWebViewBridge();
+    if (bridge?.share?.sharePage) {
+      bridge.share.sharePage({ text });
+      return;
+    }
+
+    const nav = navigator as Navigator & {
+      share?: (data?: any) => Promise<void>;
+    };
+    if (nav.share) {
+      try {
+        await nav.share({ title: 'Match Summary', text });
+        return;
+      } catch {
+        // User cancelled, or share isn't actually usable here - fall
+        // through to the clipboard copy below.
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      this.snackBar.open('Match summary copied to clipboard.', 'Dismiss', {
+        duration: 4000,
+      });
+    } catch {
+      this.snackBar.open('Could not share match info.', 'Dismiss', {
+        duration: 4000,
+      });
+    }
+  }
+
   /**
    * True if `teamKey` ('team1'/'team2') is the winning team, so the
    * template can show a small non-color checkmark cue next to their name
