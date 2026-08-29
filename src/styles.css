@@ -34,3 +34,26 @@ body {
 .newBowlerDialogClass {
   z-index: 0 !important;
 }
+
+/* Makes the on-field-player-detail dialog feel like a small page rather
+   than a cramped popup - fixed roomy modal on larger screens, near-
+   fullscreen (edge-to-edge) on phones. panelClass targets .cdk-overlay-
+   pane, an ancestor of the dialog component's own root element, so this
+   can only be done with global CSS, not :host ::ng-deep from within it. */
+.on-field-player-dialog-panel {
+  width: 520px;
+  max-width: 520px;
+}
+
+@media (max-width: 599px) {
+  .on-field-player-dialog-panel {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100%;
+    max-height: 100vh;
+  }
+
+  .on-field-player-dialog-panel .mat-mdc-dialog-container {
+    border-radius: 0;
+  }
+}

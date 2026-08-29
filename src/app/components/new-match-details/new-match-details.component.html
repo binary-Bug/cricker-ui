@@ -1,153 +1,192 @@
-<div class="main grid justify-content-center">
-  <div class="grid place-content-center">
-    <form [formGroup]="matchDetailsForm">
-      <div>
-        <mat-form-field>
-          <mat-label>Team 1 Name</mat-label>
-          <input matInput formControlName="team1Name" />
-        </mat-form-field>
-      </div>
-      <div>
-        <mat-form-field>
-          <mat-label>Team 2 Name</mat-label>
-          <input matInput formControlName="team2Name" />
-        </mat-form-field>
-      </div>
-      <div>
-        <mat-form-field class="example-full-width">
-          <mat-label>{{
-            matchDetailsForm.get("team1Name")?.value
-              ? matchDetailsForm.get("team1Name")?.value + " Captain"
-              : "Team 1 Captain"
-          }}</mat-label>
-          <input
-            type="text"
-            placeholder="Select Player"
-            matInput
-            formControlName="team1Captain"
-            [matAutocomplete]="auto1"
-          />
-          <mat-autocomplete
-            #auto1="matAutocomplete"
-            (optionSelected)="onCap1Selected($event.option.value)"
+<div class="new-match-container">
+  <div class="new-match-header">
+    <button mat-mini-fab color="primary" aria-label="Back" (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1 class="new-match-title">New Match</h1>
+  </div>
+
+  <form [formGroup]="matchDetailsForm">
+    <div class="new-match-section">
+      <div class="section-label">Teams</div>
+      <div class="new-match-card">
+        <div class="field-group">
+          <span class="field-label">Team 1 Captain *</span>
+          <mat-form-field
+            appearance="outline"
+            class="full-width-field"
+            subscriptSizing="dynamic"
           >
-            <mat-option
-              *ngFor="let option of filteredOptionsCap1"
-              [value]="option"
+            <input
+              type="text"
+              placeholder="Select Player"
+              matInput
+              formControlName="team1Captain"
+              [matAutocomplete]="auto1"
+            />
+            <mat-autocomplete
+              #auto1="matAutocomplete"
+              (optionSelected)="onCap1Selected($event.option.value)"
             >
-              {{ autoCompleteService.isAddPlayerOption(option)
-                ? ('Add Player - ' + autoCompleteService.decodeAddPlayer(option))
-                : option }}
-            </mat-option>
-          </mat-autocomplete>
-        </mat-form-field>
-      </div>
-      <div>
-        <mat-form-field class="example-full-width">
-          <mat-label>{{
-            matchDetailsForm.get("team2Name")?.value
-              ? matchDetailsForm.get("team2Name")?.value + " Captain"
-              : "Team 2 Captain"
-          }}</mat-label>
-          <input
-            type="text"
-            placeholder="Select Player"
-            matInput
-            formControlName="team2Captain"
-            [matAutocomplete]="auto2"
-          />
-          <mat-autocomplete
-            #auto2="matAutocomplete"
-            (optionSelected)="onCap2Selected($event.option.value)"
+              <mat-option
+                *ngFor="let option of filteredOptionsCap1"
+                [value]="option"
+              >
+                {{ autoCompleteService.isAddPlayerOption(option)
+                  ? ('Add Player - ' + autoCompleteService.decodeAddPlayer(option))
+                  : option }}
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+        </div>
+
+        <div class="field-group">
+          <span class="field-label">Team 2 Captain *</span>
+          <mat-form-field
+            appearance="outline"
+            class="full-width-field"
+            subscriptSizing="dynamic"
           >
-            <mat-option
-              *ngFor="let option of filteredOptionsCap2"
-              [value]="option"
+            <input
+              type="text"
+              placeholder="Select Player"
+              matInput
+              formControlName="team2Captain"
+              [matAutocomplete]="auto2"
+            />
+            <mat-autocomplete
+              #auto2="matAutocomplete"
+              (optionSelected)="onCap2Selected($event.option.value)"
             >
-              {{ autoCompleteService.isAddPlayerOption(option)
-                ? ('Add Player - ' + autoCompleteService.decodeAddPlayer(option))
-                : option }}
-            </mat-option>
-          </mat-autocomplete>
-        </mat-form-field>
-      </div>
-      <div>
-        <label>Toss Won by: </label>
-        <mat-radio-group formControlName="tossWinner">
-          <mat-radio-button color="primary" value="team1">{{
-            matchDetailsForm.get("team1Name")?.value
-              ? matchDetailsForm.get("team1Name")?.value
-              : "Team 1"
-          }}</mat-radio-button>
-          <br />
-          <mat-radio-button
-            color="primary"
-            style="margin-left: 86px"
-            value="team2"
-            >{{
-              matchDetailsForm.get("team2Name")?.value
-                ? matchDetailsForm.get("team2Name")?.value
-                : "Team 2"
-            }}</mat-radio-button
-          >
-        </mat-radio-group>
-      </div>
-      <div>
-        <label>Elected to: </label>
-        <mat-radio-group formControlName="tossResult">
-          <mat-radio-button
-            color="primary"
-            style="margin-left: 17px"
-            value="bat"
-            >Bat</mat-radio-button
-          >
-          <br />
-          <mat-radio-button
-            color="primary"
-            style="margin-left: 86px"
-            value="ball"
-            >Ball</mat-radio-button
-          >
-        </mat-radio-group>
-      </div>
-      <div>
-        <mat-form-field>
-          <mat-label>Enter Total Players</mat-label>
-          <input type="number" matInput formControlName="totalPlayers" />
-        </mat-form-field>
-      </div>
-      <div>
-        <mat-form-field>
-          <mat-label>Enter Total Overs</mat-label>
-          <input type="number" matInput formControlName="totalOvers" />
-        </mat-form-field>
-      </div>
-      <div class="example-button-row place-items-center">
-        <div>
-          <button
-            (click)="openCurrentPlayerDialog()"
-            mat-raised-button
-            color="primary"
-            style="width: 12em; height: 6em"
-            [disabled]="matchDetailsForm.invalid"
-          >
-            Start Match
-          </button>
+              <mat-option
+                *ngFor="let option of filteredOptionsCap2"
+                [value]="option"
+              >
+                {{ autoCompleteService.isAddPlayerOption(option)
+                  ? ('Add Player - ' + autoCompleteService.decodeAddPlayer(option))
+                  : option }}
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+        </div>
+
+        <div class="same-captain-warning" *ngIf="sameCaptainSelected">
+          <mat-icon class="warning-icon">warning</mat-icon>
+          Team 1 and Team 2 captains can't be the same player.
+        </div>
+
+        <!-- Resolved team name viewer box - names auto-resolve from each
+             captain's first name + a fixed-for-this-match random adjective
+             (see NewMatchDetailsComponent.ngOnInit), replacing the old
+             free-text Team Name fields entirely. -->
+        <div
+          class="team-preview-box"
+          *ngIf="bothCaptainsSelected && !sameCaptainSelected"
+        >
+          <div class="team-preview-side">
+            <div
+              class="team-preview-avatar"
+              [style.background]="utilityService.getAvatarColor(team1CaptainValue)"
+            >
+              {{ utilityService.getInitials(team1CaptainValue) }}
+            </div>
+            <div class="team-preview-name">
+              <span class="team-preview-emoji">{{ team1AdjectiveEmoji }}</span>
+              {{ resolvedTeam1Name }}
+            </div>
+          </div>
+          <div class="team-preview-vs">VS</div>
+          <div class="team-preview-side">
+            <div
+              class="team-preview-avatar"
+              [style.background]="utilityService.getAvatarColor(team2CaptainValue)"
+            >
+              {{ utilityService.getInitials(team2CaptainValue) }}
+            </div>
+            <div class="team-preview-name">
+              <span class="team-preview-emoji">{{ team2AdjectiveEmoji }}</span>
+              {{ resolvedTeam2Name }}
+            </div>
+          </div>
+        </div>
+        <div class="team-preview-placeholder" *ngIf="!bothCaptainsSelected">
+          Waiting for both captains to be selected...
         </div>
       </div>
-      <div *ngIf="!isProdEnv">
-        <label>Mode: </label>
-        <mat-radio-group formControlName="mode">
-          <mat-radio-button color="primary" value="test">Test</mat-radio-button>
-          <br />
-          <mat-radio-button
-            color="primary"
-            style="margin-left: 39px"
-            value="prod"
-            >Prod</mat-radio-button
+    </div>
+
+    <div class="new-match-section">
+      <div class="section-label">Toss</div>
+      <div class="new-match-card">
+        <div class="toggle-row">
+          <span class="toggle-row-label">Toss Winner</span>
+          <mat-button-toggle-group
+            class="segmented-toggle-group"
+            formControlName="tossWinner"
+            aria-label="Toss Winner"
           >
-        </mat-radio-group>
+            <mat-button-toggle value="team1">{{
+              bothCaptainsSelected ? resolvedTeam1Name : "Team 1"
+            }}</mat-button-toggle>
+            <mat-button-toggle value="team2">{{
+              bothCaptainsSelected ? resolvedTeam2Name : "Team 2"
+            }}</mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-row-label">Elected to</span>
+          <mat-button-toggle-group
+            class="segmented-toggle-group"
+            formControlName="tossResult"
+            aria-label="Elected to"
+          >
+            <mat-button-toggle value="bat">Bat</mat-button-toggle>
+            <mat-button-toggle value="ball">Ball</mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
       </div>
-    </form>
-  </div>
+    </div>
+
+    <div class="new-match-section">
+      <div class="section-label">Match Settings</div>
+      <div class="new-match-card">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="field-group">
+            <span class="field-label">Total Players *</span>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <input type="number" matInput formControlName="totalPlayers" />
+            </mat-form-field>
+          </div>
+          <div class="field-group">
+            <span class="field-label">Total Overs *</span>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <input type="number" matInput formControlName="totalOvers" />
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button
+      (click)="openCurrentPlayerDialog()"
+      mat-raised-button
+      color="primary"
+      class="hero-cta"
+      [disabled]="matchDetailsForm.invalid || sameCaptainSelected"
+    >
+      Start Match
+    </button>
+
+    <div class="new-match-section dev-mode-section" *ngIf="!isProdEnv">
+      <div class="section-label dev-tools-label">Mode</div>
+      <mat-button-toggle-group
+        class="segmented-toggle-group"
+        formControlName="mode"
+        aria-label="Mode"
+      >
+        <mat-button-toggle value="test">Test</mat-button-toggle>
+        <mat-button-toggle value="prod">Prod</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+  </form>
 </div>

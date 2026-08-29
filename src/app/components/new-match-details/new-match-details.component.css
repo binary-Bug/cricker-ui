@@ -1,8 +1,197 @@
-.main {
+/* ============================================================
+   New Match page - redesigned to match the room dashboard / player
+   details visual language: a centered max-width container, section-
+   labeled card groups, pill/segmented toggles (replacing stacked radio
+   groups), and a colored initials avatar chip pattern (shared
+   UtilityService helper) for the resolved-team-name preview box.
+   ============================================================ */
+
+.new-match-container {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 16px 32px;
   width: 100%;
-  height: 100%;
+  box-sizing: border-box;
 }
-.example-button-row .mat-mdc-button-base {
-  margin: 8px 8px 8px 0;
-  border-radius: 40px;
+
+@media (min-width: 1024px) {
+  .new-match-container {
+    max-width: 860px;
+  }
+}
+
+/* --- Header --- */
+.new-match-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.new-match-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #263238;
+  margin: 0;
+}
+
+/* --- Section labels + cards --- */
+.new-match-section {
+  margin-bottom: 20px;
+}
+
+.section-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #616161;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 10px 4px;
+}
+
+.dev-tools-label {
+  color: #b26a00;
+}
+
+.new-match-card {
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.full-width-field {
+  width: 100%;
+}
+
+/* mat-form-field's <mat-label> triggers a real Angular Material MDC bug
+   with appearance="outline" (the notched-outline never gets its
+   `--notched` modifier class, so the label's cutout renders as a second
+   bordered box instead of a gap) - so labels live outside the field as
+   plain text instead, matching this app's other outline fields. */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #757575;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* --- Same-captain validation hint --- */
+.same-captain-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #c62828;
+  font-size: 0.85em;
+  font-weight: 500;
+}
+
+.warning-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* --- Resolved team name viewer box --- */
+.team-preview-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #ede7f6;
+  border-radius: 12px;
+  padding: 14px 12px;
+}
+
+.team-preview-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.team-preview-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.team-preview-name {
+  font-weight: 600;
+  font-size: 0.95em;
+  color: #4527a0;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.team-preview-emoji {
+  margin-right: 2px;
+}
+
+.team-preview-vs {
+  font-weight: 700;
+  color: #9e9e9e;
+  font-size: 0.85em;
+  flex-shrink: 0;
+}
+
+.team-preview-placeholder {
+  text-align: center;
+  color: #9e9e9e;
+  font-size: 0.85em;
+  padding: 8px 0;
+}
+
+/* --- Toss / Elected-to / Mode segmented toggles --- */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.toggle-row-label {
+  font-weight: 500;
+  color: #263238;
+  font-size: 0.9em;
+}
+
+.segmented-toggle-group.mat-button-toggle-group {
+  border-radius: 999px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.dev-mode-section .segmented-toggle-group.mat-button-toggle-group {
+  width: 160px;
+}
+
+/* --- Start Match hero CTA - matches room.component.css's .hero-cta --- */
+.hero-cta.mat-mdc-button-base {
+  width: 100%;
+  height: 56px;
+  border-radius: 20px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 14px rgba(69, 39, 160, 0.35);
 }

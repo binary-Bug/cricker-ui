@@ -743,6 +743,7 @@ export class LiveMatchService {
       this.dialog
         .open(OnFieldPlayerDetailsDialog, {
           data: { isAuto: true },
+          panelClass: 'on-field-player-dialog-panel',
         })
         .afterClosed()
         .subscribe(() => {
