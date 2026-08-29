@@ -46,11 +46,15 @@
   }
 }
 
-/* --- Innings pill tab bar --- */
+/* --- Innings pill tab bar ---
+   Deliberately blue (not the purple used by match-details' Match Info /
+   Score Card tab row above this one) so the two stacked tab bars read as
+   distinct levels of navigation instead of blurring together. Same blue
+   already used for MVP accents elsewhere (player-details/player-list). */
 .innings-pill-bar {
   display: flex;
   gap: 4px;
-  background-color: #f5f3fa;
+  background-color: #e3f2fd;
   border-radius: 999px;
   padding: 4px;
   margin: 4px 4px 12px;
@@ -69,8 +73,8 @@
 }
 
 .innings-pill-active {
-  background-color: #ede7f6;
-  color: #4527a0;
+  background-color: #bbdefb;
+  color: #0d47a1;
 }
 
 /* --- Sticky mini score header --- */
