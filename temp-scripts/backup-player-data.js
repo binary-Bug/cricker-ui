@@ -59,7 +59,9 @@ async function main() {
   console.log(`Backed up ${docsOut.length} doc(s) to ${outFile}`);
 }
 
-main().catch((err) => {
-  console.error('Backup failed:', err);
-  process.exit(1);
-});
+main()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error('Backup failed:', err);
+    process.exit(1);
+  });

@@ -593,7 +593,9 @@ async function main() {
   console.log('Done. Backfill completed successfully.');
 }
 
-main().catch((err) => {
-  console.error('Backfill failed:', err);
-  process.exit(1);
-});
+main()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error('Backfill failed:', err);
+    process.exit(1);
+  });

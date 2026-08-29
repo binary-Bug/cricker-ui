@@ -332,9 +332,13 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
   }
 
   /** Plain-text match summary for shareMatchInfo(): teams, date/start time,
-   * overs, result, Man of the Match (if any), then a link back to this
-   * match - in that order, ending with the current page URL. */
-  private buildMatchShareText(): string {
+   * overs, result, Man of the Match (if any) - the page URL is deliberately
+   * NOT appended here; the bridge/Web Share API attach it themselves via
+   * their own `url` field (see shareMatchInfo()), so embedding it in this
+   * text too would make it show up twice in the shared message. Only the
+   * clipboard fallback (which has no separate url slot) appends it, via
+   * the `includeUrl` flag. */
+  private buildMatchShareText(includeUrl: boolean): string {
     const team1 = this.matchService.teamData['team1'];
     const team2 = this.matchService.teamData['team2'];
     const dateTime = this.matchService.inningsOneFirstBallTime
@@ -352,7 +356,9 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
     if (momName) {
       lines.push('', `\ud83c\udfc6 Man of the Match: ${momName}`);
     }
-    lines.push('', '\ud83d\udcca View Complete Scorecard:', window.location.href);
+    if (includeUrl) {
+      lines.push('', '\ud83d\udcca View Complete Scorecard:', window.location.href);
+    }
     return lines.join('\n');
   }
 
@@ -366,11 +372,12 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
    *      Web Share support.
    */
   async shareMatchInfo(): Promise<void> {
-    const text = this.buildMatchShareText();
+    const text = this.buildMatchShareText(false);
+    const url = window.location.href;
 
     const bridge = this.getWebViewBridge();
     if (bridge?.share?.sharePage) {
-      bridge.share.sharePage({ text });
+      bridge.share.sharePage({ text, url });
       return;
     }
 
@@ -379,7 +386,7 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
     };
     if (nav.share) {
       try {
-        await nav.share({ title: 'Match Summary', text });
+        await nav.share({ title: 'Match Summary', text, url });
         return;
       } catch {
         // User cancelled, or share isn't actually usable here - fall
@@ -388,7 +395,9 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
     }
 
     try {
-      await navigator.clipboard.writeText(text);
+      // Clipboard has no separate url field, so the link needs to be part
+      // of the copied text here (unlike the bridge/Web Share paths above).
+      await navigator.clipboard.writeText(this.buildMatchShareText(true));
       this.snackBar.open('Match summary copied to clipboard.', 'Dismiss', {
         duration: 4000,
       });

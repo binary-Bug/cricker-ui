@@ -62,11 +62,17 @@ function parseMode() {
   const mode = arg ? arg.split('=')[1] : undefined;
   if (mode !== 'test' && mode !== 'prod') {
     console.error(
-      'Missing/invalid --mode flag. Usage: node temp-scripts/backfill-match-mvp-data.js --mode=test|prod'
+      'Missing/invalid --mode flag. Usage: node temp-scripts/backfill-match-mvp-data.js --mode=test|prod [--id=<matchDocId>]'
     );
     process.exit(1);
   }
   return mode;
+}
+
+// Optional: recompute just one match instead of the whole collection.
+function parseId() {
+  const arg = process.argv.find((a) => a.startsWith('--id='));
+  return arg ? arg.split('=')[1] : undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -472,10 +478,11 @@ function getWinningTeamKeyForMvp(team1, team2) {
 
 async function main() {
   const mode = parseMode();
+  const onlyId = parseId();
   const matchCollectionName = mode === 'prod' ? 'MatchData' : 'Test_MatchData';
 
   console.log(`Backfilling per-match MVP/MoM data for mode="${mode}"`);
-  console.log(`Reading + patching matches in "${matchCollectionName}"`);
+  console.log(`Reading + patching matches in "${matchCollectionName}"${onlyId ? ` (filtered to id=${onlyId})` : ''}`);
 
   const app = initializeApp(firebaseConfig);
   const firestore = getFirestore(app);
@@ -483,12 +490,15 @@ async function main() {
   const weights = await loadWeights(firestore);
 
   const matchesSnapshot = await getDocs(collection(firestore, matchCollectionName));
-  console.log(`Found ${matchesSnapshot.docs.length} match(es) to process.`);
+  const matchDocs = onlyId
+    ? matchesSnapshot.docs.filter((d) => d.id === onlyId)
+    : matchesSnapshot.docs;
+  console.log(`Found ${matchDocs.length} match(es) to process.`);
 
   let updatedCount = 0;
   let skippedCount = 0;
 
-  for (const matchDoc of matchesSnapshot.docs) {
+  for (const matchDoc of matchDocs) {
     const data = matchDoc.data();
     const team1 = data.teamData && data.teamData.team1;
     const team2 = data.teamData && data.teamData.team2;
@@ -525,7 +535,9 @@ async function main() {
   console.log(`Done. Updated ${updatedCount} match(es), skipped ${skippedCount}.`);
 }
 
-main().catch((err) => {
-  console.error('Match MVP backfill failed:', err);
-  process.exit(1);
-});
+main()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error('Match MVP backfill failed:', err);
+    process.exit(1);
+  });
