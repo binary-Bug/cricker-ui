@@ -26,6 +26,7 @@ import { MvpHelpDialog } from '../dailogs/mvp-help.dialog';
 import { MvpBreakdownDialog } from '../dailogs/mvp-breakdown.dialog';
 import { PlayerMvpBreakdown } from '../../models/mvp.interface';
 import { LoadMatchService } from '../../services/load-match.service';
+import { logger } from '../../utils/logger';
 
 @Component({
   selector: 'app-match-details',
@@ -42,7 +43,9 @@ import { LoadMatchService } from '../../services/load-match.service';
   templateUrl: './match-details.component.html',
   styleUrl: './match-details.component.css',
 })
-export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class MatchDetailsComponent
+  implements OnInit, OnDestroy, AfterViewChecked
+{
   constructor(
     public matchService: MatchService,
     private eventHandlerService: EventHandlerService,
@@ -52,7 +55,7 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
     private mvpCalculatorService: MvpCalculatorService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
-    private loadMatchService: LoadMatchService
+    private loadMatchService: LoadMatchService,
   ) {}
   private subscriptions: Subscription[] = [];
   public isMatchLoaded: boolean = false;
@@ -95,6 +98,15 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
           // needed) since MatchDetailsComponent is only ever instantiated
           // on the 'match-details' route itself.
           await this.loadMatchService.loadMatch(qp['id']);
+
+          // Log match view
+          logger
+            .trackEvent('match_details_viewed', {
+              matchId: qp['id'],
+              playerName: this.playerName,
+              fromPage: this.playerDetailsBackTarget,
+            })
+            .catch((err) => console.error('Failed to log match view:', err));
         });
       }
     });
@@ -102,11 +114,17 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
       this.eventHandlerService.MatchLoadCompleteEvent$().subscribe(() => {
         // match loaded
         this.isMatchLoaded = true;
+        // Log match loaded event
+        logger
+          .trackEvent('match_details_loaded', {
+            timestamp: new Date().toISOString(),
+          })
+          .catch((err) => console.error('Failed to log match loaded:', err));
         // this.playerService.savePlayerData(
         //   'WItAdDq3YCJmKM1YlhaJ',
         //   this.matchService.matchResult as string
         // );
-      })
+      }),
     );
   }
 
@@ -141,7 +159,6 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
     }
   }
 
-
   private async prerenderShareCard(): Promise<void> {
     if (!this.shareCardRef) return;
     try {
@@ -151,7 +168,7 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
         logging: false,
       });
       this.cachedShareBlob = await new Promise((resolve) =>
-        canvas.toBlob((b) => resolve(b), 'image/png')
+        canvas.toBlob((b) => resolve(b), 'image/png'),
       );
     } catch {
       // Non-fatal - shareMomCard() falls back to rendering it live on
@@ -173,7 +190,7 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
         data: {
           sections: this.mvpCalculatorService.describeRules(
             weights,
-            this.matchService.totalOvers ?? undefined
+            this.matchService.totalOvers ?? undefined,
           ),
         },
       });
@@ -204,7 +221,9 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
    * see https://docs.median.co/docs/javascript-bridge.
    */
   private getWebViewBridge():
-    | { share?: { sharePage?: (opts: { url?: string; text?: string }) => void } }
+    | {
+        share?: { sharePage?: (opts: { url?: string; text?: string }) => void };
+      }
     | undefined {
     const win = window as any;
     return win.median ?? win.gonative;
@@ -270,7 +289,7 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
             logging: false,
           });
           return new Promise<Blob | null>((resolve) =>
-            canvas.toBlob((b) => resolve(b), 'image/png')
+            canvas.toBlob((b) => resolve(b), 'image/png'),
           );
         })());
       if (!blob) {
@@ -306,7 +325,7 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
           this.snackBar.open(
             'Image copied - paste it into WhatsApp Web or any chat app.',
             'Dismiss',
-            { duration: 5000 }
+            { duration: 5000 },
           );
           return;
         } catch {
@@ -357,7 +376,11 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
       lines.push('', `\ud83c\udfc6 Man of the Match: ${momName}`);
     }
     if (includeUrl) {
-      lines.push('', '\ud83d\udcca View Complete Scorecard:', window.location.href);
+      lines.push(
+        '',
+        '\ud83d\udcca View Complete Scorecard:',
+        window.location.href,
+      );
     }
     return lines.join('\n');
   }
@@ -459,7 +482,7 @@ export class MatchDetailsComponent implements OnInit, OnDestroy, AfterViewChecke
         'player-details?name=' +
           this.playerName +
           '&from=' +
-          this.playerDetailsBackTarget
+          this.playerDetailsBackTarget,
       );
     } else this.liveMatchService.exitMatch('allMatches');
   }

@@ -1,4 +1,4 @@
-import { ApplicationConfig } from '@angular/core';
+import { ApplicationConfig, ErrorHandler } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -6,6 +6,12 @@ import { routes } from './app.routes';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getFirestore, provideFirestore } from '@angular/fire/firestore';
+import { environment } from '../environments/environment';
+import { logger } from './utils/logger';
+import { GlobalErrorHandler } from './utils/global-error-handler';
+
+// Initialize logger with environment config
+logger.initialize(environment.isProdEnv);
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBLq32SteEldvV8zUCe2nD7rGUPEmfC_tA',
@@ -31,11 +37,13 @@ export const appConfig: ApplicationConfig = {
       withInMemoryScrolling({
         scrollPositionRestoration: 'top',
         anchorScrolling: 'enabled',
-      })
+      }),
     ),
-  provideHttpClient(),
+    provideHttpClient(),
     provideAnimationsAsync(),
     provideFirebaseApp(() => initializeApp(firebaseConfig)),
     provideFirestore(() => getFirestore()),
+    // Global error handler for logging errors to Axiom
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
   ],
 };

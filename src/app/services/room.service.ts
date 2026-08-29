@@ -2,12 +2,9 @@ import { inject, Injectable } from '@angular/core';
 import {
   addDoc,
   collection,
-  DocumentData,
   Firestore,
   getDocs,
   query,
-  updateDoc,
-  where,
 } from '@angular/fire/firestore';
 import { Router } from '@angular/router';
 
@@ -23,7 +20,7 @@ export class RoomService {
 
   async getRooms() {
     return (await getDocs(query(collection(this.firestore, 'room')))).docs.map(
-      (rooms) => rooms.data()
+      (rooms) => rooms.data(),
     );
   }
 
@@ -37,35 +34,5 @@ export class RoomService {
       adminCode: code,
     };
     this.router.navigateByUrl('room');
-  }
-
-  async saveUserInfo(ip: any) {
-    let docRef: any = null;
-    let docData: DocumentData | null = null;
-    const date = new Date();
-    (
-      await getDocs(
-        query(
-          collection(this.firestore, 'UserInfo'),
-          where('ipAddress', '==', ip)
-        )
-      )
-    ).docs.map((user) => {
-      docRef = user.ref;
-      docData = user.data();
-    });
-    if (docRef === null) {
-      await addDoc(collection(this.firestore, 'UserInfo'), {
-        ipAddress: ip,
-        count: 1,
-        lastLoggedIn: date,
-      });
-    } else {
-      let count: number = docData?.['count'] ? docData?.['count'] : 0;
-      await updateDoc(docRef, {
-        count: count + 1,
-        lastLoggedIn: date,
-      });
-    }
   }
 }

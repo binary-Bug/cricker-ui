@@ -1,10 +1,20 @@
-import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { PlayerService } from '../../services/player.service';
 import { FormsModule, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
+import {
+  MatTable,
+  MatTableDataSource,
+  MatTableModule,
+} from '@angular/material/table';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { Player } from '../../models/player.interface';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,6 +26,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MvpCalculatorService } from '../../services/mvp-calculator.service';
 import { MvpHelpDialog } from '../dailogs/mvp-help.dialog';
 import { SpinnerService } from '../../services/spinner.service';
+import { logger } from '../../utils/logger';
 
 interface StatType {
   value: string;
@@ -144,7 +155,7 @@ export class StatsComponent implements OnInit {
 
   displayedColumns: string[] = this.overviewColumns;
   dataSource: MatTableDataSource<IPlayer> = new MatTableDataSource(
-    this.playersData
+    this.playersData,
   );
 
   /** "Sort by" chips shown above the table, per selected category - see applySort(). */
@@ -216,7 +227,7 @@ export class StatsComponent implements OnInit {
     public utilityService: UtilityService,
     private mvpCalculatorService: MvpCalculatorService,
     private dialog: MatDialog,
-    private spinnerService: SpinnerService
+    private spinnerService: SpinnerService,
   ) {
     // Only wrap the genuine cold fetch in the global spinner - if the
     // roster is already cached (e.g. /allPlayers was visited first this
@@ -236,6 +247,14 @@ export class StatsComponent implements OnInit {
       this.applyFilters();
       this.computeLeaders();
       this.refreshTableLayout();
+
+      // Log stats page data loaded
+      logger
+        .trackEvent('stats_loaded', {
+          playerCount: this.playersData.length,
+          timestamp: new Date().toISOString(),
+        })
+        .catch((err) => console.error('Failed to log stats loaded:', err));
     });
 
     this.searchTerm.valueChanges.subscribe(() => this.applyFilters());
@@ -251,6 +270,14 @@ export class StatsComponent implements OnInit {
     // instead of resetting to the 'overview' default.
     this.selectedValue = this.playerService.lastSelectedStatType;
     this.statTypeChanged();
+
+    // Log stats page viewed
+    logger
+      .trackEvent('stats_viewed', {
+        selectedStatType: this.selectedValue,
+        timestamp: new Date().toISOString(),
+      })
+      .catch((err) => console.error('Failed to log stats view:', err));
   }
 
   /**
@@ -266,8 +293,7 @@ export class StatsComponent implements OnInit {
     const min = this.minMatches.value ?? 0;
     this.dataSource.data = this.playersData.filter(
       (player) =>
-        player.matchesPlayed >= min &&
-        player.name.toLowerCase().includes(term)
+        player.matchesPlayed >= min && player.name.toLowerCase().includes(term),
     );
     this.refreshTableLayout();
   }
@@ -323,7 +349,7 @@ export class StatsComponent implements OnInit {
     const topBy = (metric: (p: IPlayer) => number): IPlayer | null =>
       pool.reduce<IPlayer | null>(
         (best, p) => (!best || metric(p) > metric(best) ? p : best),
-        null
+        null,
       );
 
     const mostRuns = topBy((p) => p.runsScored);
@@ -351,7 +377,9 @@ export class StatsComponent implements OnInit {
         icon: 'emoji_events',
         accent: 'won',
         player: bestWinPercent,
-        value: bestWinPercent ? `${bestWinPercent.winPercent.toFixed(0)}%` : '-',
+        value: bestWinPercent
+          ? `${bestWinPercent.winPercent.toFixed(0)}%`
+          : '-',
       },
       {
         label: 'Most MoM',
@@ -431,7 +459,7 @@ export class StatsComponent implements OnInit {
   private reorderColumnsForSort(sortId: string): void {
     const base = this.baseColumnsForCategory();
     const rest = base.filter(
-      (col) => col !== 'rank' && col !== 'name' && col !== sortId
+      (col) => col !== 'rank' && col !== 'name' && col !== sortId,
     );
     this.displayedColumns = ['rank', 'name', sortId, ...rest];
   }
@@ -454,7 +482,7 @@ export class StatsComponent implements OnInit {
       this.tableScrollEl.nativeElement.scrollLeft = 0;
     }
     requestAnimationFrame(() =>
-      requestAnimationFrame(() => this.matTableRef?.updateStickyColumnStyles())
+      requestAnimationFrame(() => this.matTableRef?.updateStickyColumnStyles()),
     );
   }
 
@@ -505,7 +533,9 @@ export class StatsComponent implements OnInit {
     // Tag the navigation with 'from=stats' so player-details' back button
     // (and its nested "Matches Played" tab) can return here instead of
     // defaulting to allPlayers.
-    this.router.navigateByUrl('player-details?name=' + data.name + '&from=stats');
+    this.router.navigateByUrl(
+      'player-details?name=' + data.name + '&from=stats',
+    );
   }
 
   /**

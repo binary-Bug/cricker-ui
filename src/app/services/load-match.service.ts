@@ -18,6 +18,7 @@ import { PlayerService } from './player.service';
 import { MvpCalculatorService } from './mvp-calculator.service';
 import { MatchMvpSummary } from '../models/mvp.interface';
 import { RecentlyViewedService } from './recently-viewed.service';
+import { logger } from '../utils/logger';
 import { SpinnerService } from './spinner.service';
 
 /**
@@ -56,7 +57,7 @@ export class LoadMatchService {
     private playerService: PlayerService,
     private mvpCalculatorService: MvpCalculatorService,
     private recentlyViewedService: RecentlyViewedService,
-    private spinnerService: SpinnerService
+    private spinnerService: SpinnerService,
   ) {
     // A newly saved match adds a new document to the matches collection
     // and its snapshot-cached view (if any, from re-viewing it while it
@@ -89,7 +90,6 @@ export class LoadMatchService {
   // re-set an existing key to bump it to "most recent".
   private recentMatchViewCache = new Map<string, MatchViewSnapshot>();
 
-
   async getAllMatches(): Promise<LoadMatchDTO[]> {
     if (this.matches.length > 0) {
       return this.matches;
@@ -111,8 +111,8 @@ export class LoadMatchService {
       await getDocs(
         query(
           collection(this.firestore, collectionName),
-          orderBy('FireBaseDate', 'desc')
-        )
+          orderBy('FireBaseDate', 'desc'),
+        ),
       )
     ).docs.map((m) => {
       matchesObj.push({ id: m.id, data: m.data() });
@@ -175,60 +175,74 @@ export class LoadMatchService {
     // matchService.matchNotFound doc comment for how the UI reacts to this.
     this.matchService.matchNotFound = !matchToLoad;
     if (!matchToLoad) {
+      logger.error('Match not found', { matchId }).catch(() => {});
       return;
     }
 
-    this.matchService.tossWinner = matchToLoad?.data['tossWinner'];
-    this.matchService.tossResult = matchToLoad?.data['tossResult'];
-    this.matchService.matchResult = matchToLoad?.data['MatchResult'];
-    this.matchService.totalPlayers = matchToLoad?.data['totalPlayers'];
-    this.matchService.totalOvers = matchToLoad?.data['totalOvers'];
-    this.matchService.matchDate = matchToLoad?.data['MatchDate'];
-    this.matchService.teamData['team1'] = matchToLoad?.data['teamData'][
-      'team1'
-    ] as unknown as Team;
-    this.matchService.teamData['team2'] = matchToLoad?.data['teamData'][
-      'team2'
-    ] as unknown as Team;
+    try {
+      this.matchService.tossWinner = matchToLoad?.data['tossWinner'];
+      this.matchService.tossResult = matchToLoad?.data['tossResult'];
+      this.matchService.matchResult = matchToLoad?.data['MatchResult'];
+      this.matchService.totalPlayers = matchToLoad?.data['totalPlayers'];
+      this.matchService.totalOvers = matchToLoad?.data['totalOvers'];
+      this.matchService.matchDate = matchToLoad?.data['MatchDate'];
 
-    // Older matches saved before this feature existed won't have an "mvp"
-    // field at all - fall back to undefined so match-details simply hides
-    // the MoM banner/top-5 list for those, instead of crashing.
-    this.matchService.mvpSummary = matchToLoad?.data['mvp']
-      ? {
-          topFive: matchToLoad.data['mvp']['topFive'] ?? [],
-          manOfTheMatch: matchToLoad.data['mvp']['manOfTheMatch'] ?? '',
-          allPlayers: [],
-        }
-      : undefined;
+      const teamData = matchToLoad?.data['teamData'];
+      if (!teamData) {
+        logger.warn('Team data missing in match', { matchId }).catch(() => {});
+      }
 
-    // Historical matches don't carry per-ball timestamps (they're stripped
-    // before saving - see SaveMatchService.prepareOversPlayedObj), so the 4
-    // innings-timestamp getters on MatchService can't derive their values
-    // from oversPlayedData here. Instead, read the 4 flat fields saved on
-    // the match document directly and flip isMatchLoadedFromHistory so
-    // those getters fall back to these loaded values instead of scanning
-    // (now timestamp-less) ball data.
-    this.matchService.isMatchLoadedFromHistory = true;
-    this.matchService.loadedInningsOneFirstBallTime = this.toDateOrNull(
-      matchToLoad?.data['InningsOneFirstBallTime']
-    );
-    this.matchService.loadedInningsOneLastBallTime = this.toDateOrNull(
-      matchToLoad?.data['InningsOneLastBallTime']
-    );
-    this.matchService.loadedInningsTwoFirstBallTime = this.toDateOrNull(
-      matchToLoad?.data['InningsTwoFirstBallTime']
-    );
-    this.matchService.loadedInningsTwoLastBallTime = this.toDateOrNull(
-      matchToLoad?.data['InningsTwoLastBallTime']
-    );
+      this.matchService.teamData['team1'] = teamData?.[
+        'team1'
+      ] as unknown as Team;
+      this.matchService.teamData['team2'] = teamData?.[
+        'team2'
+      ] as unknown as Team;
 
-    this.cacheMatchView(matchId);
-    this.mapOversPlayedData();
-    this.matchService.setCurrentRoles();
-    this.recentlyViewedService.recordMatch(matchId);
-    //console.log('load completed for {' + matchId + '} from service');
-    this.eventHandlerService.NotifyMatchLoadCompleteEvent();
+      // Older matches saved before this feature existed won't have an "mvp"
+      // field at all - fall back to undefined so match-details simply hides
+      // the MoM banner/top-5 list for those, instead of crashing.
+      this.matchService.mvpSummary = matchToLoad?.data['mvp']
+        ? {
+            topFive: matchToLoad.data['mvp']['topFive'] ?? [],
+            manOfTheMatch: matchToLoad.data['mvp']['manOfTheMatch'] ?? '',
+            allPlayers: [],
+          }
+        : undefined;
+
+      // Historical matches don't carry per-ball timestamps (they're stripped
+      // before saving - see SaveMatchService.prepareOversPlayedObj), so the 4
+      // innings-timestamp getters on MatchService can't derive their values
+      // from oversPlayedData here. Instead, read the 4 flat fields saved on
+      // the match document directly and flip isMatchLoadedFromHistory so
+      // those getters fall back to these loaded values instead of scanning
+      // (now timestamp-less) ball data.
+      this.matchService.isMatchLoadedFromHistory = true;
+      this.matchService.loadedInningsOneFirstBallTime = this.toDateOrNull(
+        matchToLoad?.data['InningsOneFirstBallTime'],
+      );
+      this.matchService.loadedInningsOneLastBallTime = this.toDateOrNull(
+        matchToLoad?.data['InningsOneLastBallTime'],
+      );
+      this.matchService.loadedInningsTwoFirstBallTime = this.toDateOrNull(
+        matchToLoad?.data['InningsTwoFirstBallTime'],
+      );
+      this.matchService.loadedInningsTwoLastBallTime = this.toDateOrNull(
+        matchToLoad?.data['InningsTwoLastBallTime'],
+      );
+
+      this.cacheMatchView(matchId);
+      this.mapOversPlayedData();
+      this.matchService.setCurrentRoles();
+      this.recentlyViewedService.recordMatch(matchId);
+      //console.log('load completed for {' + matchId + '} from service');
+      this.eventHandlerService.NotifyMatchLoadCompleteEvent();
+    } catch (error: any) {
+      logger
+        .error('Error loading match', { matchId, error: error?.message })
+        .catch(() => {});
+      this.matchService.matchNotFound = true;
+    }
   }
 
   /** Snapshots the fields loadMatch() just derived onto MatchService, for recentMatchViewCache. */
@@ -283,7 +297,6 @@ export class LoadMatchService {
       snapshot.loadedInningsTwoLastBallTime;
   }
 
-
   /**
    * Firestore returns Timestamp fields (not JS Date) when a document is
    * read back. Older matches saved before this feature also won't have
@@ -307,7 +320,7 @@ export class LoadMatchService {
       this.matchService.teamData['team1'].oversPlayedData.push([]);
       Object.values(over).forEach((ball_data) => {
         this.matchService.teamData['team1'].oversPlayedData[index].push(
-          ball_data
+          ball_data,
         );
       });
     });
@@ -319,7 +332,7 @@ export class LoadMatchService {
       this.matchService.teamData['team2'].oversPlayedData.push([]);
       Object.values(over).forEach((ball_data) => {
         this.matchService.teamData['team2'].oversPlayedData[index].push(
-          ball_data
+          ball_data,
         );
       });
     });
@@ -368,13 +381,13 @@ export class LoadMatchService {
           this.getWinningTeamKeyForLoadedMatch(),
           this.getTossWinnerKeyForLoadedMatch(),
           weights,
-          this.matchService.totalOvers ?? 0
+          this.matchService.totalOvers ?? 0,
         );
 
         await this.playerService.savePlayerData(
           match.id,
           this.matchService.matchResult as string,
-          mvpSummary
+          mvpSummary,
         );
         console.log(match.id + ' - player data updated in loop');
         this.matchService.resetServiceData();

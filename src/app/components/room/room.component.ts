@@ -31,12 +31,10 @@ export class RoomComponent {
     private router: Router,
     private loadMatchService: LoadMatchService,
     private playerService: PlayerService,
-    private modeService: ModeService
+    private modeService: ModeService,
   ) {
     this.versionService.getVersion().subscribe((v) => (this.version = v));
     if (environment.isProdEnv) {
-      // saving user session to firebase
-      this.saveUserSession();
       // ModeService already defaults to 'prod' from environment.isProdEnv,
       // but set it explicitly here too in case a prior "test" mode selection
       // (e.g. from a previous session in the same tab) is still in memory.
@@ -63,19 +61,6 @@ export class RoomComponent {
     this.loadMatchService.matches = [];
     this.playerService.players = [];
     this.router.navigateByUrl('');
-  }
-
-  saveUserSession() {
-    try {
-      fetch('https://api.ipify.org?format=json').then((response) => {
-        response.json().then((json) => {
-          console.log(json.ip);
-          this.roomService.saveUserInfo(json.ip);
-        });
-      });
-    } catch (error) {
-      console.error('Error fetching IP address:', error);
-    }
   }
 
   viewAllMatches(): void {

@@ -12,6 +12,7 @@ import { UtilityService } from '../../services/utility.service';
 import { MatchListComponent } from '../match-list/match-list.component';
 import { SpinnerService } from '../../services/spinner.service';
 import { RecentlyViewedService } from '../../services/recently-viewed.service';
+import { logger } from '../../utils/logger';
 
 @Component({
   selector: 'app-player-details',
@@ -49,7 +50,7 @@ export class PlayerDetailsComponent implements OnInit {
     public router: Router,
     public utilityService: UtilityService,
     private spinnerService: SpinnerService,
-    private recentlyViewedService: RecentlyViewedService
+    private recentlyViewedService: RecentlyViewedService,
   ) {}
   async ngOnInit(): Promise<void> {
     this.route.queryParams.subscribe(async (qp) => {
@@ -66,6 +67,18 @@ export class PlayerDetailsComponent implements OnInit {
       });
       if (this.currentPlayer) {
         this.recentlyViewedService.recordPlayer(this.currentPlayer.name);
+        // Log player details viewed
+        logger
+          .trackEvent('player_details_viewed', {
+            playerName: this.currentPlayer.name,
+            fromPage: this.backTarget,
+            playerStatsAvailable: {
+              runsScored: this.currentPlayer.runsScored || 0,
+              wickets: this.currentPlayer.wickets || 0,
+              matchesPlayed: this.currentPlayer.matchesPlayed || 0,
+            },
+          })
+          .catch((err) => console.error('Failed to log player view:', err));
       }
       this.initializeStatsArray();
       this.selectedStatOption =
