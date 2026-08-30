@@ -239,7 +239,9 @@ export class ScoringActionsComponent {
               });
             } else {
               //open match complete dialog
-              this.dialog.open(MatchCompleteDialog);
+              this.dialog.open(MatchCompleteDialog, {
+                panelClass: 'app-dialog-panel',
+              });
               //this.saveMatchService.saveMatchData();
             }
           } else {
@@ -256,7 +258,9 @@ export class ScoringActionsComponent {
       if (!this.isBallUncounted) this.checkForOverCompletion();
       else if (this.matchService.isSecondInning) {
         if (this.matchService.checkIfTargetChased()) {
-          this.dialog.open(MatchCompleteDialog);
+          this.dialog.open(MatchCompleteDialog, {
+            panelClass: 'app-dialog-panel',
+          });
         }
       }
       this.unCheckExtras();
@@ -289,7 +293,9 @@ export class ScoringActionsComponent {
             this.liveMatchService.handleEndInningsDialog(data);
           });
         } else {
-          this.dialog.open(MatchCompleteDialog);
+          this.dialog.open(MatchCompleteDialog, {
+            panelClass: 'app-dialog-panel',
+          });
           //this.saveMatchService.saveMatchData();
           // match complete dialog
         }
@@ -297,7 +303,9 @@ export class ScoringActionsComponent {
         this.liveMatchService.swapStriker();
         // check for target chased
         if (this.matchService.checkIfTargetChased()) {
-          this.dialog.open(MatchCompleteDialog);
+          this.dialog.open(MatchCompleteDialog, {
+            panelClass: 'app-dialog-panel',
+          });
           //this.saveMatchService.saveMatchData();
         } else {
           this.eventHandler.NotifyOverCompleteEvent();
@@ -314,7 +322,9 @@ export class ScoringActionsComponent {
     } else {
       // check for target chased
       if (this.matchService.checkIfTargetChased()) {
-        this.dialog.open(MatchCompleteDialog);
+        this.dialog.open(MatchCompleteDialog, {
+          panelClass: 'app-dialog-panel',
+        });
         //this.saveMatchService.saveMatchData();
       }
     }

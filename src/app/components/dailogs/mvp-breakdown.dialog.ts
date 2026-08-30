@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { MvpLineItem, PlayerMvpBreakdown } from '../../models/mvp.interface';
+import { DialogIconHeaderComponent } from './dialog-icon-header.component';
 
 /**
  * Shows exactly how one player's MVP total for a match was worked out -
@@ -62,7 +63,11 @@ import { MvpLineItem, PlayerMvpBreakdown } from '../../models/mvp.interface';
       </div>
     </ng-template>
 
-    <h1 mat-dialog-title>{{ data.player.name }} - MVP Breakdown</h1>
+    <app-dialog-icon-header
+      icon="military_tech"
+      [title]="data.player.name"
+      subtitle="MVP Points Breakdown"
+    ></app-dialog-icon-header>
     <mat-dialog-content>
       <div class="total-row">Total: {{ data.player.totalPoints }} pts</div>
       <div
@@ -115,19 +120,43 @@ import { MvpLineItem, PlayerMvpBreakdown } from '../../models/mvp.interface';
         <strong>{{ data.player.totalPoints }} pts</strong>
       </div>
     </mat-dialog-content>
-    <mat-dialog-actions>
-      <button mat-button color="primary" (click)="dialogRef.close()">
+    <mat-dialog-actions class="mvp-breakdown-actions">
+      <button
+        mat-flat-button
+        color="primary"
+        class="dlg-btn-primary"
+        (click)="dialogRef.close()"
+        cdkFocusInitial
+      >
         Close
       </button>
     </mat-dialog-actions>
   `,
   styles: [
     `
+      :host {
+        display: block;
+      }
+      /* This dialog's title is a player's name, not a generic dialog
+         heading - overriding the shared header's default purple with an
+         amber "trophy" tone (matching the military_tech icon + the
+         mom-gap-row chip below) so it reads as a spotlighted achievement
+         rather than looking identical to every other dialog's chrome. */
+      :host ::ng-deep .dlg-icon-badge {
+        background-color: #fff3d6;
+      }
+      :host ::ng-deep .dlg-icon {
+        color: #b8860b;
+      }
+      :host ::ng-deep .dlg-title {
+        color: #a66a00;
+      }
       .total-row {
-        font-size: 1.2em;
-        font-weight: 600;
+        font-size: 1.3em;
+        font-weight: 700;
         text-align: center;
         margin-bottom: 10px;
+        color: #212121;
       }
       .mom-gap-row {
         font-size: 0.85em;
@@ -135,19 +164,26 @@ import { MvpLineItem, PlayerMvpBreakdown } from '../../models/mvp.interface';
         text-align: center;
         color: #8a6100;
         background: #fff8e1;
-        border-radius: 4px;
-        padding: 4px 8px;
-        margin: -4px 0 10px 0;
+        border-radius: 8px;
+        padding: 6px 10px;
+        margin: -4px 0 12px 0;
       }
       .section {
-        margin-bottom: 14px;
+        background: #fafafa;
+        border-radius: 12px;
+        padding: 10px 12px;
+        margin-bottom: 12px;
       }
       .section h3 {
-        margin-bottom: 4px;
-        color: #673ab7;
+        margin: 0 0 6px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #757575;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
       }
       .line-item {
-        padding: 2px 0;
+        padding: 3px 0;
       }
       .line-item-row {
         display: flex;
@@ -200,10 +236,26 @@ import { MvpLineItem, PlayerMvpBreakdown } from '../../models/mvp.interface';
         border-top: 1px solid #ddd;
         font-size: 0.85em;
         text-align: center;
+        color: #757575;
+      }
+      .grand-total-row strong {
+        color: #212121;
+      }
+      .mvp-breakdown-actions.mat-mdc-dialog-actions {
+        padding: 8px 24px 20px;
+      }
+      .mvp-breakdown-actions .dlg-btn-primary {
+        width: 100%;
       }
     `,
   ],
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatDialogModule],
+  imports: [
+    CommonModule,
+    MatButtonModule,
+    MatIconModule,
+    MatDialogModule,
+    DialogIconHeaderComponent,
+  ],
 })
 export class MvpBreakdownDialog {
   constructor(

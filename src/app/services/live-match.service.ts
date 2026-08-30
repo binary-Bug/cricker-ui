@@ -799,7 +799,7 @@ export class LiveMatchService {
 
   handleEndInningsDialog(data: any): void {
     if (data.event === 'end' && this.matchService.isSecondInning) {
-      this.dialog.open(MatchCompleteDialog);
+      this.dialog.open(MatchCompleteDialog, { panelClass: 'app-dialog-panel' });
     }
     if (data.event === 'end' && !this.matchService.isSecondInning) {
       if (data.isAuto === false) {

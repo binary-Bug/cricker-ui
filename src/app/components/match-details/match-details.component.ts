@@ -209,6 +209,7 @@ export class MatchDetailsComponent
     const momName = this.matchService.mvpSummary?.manOfTheMatch;
     const momPoints = this.matchService.mvpSummary?.topFive?.[0]?.totalPoints;
     this.dialog.open(MvpBreakdownDialog, {
+      panelClass: 'app-dialog-panel',
       data: { player, momName, momPoints },
     });
   }

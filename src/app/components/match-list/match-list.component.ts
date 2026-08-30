@@ -269,6 +269,7 @@ export class MatchListComponent implements OnInit, OnChanges {
     const topFive: PlayerMvpBreakdown[] | undefined =
       match.data?.['mvp']?.['topFive'];
     this.dialog.open(MvpBreakdownDialog, {
+      panelClass: 'app-dialog-panel',
       data: {
         player: breakdown,
         momName: match.data?.['mvp']?.['manOfTheMatch'],

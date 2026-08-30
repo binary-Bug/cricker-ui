@@ -2,7 +2,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import {
-  MatDialogTitle,
   MatDialogContent,
   MatDialogActions,
   MatDialogRef,
@@ -10,6 +9,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { DialogIconHeaderComponent } from './dialog-icon-header.component';
 import { MatchService } from '../../services/match.service';
 import { LiveMatchService } from '../../services/live-match.service';
 import { EventHandlerService } from '../../services/event-handler.service';
@@ -23,9 +23,12 @@ import { MatchMvpSummary } from '../../models/mvp.interface';
 
 @Component({
   selector: 'match-complete-dialog',
-  template: ` <h2 mat-dialog-title>Match Complete</h2>
+  template: ` <app-dialog-icon-header
+      icon="emoji_events"
+      title="Match Complete"
+      [subtitle]="matchResult"
+    ></app-dialog-icon-header>
     <mat-dialog-content>
-      <p>{{ matchResult }}</p>
       <!--
         Man of the Match spotlight + top-5 list - only rendered once MVP
         points have been calculated (see ngOnInit). manOfTheMatch is only
@@ -37,6 +40,10 @@ import { MatchMvpSummary } from '../../models/mvp.interface';
         ("center of attraction"), with the top-5 list below it styled as
         clearly secondary/supporting detail.
       -->
+      <div class="mvp-loading" *ngIf="!mvpSummary?.manOfTheMatch">
+        <span class="mvp-spinner"></span>
+        <span class="mvp-loading-text">Crunching MVP numbers…</span>
+      </div>
       <div class="mom-spotlight" *ngIf="mvpSummary?.manOfTheMatch">
         <div class="mom-label">🏆 Man of the Match</div>
         <div class="mom-name">{{ mvpSummary?.manOfTheMatch }}</div>
@@ -53,21 +60,98 @@ import { MatchMvpSummary } from '../../models/mvp.interface';
         </table>
       </div>
     </mat-dialog-content>
-    <mat-dialog-actions>
+    <mat-dialog-actions class="match-complete-actions">
+      <div class="view-scorecard-wrap">
+        <button
+          [disabled]="IsMatchSaveComplete ? null : 'true'"
+          mat-stroked-button
+          class="dlg-btn-secondary"
+          (click)="viewScorecard()"
+        >
+          View Scorecard
+        </button>
+        <span
+          class="btn-spinner"
+          *ngIf="!IsMatchSaveComplete"
+          title="Saving match..."
+        ></span>
+      </div>
       <button
-        [disabled]="IsMatchSaveComplete ? null : 'true'"
-        mat-button
-        color="primary"
-        (click)="viewScorecard()"
+        mat-flat-button
+        color="warn"
+        class="dlg-btn-primary warn"
+        (click)="exit()"
+        cdkFocusInitial
       >
-        View Scorecard
-      </button>
-      <button mat-button color="warn" (click)="exit()" cdkFocusInitial>
         Exit
       </button>
     </mat-dialog-actions>`,
   styles: [
     `
+      .match-complete-actions.mat-mdc-dialog-actions {
+        display: flex;
+        gap: 10px;
+        padding: 12px 24px 20px;
+      }
+      @media (max-width: 340px) {
+        .match-complete-actions.mat-mdc-dialog-actions {
+          flex-direction: column-reverse;
+          align-items: stretch;
+        }
+      }
+      .view-scorecard-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1 1 0;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      /* Small inline spinner next to "View Scorecard" - that button stays
+         disabled until the match finishes saving to Firestore, and without
+         this it just looks broken/unresponsive rather than "still working". */
+      .btn-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(69, 39, 160, 0.25);
+        border-top-color: #4527a0;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        flex-shrink: 0;
+      }
+      /* Golden loader standing in for the MOM spotlight/MVP table while
+         MvpCalculatorService is still computing them (ngOnInit awaits
+         loadWeights() first), styled to match the mom-spotlight's amber
+         palette so it reads as "that content is on its way", not a
+         generic/unrelated loading spinner. */
+      .mvp-loading {
+        margin-top: 12px;
+        padding: 16px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: #fff8e1;
+        border: 1px solid #f5a623;
+        border-radius: 6px;
+      }
+      .mvp-spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(184, 134, 11, 0.25);
+        border-top-color: #b8860b;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        flex-shrink: 0;
+      }
+      .mvp-loading-text {
+        color: #8a6100;
+        font-weight: 600;
+        font-size: 0.9em;
+      }
       .mom-spotlight {
         margin-top: 12px;
         padding: 14px 12px 16px 12px;
@@ -141,11 +225,11 @@ import { MatchMvpSummary } from '../../models/mvp.interface';
     MatInputModule,
     FormsModule,
     MatButtonModule,
-    MatDialogTitle,
     MatDialogContent,
     MatDialogActions,
     ReactiveFormsModule,
     CommonModule,
+    DialogIconHeaderComponent,
   ],
 })
 export class MatchCompleteDialog implements OnInit, OnDestroy {
