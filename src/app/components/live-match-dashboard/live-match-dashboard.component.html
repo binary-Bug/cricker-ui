@@ -1,9 +1,14 @@
-<mat-tab-group (selectedTabChange)="toggleTab($event)">
-  <mat-tab label="Live"><app-scoring></app-scoring> </mat-tab>
-  <mat-tab label="Score Card">
-    <app-scorecard
-      style="z-index: 2500"
-      [isActive]="isScorecardTabActive"
-    ></app-scorecard>
-  </mat-tab>
-</mat-tab-group>
+<div class="live-dashboard-shell">
+  <mat-tab-group
+    class="live-tab-group"
+    (selectedTabChange)="toggleTab($event)"
+  >
+    <mat-tab label="Live"><app-scoring></app-scoring></mat-tab>
+    <mat-tab label="Score Card">
+      <app-scorecard
+        style="z-index: 2500"
+        [isActive]="isScorecardTabActive"
+      ></app-scorecard>
+    </mat-tab>
+  </mat-tab-group>
+</div>

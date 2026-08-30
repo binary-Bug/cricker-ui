@@ -1,259 +1,189 @@
-<div class="grid place-items-center" style="margin-top: 12px">
-  <div class="w-[100%] flex justify-between items-center">
-    <div class="ml-4">
-      <h3 style="display: inline; font-weight: 500">
-        {{ matchService.teamData[matchService.currentRoles["bat"]].name }}
-      </h3>
-      <br />
-      <h2 style="display: inline">
-        <b>
-          {{
-            matchService.teamData[this.matchService.currentRoles["bat"]]
-              .runsScored
-          }}
-          /
-          {{
-            matchService.teamData[this.matchService.currentRoles["bat"]]
-              .wicketsLost
-          }}
-        </b>
-      </h2>
-      <br />
-      <h4 style="display: inline">
-        {{
-          matchService.teamData[this.matchService.currentRoles["bat"]]
-            .oversPlayed | number : "1.1-1"
-        }}
-        Overs
-      </h4>
-    </div>
-    <div>
-      <h4
-        *ngIf="matchService.isSecondInning"
-        style="margin-bottom: 0; text-align: center"
-      >
-        <b style="color: green; font-size: xx-large">{{
-          matchService.teamData[this.matchService.currentRoles["bat"]]
-            .requiredRuns
-        }}</b>
-        from
-        <b style="color: red; font-size: large">{{
-          matchService.teamData[this.matchService.currentRoles["bat"]].ballsLeft
-        }}</b>
-      </h4>
-      <h5 style="margin-bottom: 0">
-        Extras (W:{{
-          matchService.teamData[this.matchService.currentRoles["bat"]].extras[
-            "w"
-          ]
-        }}, NB:{{
-          matchService.teamData[this.matchService.currentRoles["bat"]].extras[
-            "nb"
-          ]
-        }}, LB:{{
-          matchService.teamData[this.matchService.currentRoles["bat"]].extras[
-            "lb"
-          ]
-        }}, B:{{
-          matchService.teamData[this.matchService.currentRoles["bat"]].extras[
-            "b"
-          ]
-        }})
-      </h5>
-      <h4 style="margin-bottom: 0; text-align: center">
-        Patnership: {{ liveMatchService.currentPatnership.runs }}({{
-          liveMatchService.currentPatnership.balls
-        }})
-      </h4>
-    </div>
-    <div class="mr-4">
-      <h4 style="margin-bottom: 0">
-        CRR:
-        {{
-          matchService.teamData[this.matchService.currentRoles["bat"]].runRate
-            | number : "1.1-2"
-        }}
-      </h4>
-      <h4 *ngIf="matchService.isSecondInning" style="margin-bottom: 0">
+<div class="scoring-root">
+  <!-- Scoreboard -->
+  <div class="scoreboard-card">
+    <div class="scoreboard-top">
+      <span class="team-name">{{
+        matchService.teamData[matchService.currentRoles["bat"]].name
+      }}</span>
+      <span class="score-line">
         <b
-          >Target:
-          {{
-            matchService.teamData[matchService.currentRoles["bat"]].targetRuns
+          >{{
+            matchService.teamData[matchService.currentRoles["bat"]]
+              .runsScored
+          }}/{{
+            matchService.teamData[matchService.currentRoles["bat"]]
+              .wicketsLost
           }}</b
         >
-      </h4>
-      <h4 *ngIf="matchService.isSecondInning" style="margin-bottom: 0">
-        RRR:
+        <span class="overs-text"
+          >({{
+            matchService.teamData[matchService.currentRoles["bat"]]
+              .oversPlayed | number : "1.1-1"
+          }}
+          ov)</span
+        >
+      </span>
+    </div>
+
+    <div class="scoreboard-meta">
+      <span
+        >CRR
+        {{
+          matchService.teamData[matchService.currentRoles["bat"]].runRate
+            | number : "1.1-2"
+        }}</span
+      >
+      <span
+        >P'ship {{ liveMatchService.currentPatnership.runs }}({{
+          liveMatchService.currentPatnership.balls
+        }})</span
+      >
+      <span
+        >Extras
+        {{
+          matchService.teamData[matchService.currentRoles["bat"]].extras[
+            "w"
+          ] +
+            matchService.teamData[matchService.currentRoles["bat"]].extras[
+              "nb"
+            ] +
+            matchService.teamData[matchService.currentRoles["bat"]].extras[
+              "lb"
+            ] +
+            matchService.teamData[matchService.currentRoles["bat"]].extras["b"]
+        }}
+        (W{{
+          matchService.teamData[matchService.currentRoles["bat"]].extras["w"]
+        }}
+        NB{{
+          matchService.teamData[matchService.currentRoles["bat"]].extras["nb"]
+        }}
+        LB{{
+          matchService.teamData[matchService.currentRoles["bat"]].extras["lb"]
+        }}
+        B{{
+          matchService.teamData[matchService.currentRoles["bat"]].extras["b"]
+        }})</span
+      >
+    </div>
+
+    <div class="chase-banner" *ngIf="matchService.isSecondInning">
+      <div class="chase-line">
+        Need
+        <span class="chase-stat-value chase-stat-runs">{{
+          matchService.teamData[matchService.currentRoles["bat"]].requiredRuns
+        }}</span>
+        runs from
+        <span class="chase-stat-value chase-stat-balls">{{
+          matchService.teamData[matchService.currentRoles["bat"]].ballsLeft
+        }}</span>
+        balls &middot; Target
+        {{
+          matchService.teamData[matchService.currentRoles["bat"]].targetRuns
+        }}
+        &middot; RRR
         {{
           matchService.teamData[matchService.currentRoles["bat"]]
-            .requiredRunRate
+            .requiredRunRate | number : "1.1-2"
         }}
-      </h4>
+      </div>
+      <div class="chase-progress-track">
+        <div
+          class="chase-progress-fill"
+          [style.width.%]="chaseProgressPct"
+        ></div>
+      </div>
     </div>
   </div>
-  <br />
-  <mat-accordion class="w-[100%]" style="margin-bottom: 10px">
-    <mat-expansion-panel class="fow-panel">
-      <mat-expansion-panel-header>
-        <mat-panel-title>Fall of Wickets &amp; Partnerships</mat-panel-title>
-      </mat-expansion-panel-header>
-      <div *ngIf="currentInningsBreakdown as breakdown">
-        <div class="fow-row" *ngIf="breakdown.fallOfWickets.length > 0">
-          <b>FoW:</b>
-          <span *ngFor="let fow of breakdown.fallOfWickets; let last = last">
-            {{ fow.wicketNumber }}-{{ fow.teamScore }} ({{ fow.batsmanOut }},
-            {{ fow.overs }} ov){{ last ? "" : ", " }}
-          </span>
-        </div>
-        <div
-          *ngIf="breakdown.fallOfWickets.length === 0"
-          class="partnerships-empty"
-        >
-          No wickets yet.
-        </div>
-        <div class="partnerships-wrap">
-          <div *ngFor="let p of breakdown.partnerships" class="partnership-card">
-            <div class="partnership-card-header">
-              <span
-                >{{ ordinal(p.wicketNumber) }} Wicket
-                <em *ngIf="p.isUnbroken">(unbroken)</em></span
-              >
-              <span class="partnership-card-total"
-                >{{ p.runs }} ({{ p.balls }})</span
-              >
-            </div>
-            <div class="partnership-contributors">
-              <span
-                *ngFor="let c of p.contributors; let last = last"
-                class="partnership-contributor"
-              >
-                {{ c.name }} {{ c.runs }}({{ c.balls }}){{
-                  last ? "" : " & "
-                }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </mat-expansion-panel>
-  </mat-accordion>
 
-  <div
-    #overView
-    *ngIf="!overCompleted"
-    [ngClass]="
-      'grid gap-2 grid-cols-' +
-      matchService.teamData[this.matchService.currentRoles['bat']]
-        .oversPlayedData[liveMatchService.currentOverNumber].length
-    "
-  >
-    <ng-container
-      *ngFor="
-        let ball of matchService.teamData[this.matchService.currentRoles['bat']]
-          .oversPlayedData[liveMatchService.currentOverNumber];
-        trackBy: trackByIndex
-      "
+  <!-- Current-over ball strip -->
+  <div class="over-strip-card">
+    <div class="over-strip-header">
+      <span class="over-strip-title">This Over</span>
+      <span class="over-runs-chip"
+        >{{
+          matchService.teamData[matchService.currentRoles["bat"]]
+            .oversPlayedData
+            | CalculateTotalRunsInOver : liveMatchService.currentOverNumber
+        }}
+        runs</span
+      >
+    </div>
+    <div class="over-strip" *ngIf="!overCompleted">
+      <button
+        *ngFor="
+          let ball of matchService.teamData[matchService.currentRoles['bat']]
+            .oversPlayedData[liveMatchService.currentOverNumber];
+          let i = index;
+          trackBy: trackByIndex
+        "
+        class="over-ball {{ ball.class }}"
+        [class.latest]="
+          i ===
+          lastBowledIndex(
+            matchService.teamData[matchService.currentRoles['bat']]
+              .oversPlayedData[liveMatchService.currentOverNumber]
+          )
+        "
+        [disabled]="ball.hasBeenBowled ? null : 'true'"
+      >
+        {{ ball.label }}
+      </button>
+    </div>
+    <div class="over-strip" *ngIf="overCompleted">
+      <button *ngFor="let _ of [].constructor(6)" class="over-ball" disabled>
+        -
+      </button>
+    </div>
+  </div>
+
+  <!-- Batsmen / Bowler compact stat rows -->
+  <div class="players-strip">
+    <div
+      class="player-row"
+      (click)="openStat(ELEMENT_DATA_BATSMEN[0], 'batsman')"
     >
-      <div>
-        <button
-          class="{{ ball.class }}"
-          mat-mini-fab
-          matTooltip="Primary"
-          color="primary"
-          [disabled]="ball.hasBeenBowled ? null : 'true'"
-        >
-          {{ ball.label }}
-        </button>
-      </div>
-    </ng-container>
+      <span class="player-name">{{ ELEMENT_DATA_BATSMEN[0].name }}</span>
+      <span class="player-stats"
+        >{{ ELEMENT_DATA_BATSMEN[0].runs }}({{
+          ELEMENT_DATA_BATSMEN[0].balls
+        }})
+        <span class="player-stats-sub"
+          >SR {{ ELEMENT_DATA_BATSMEN[0].sr | number : "1.0-2" }}</span
+        ></span
+      >
+    </div>
+    <div
+      class="player-row"
+      (click)="openStat(ELEMENT_DATA_BATSMEN[1], 'batsman')"
+    >
+      <span class="player-name">{{ ELEMENT_DATA_BATSMEN[1].name }}</span>
+      <span class="player-stats"
+        >{{ ELEMENT_DATA_BATSMEN[1].runs }}({{
+          ELEMENT_DATA_BATSMEN[1].balls
+        }})
+        <span class="player-stats-sub"
+          >SR {{ ELEMENT_DATA_BATSMEN[1].sr | number : "1.0-2" }}</span
+        ></span
+      >
+    </div>
+    <div
+      class="player-row bowler-row"
+      (click)="openStat(ELEMENT_DATA_BOWLER[0], 'bowler')"
+    >
+      <span class="player-name">{{ ELEMENT_DATA_BOWLER[0].name }}</span>
+      <span class="player-stats"
+        >{{ ELEMENT_DATA_BOWLER[0].wickets }}-{{
+          ELEMENT_DATA_BOWLER[0].runs
+        }}
+        ({{ ELEMENT_DATA_BOWLER[0].overs | number : "1.1-1" }})
+        <span class="player-stats-sub"
+          >Eco {{ ELEMENT_DATA_BOWLER[0].eco | number : "1.1-2" }}</span
+        ></span
+      >
+    </div>
   </div>
-  <div *ngIf="overCompleted" class="grid grid-cols-6 gap-2">
-    <ng-container *ngFor="let _ of [].constructor(6)">
-      <div>
-        <button mat-mini-fab matTooltip="Primary" color="primary" disabled>
-          -
-        </button>
-      </div>
-    </ng-container>
-  </div>
+
+  <app-scoring-actions class="scoring-actions-flex"></app-scoring-actions>
 </div>
-<br />
 
-<table mat-table [dataSource]="dataSourceBatsmen" class="mat-elevation-z8">
-  <ng-container matColumnDef="nameBat">
-    <th mat-header-cell *matHeaderCellDef>Batsmen</th>
-    <td (click)="openStat(element.name)" mat-cell *matCellDef="let element">
-      {{ element.name }}
-    </td>
-  </ng-container>
-
-  <ng-container matColumnDef="runs">
-    <th mat-header-cell *matHeaderCellDef>R</th>
-    <td mat-cell *matCellDef="let element">{{ element.runs }}</td>
-  </ng-container>
-
-  <ng-container matColumnDef="balls">
-    <th mat-header-cell *matHeaderCellDef>B</th>
-    <td mat-cell *matCellDef="let element">{{ element.balls }}</td>
-  </ng-container>
-
-  <ng-container matColumnDef="4s">
-    <th mat-header-cell *matHeaderCellDef>4s</th>
-    <td mat-cell *matCellDef="let element">{{ element.fours }}</td>
-  </ng-container>
-
-  <ng-container matColumnDef="6s">
-    <th mat-header-cell *matHeaderCellDef>6s</th>
-    <td mat-cell *matCellDef="let element">{{ element.six }}</td>
-  </ng-container>
-
-  <ng-container matColumnDef="S/R">
-    <th mat-header-cell *matHeaderCellDef>S/R</th>
-    <td mat-cell *matCellDef="let element">
-      {{ element.sr | number : "1.0-2" }}
-    </td>
-  </ng-container>
-
-  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-  <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-</table>
-
-<h1></h1>
-
-<table mat-table [dataSource]="dataSourceBowler" class="mat-elevation-z8">
-  <ng-container matColumnDef="nameBowl">
-    <th mat-header-cell *matHeaderCellDef>Bowler</th>
-    <td (click)="openStat(element.name)" mat-cell *matCellDef="let element">
-      {{ element.name }}
-    </td>
-  </ng-container>
-
-  <ng-container matColumnDef="runs">
-    <th mat-header-cell *matHeaderCellDef>R</th>
-    <td mat-cell *matCellDef="let element">{{ element.runs }}</td>
-  </ng-container>
-
-  <ng-container matColumnDef="overs">
-    <th mat-header-cell *matHeaderCellDef>O</th>
-    <td mat-cell *matCellDef="let element">
-      {{ element.overs | number : "1.1-1" }}
-    </td>
-  </ng-container>
-
-  <ng-container matColumnDef="wickets">
-    <th mat-header-cell *matHeaderCellDef>W</th>
-    <td mat-cell *matCellDef="let element">{{ element.wickets }}</td>
-  </ng-container>
-
-  <ng-container matColumnDef="eco">
-    <th mat-header-cell *matHeaderCellDef>Eco.</th>
-    <td mat-cell *matCellDef="let element">
-      {{ element.eco | number : "1.1-2" }}
-    </td>
-  </ng-container>
-
-  <tr mat-header-row *matHeaderRowDef="displayedColumnsBowler"></tr>
-  <tr mat-row *matRowDef="let row; columns: displayedColumnsBowler"></tr>
-</table>
-
-<app-scoring-actions></app-scoring-actions>

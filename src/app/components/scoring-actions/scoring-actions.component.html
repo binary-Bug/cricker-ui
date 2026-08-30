@@ -1,212 +1,190 @@
-<mat-grid-list cols="4" rowHeight="1.8:1">
-  <mat-grid-tile
-    ><mat-checkbox
-      color="accent"
-      class="example-margin"
-      [(ngModel)]="isWideChecked"
-      [disabled]="isByesChecked || isNBChecked || isLBChecked"
-      >Wide</mat-checkbox
-    ></mat-grid-tile
-  >
-  <mat-grid-tile
-    ><mat-checkbox
-      color="warn"
-      class="example-margin"
-      [(ngModel)]="isNBChecked"
-      [disabled]="isWideChecked"
-      >NB</mat-checkbox
-    ></mat-grid-tile
-  >
-  <mat-grid-tile
-    ><mat-checkbox
-      color="primary"
-      class="example-margin"
-      [(ngModel)]="isLBChecked"
-      [disabled]="isWideChecked || isByesChecked"
-      >LB</mat-checkbox
-    ></mat-grid-tile
-  >
-  <mat-grid-tile
-    ><mat-checkbox
-      color="primary"
-      class="example-margin"
-      [(ngModel)]="isByesChecked"
-      [disabled]="isWideChecked || isLBChecked"
-      >Byes</mat-checkbox
-    ></mat-grid-tile
-  >
-  <mat-grid-tile colspan="2"
-    ><mat-checkbox
-      color="warn"
-      class="example-margin"
-      [(ngModel)]="isWicketChecked"
-      >Wicket</mat-checkbox
-    ></mat-grid-tile
-  >
-  <mat-grid-tile colspan="2">
-    <div class="example-button-row">
-      <button
-        (click)="addRun('0', 'dot')"
-        color="primary"
-        mat-raised-button
-        style="width: 10em; height: 6em"
-      >
-        Dot
-      </button>
-    </div>
-  </mat-grid-tile>
-  <mat-grid-tile
-    ><div class="example-button-row">
-      <button
-        (click)="addRun('1', 'run')"
-        color="primary"
-        mat-raised-button
-        style="width: 10em; height: 6em"
-      >
-        1
-      </button>
-    </div></mat-grid-tile
-  >
-  <mat-grid-tile
-    ><div class="example-button-row">
-      <button
-        (click)="addRun('2', 'run')"
-        color="primary"
-        mat-raised-button
-        style="width: 10em; height: 6em"
-      >
-        2
-      </button>
-    </div></mat-grid-tile
-  >
-  <mat-grid-tile
-    ><div class="example-button-row">
-      <button
-        (click)="addRun('3', 'run')"
-        color="primary"
-        mat-raised-button
-        style="width: 10em; height: 6em"
-      >
-        3
-      </button>
-    </div></mat-grid-tile
-  >
-  <mat-grid-tile
-    ><div class="example-button-row">
-      <button
-        (click)="addRun('4', 'four')"
-        color="primary"
-        mat-raised-button
-        style="width: 10em; height: 6em"
-      >
-        4
-      </button>
-    </div></mat-grid-tile
-  >
-  <mat-grid-tile
-    ><div class="example-button-row">
-      <button
-        (click)="addRun('6', 'six')"
-        color="primary"
-        mat-raised-button
-        style="width: 10em; height: 6em"
-      >
-        6
-      </button>
-    </div></mat-grid-tile
-  >
+<!-- Screen-reader-only mirror of the spotlight tour's instruction (the
+     visual callout below is non-interactive/decorative-adjacent). -->
+<span class="sr-only" aria-live="polite">{{
+  tourActive ? tourMessage : ""
+}}</span>
 
-  <mat-grid-tile
-    ><div class="example-button-row smallText">
-      <button
-        color="primary"
-        mat-raised-button
-        style="width: 10em; height: 6em"
-        (click)="penaltyRuns()"
-      >
-        Penalty Runs
-      </button>
-    </div></mat-grid-tile
+<!-- Extras / Wicket toggles - part of the spotlight cutout below, so a
+     scorer can still combine chips (e.g. Wicket + Wide for a run-out while
+     taking a bye on a wide) while the tour is active. -->
+<div class="extras-row" #extrasRow [class.tour-active]="tourActive">
+  <button
+    type="button"
+    class="chip chip-wide"
+    [class.active]="isWideChecked"
+    [disabled]="isByesChecked || isNBChecked || isLBChecked"
+    (click)="toggleWide()"
   >
-  <mat-grid-tile
-    ><div class="example-button-row">
-      <button
-        (click)="retireBatsmen()"
-        color="primary"
-        mat-raised-button
-        style="width: 10em; height: 6em"
-      >
-        Retire
-      </button>
-    </div></mat-grid-tile
+    Wide
+  </button>
+  <button
+    type="button"
+    class="chip chip-nb"
+    [class.active]="isNBChecked"
+    [disabled]="isWideChecked"
+    (click)="toggleNB()"
   >
-  <mat-grid-tile
-    ><div class="example-button-row">
-      <button
-        (click)="liveMatchService.swapStriker()"
-        color="primary"
-        mat-raised-button
-        style="width: 10em; height: 6em"
-      >
-        Swap
-      </button>
-    </div></mat-grid-tile
+    NB
+  </button>
+  <button
+    type="button"
+    class="chip chip-lb"
+    [class.active]="isLBChecked"
+    [disabled]="isWideChecked || isByesChecked"
+    (click)="toggleLB()"
   >
+    LB
+  </button>
+  <button
+    type="button"
+    class="chip chip-bye"
+    [class.active]="isByesChecked"
+    [disabled]="isWideChecked || isLBChecked"
+    (click)="toggleByes()"
+  >
+    Bye
+  </button>
+  <button
+    type="button"
+    class="chip chip-wicket"
+    [class.active]="isWicketChecked"
+    (click)="toggleWicket()"
+  >
+    Wicket
+  </button>
+  <button
+    type="button"
+    mat-icon-button
+    class="help-btn"
+    aria-label="Scoring guide"
+    (click)="openScoringHelp()"
+  >
+    <mat-icon>help_outline</mat-icon>
+  </button>
+</div>
 
-  <mat-grid-tile
-    ><div class="example-button-row smallText">
-      <button
-        (click)="changeBowler()"
-        color="primary"
-        mat-raised-button
-        style="width: 10em; height: 6em"
-      >
-        Change Bowler
-      </button>
-    </div></mat-grid-tile
-  >
+<!-- Run buttons - the primary, always-reachable tap targets -->
+<div class="run-grid" #runGrid [class.tour-active]="tourActive">
+  <button class="run-btn dot" (click)="addRun('0', 'dot')">Dot</button>
+  <button class="run-btn run" (click)="addRun('1', 'run')">1</button>
+  <button class="run-btn run" (click)="addRun('2', 'run')">2</button>
+  <button class="run-btn run" (click)="addRun('3', 'run')">3</button>
+  <button class="run-btn four" (click)="addRun('4', 'four')">4</button>
+  <button class="run-btn six" (click)="addRun('6', 'six')">6</button>
+</div>
 
-  <mat-grid-tile
-    ><div class="example-button-row">
-      <button
-        [disabled]="
-          liveMatchService.currentBowlNumber > 0 ||
-          liveMatchService.currentOverNumber > 0
-            ? null
-            : 'true'
-        "
-        (click)="liveMatchService.undo()"
-        color="primary"
-        mat-raised-button
-        style="width: 10em; height: 6em"
-      >
-        Undo
-      </button>
-    </div></mat-grid-tile
+<!-- Spotlight tour: dims and blocks taps everywhere except the extras row
+     + run-button grid (so mutual-exclusive combos like Wicket+Wide are
+     still reachable) until the ball is recorded or the tour is cancelled -
+     a persistent, action-driven cue rather than a timer that can disappear
+     before it's read. -->
+<ng-container *ngIf="tourActive">
+  <div class="tour-frame tour-frame-top" [style.height.px]="spotlightRect.top"></div>
+  <div class="tour-frame tour-frame-bottom" [style.top.px]="spotlightRect.bottom"></div>
+  <div
+    class="tour-frame tour-frame-left"
+    [style.top.px]="spotlightRect.top"
+    [style.height.px]="spotlightRect.bottom - spotlightRect.top"
+    [style.width.px]="spotlightRect.left"
+  ></div>
+  <div
+    class="tour-frame tour-frame-right"
+    [style.top.px]="spotlightRect.top"
+    [style.height.px]="spotlightRect.bottom - spotlightRect.top"
+    [style.left.px]="spotlightRect.right"
+  ></div>
+  <div
+    class="tour-callout"
+    [style.bottom.px]="calloutBottom"
+    [style.left.px]="calloutLeft"
   >
+    <span class="tour-callout-text">{{ tourMessage }}</span>
+    <button type="button" class="tour-cancel-btn" (click)="cancelTour()">
+      Cancel
+    </button>
+  </div>
+</ng-container>
 
-  <mat-grid-tile
-    ><div class="example-button-row smallText">
-      <button
-        (click)="endInnings()"
-        color="accent"
-        mat-raised-button
-        style="width: 10em; height: 6em"
-      >
-        End Innings
-      </button>
-    </div></mat-grid-tile
+<!-- Undo - bigger, labeled pill given how much more often it's used than
+     the actions below. The last-ball preview is rendered as its own inline
+     chip (not a matBadge overlay) so multi-character labels like "1wd"
+     never get clipped; tooltip still carries the full batsman detail. -->
+<button
+  type="button"
+  class="undo-pill"
+  [matTooltip]="
+    lastBallSummary
+      ? 'Undo: ' + lastBallSummary!.label + ' - ' + lastBallSummary!.batsman
+      : 'Nothing to undo'
+  "
+  [disabled]="
+    !(
+      liveMatchService.currentBowlNumber > 0 ||
+      liveMatchService.currentOverNumber > 0
+    )
+  "
+  (click)="liveMatchService.undo()"
+  aria-label="Undo last ball"
+>
+  <mat-icon>undo</mat-icon>
+  <span class="undo-pill-label">Undo</span>
+  <span class="undo-pill-preview" *ngIf="lastBallSummary">{{
+    lastBallSummary.label
+  }}</span>
+</button>
+
+<!-- Always-visible secondary actions - no overflow menu, everything
+     reachable in one tap. Each tile gets its own accent color so the six
+     are easy to tell apart, and full action names instead of one-word
+     abbreviations that read as ambiguous. -->
+<div class="quick-actions-grid">
+  <button
+    type="button"
+    class="quick-action-tile tile-penalty"
+    (click)="penaltyRuns()"
   >
-  <mat-grid-tile
-    ><div class="example-button-row smallText">
-      <button
-        (click)="exitMatch()"
-        color="warn"
-        mat-raised-button
-        style="width: 10em; height: 6em"
-      >
-        Exit Match
-      </button>
-    </div></mat-grid-tile
+    <mat-icon>add_circle_outline</mat-icon>
+    <span>Penalty Runs</span>
+  </button>
+  <button
+    type="button"
+    class="quick-action-tile tile-retire"
+    (click)="retireBatsmen()"
   >
-</mat-grid-list>
+    <mat-icon>exit_to_app</mat-icon>
+    <span>Retire Batsman</span>
+  </button>
+  <button
+    type="button"
+    class="quick-action-tile tile-swap"
+    (click)="liveMatchService.swapStriker()"
+  >
+    <mat-icon>swap_horiz</mat-icon>
+    <span>Swap Batsmen</span>
+  </button>
+  <button
+    type="button"
+    class="quick-action-tile tile-bowler"
+    (click)="changeBowler()"
+  >
+    <mat-icon>change_circle</mat-icon>
+    <span>Change Bowler</span>
+  </button>
+  <button
+    type="button"
+    class="quick-action-tile tile-end-innings"
+    (click)="endInnings()"
+  >
+    <mat-icon>flag</mat-icon>
+    <span>End Innings</span>
+  </button>
+  <button
+    type="button"
+    class="quick-action-tile tile-exit"
+    (click)="exitMatch()"
+  >
+    <mat-icon>logout</mat-icon>
+    <span>Exit Match</span>
+  </button>
+</div>
+

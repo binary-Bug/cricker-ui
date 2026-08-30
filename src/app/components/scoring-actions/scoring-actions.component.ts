@@ -1,7 +1,9 @@
-import { Component, inject } from '@angular/core';
-import { MatGridListModule } from '@angular/material/grid-list';
+import { Component, ElementRef, HostListener, inject, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { LiveMatchService } from '../../services/live-match.service';
 import { MatchService } from '../../services/match.service';
 import { EventHandlerService } from '../../services/event-handler.service';
@@ -15,11 +17,19 @@ import { PenaltyRunsDialog } from '../dailogs/penalty-runs.dialog';
 import { MatchCompleteDialog } from '../dailogs/match-complete.dialog';
 import { SaveMatchService } from '../../services/save-match.service';
 import { ConfirmDialog } from '../dailogs/confirm.dialog';
+import { ScoringHelpDialog } from '../dailogs/scoring-help.dialog';
 
 @Component({
   selector: 'app-scoring-actions',
   standalone: true,
-  imports: [FormsModule, MatGridListModule, MatButtonModule, MatCheckboxModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTooltipModule,
+    MatSnackBarModule,
+  ],
   templateUrl: './scoring-actions.component.html',
   styleUrl: './scoring-actions.component.css',
 })
@@ -29,6 +39,7 @@ export class ScoringActionsComponent {
   matchService: MatchService = inject(MatchService);
   dialog: MatDialog = inject(MatDialog);
   saveMatchService: SaveMatchService = inject(SaveMatchService);
+  snackBar: MatSnackBar = inject(MatSnackBar);
 
   isWideChecked: boolean = false;
   isNBChecked: boolean = false;
@@ -42,6 +53,121 @@ export class ScoringActionsComponent {
   // Defaults to true so the existing "penalty runs always count" behavior is
   // preserved unless the scorer explicitly unchecks it in PenaltyRunsDialog.
   isPenaltyBallCounted: boolean = true;
+
+  // --- Spotlight tour: a persistent (never timer-dismissed) cue shown the
+  // instant an extra/wicket toggle is switched on, dimming everything
+  // except the extras row + run-button grid - both stay reachable so
+  // mutual-exclusive combos (e.g. Wicket + Wide for a run-out taken while
+  // running on a wide) can still be selected - until the scorer completes
+  // the ball or taps Cancel. Replaces the old auto-dismissing coach-mark,
+  // which could disappear before a first-time scorer had read it.
+  @ViewChild('extrasRow', { static: true }) extrasRowRef!: ElementRef<HTMLDivElement>;
+  @ViewChild('runGrid', { static: true }) runGridRef!: ElementRef<HTMLDivElement>;
+  spotlightRect: { top: number; left: number; right: number; bottom: number } = {
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  };
+
+  get tourActive(): boolean {
+    return (
+      this.isWideChecked ||
+      this.isNBChecked ||
+      this.isLBChecked ||
+      this.isByesChecked ||
+      this.isWicketChecked
+    );
+  }
+
+  get tourMessage(): string {
+    return this.isWicketChecked
+      ? 'Wicket selected \u2014 tap the runs completed before the dismissal'
+      : 'Now tap the runs scored on this ball';
+  }
+
+  get calloutBottom(): number {
+    return Math.max(8, window.innerHeight - this.spotlightRect.top + 8);
+  }
+
+  get calloutLeft(): number {
+    return Math.min(
+      Math.max(8, this.spotlightRect.left),
+      window.innerWidth - 268
+    );
+  }
+
+  private updateSpotlightRect(): void {
+    const extrasRect = this.extrasRowRef.nativeElement.getBoundingClientRect();
+    const gridRect = this.runGridRef.nativeElement.getBoundingClientRect();
+    this.spotlightRect = {
+      top: Math.min(extrasRect.top, gridRect.top),
+      left: Math.min(extrasRect.left, gridRect.left),
+      right: Math.max(extrasRect.right, gridRect.right),
+      bottom: Math.max(extrasRect.bottom, gridRect.bottom),
+    };
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    if (this.tourActive) this.updateSpotlightRect();
+  }
+
+  /** Backs out of the tour without recording a ball - resets all toggles. */
+  cancelTour(): void {
+    this.unCheckExtras();
+  }
+
+  toggleWide(): void {
+    this.isWideChecked = !this.isWideChecked;
+    if (this.tourActive) this.updateSpotlightRect();
+  }
+  toggleNB(): void {
+    this.isNBChecked = !this.isNBChecked;
+    if (this.tourActive) this.updateSpotlightRect();
+  }
+  toggleLB(): void {
+    this.isLBChecked = !this.isLBChecked;
+    if (this.tourActive) this.updateSpotlightRect();
+  }
+  toggleByes(): void {
+    this.isByesChecked = !this.isByesChecked;
+    if (this.tourActive) this.updateSpotlightRect();
+  }
+  toggleWicket(): void {
+    this.isWicketChecked = !this.isWicketChecked;
+    if (this.tourActive) this.updateSpotlightRect();
+  }
+
+  openScoringHelp(): void {
+    this.dialog.open(ScoringHelpDialog);
+  }
+
+  /**
+   * Preview of the ball Undo would revert - drives the small badge on the
+   * Undo button plus its tooltip. Reads the current over's previous ball,
+   * or the previous over's last ball if we're at the start of an over.
+   */
+  get lastBallSummary(): { label: string; batsman: string } | null {
+    const team =
+      this.matchService.teamData[this.matchService.currentRoles['bat']];
+    let overIdx = this.liveMatchService.currentOverNumber;
+    let ballIdx = this.liveMatchService.currentBowlNumber - 1;
+    if (ballIdx < 0) {
+      overIdx -= 1;
+      if (overIdx < 0 || !team.oversPlayedData[overIdx]) return null;
+      ballIdx = team.oversPlayedData[overIdx].length - 1;
+    }
+    const ball = team.oversPlayedData[overIdx]?.[ballIdx];
+    if (!ball || !ball.hasBeenBowled) return null;
+    return { label: ball.label, batsman: ball.striker?.name || '' };
+  }
+
+  private toastLastBall(): void {
+    const summary = this.lastBallSummary;
+    if (!summary) return;
+    this.snackBar.open(summary.label, undefined, { duration: 1300 });
+  }
 
   // True whenever the current delivery should NOT consume a legal ball / advance
   // the over - either because it's a wide/no-ball (existing behavior), or because
@@ -93,7 +219,12 @@ export class ScoringActionsComponent {
           // Re-snapshot the wicket ball itself so its persisted striker/
           // nonStriker reflect the corrected end assignment above, not the
           // (possibly wrong) one baked in by checkForExtras_And_AddRun().
-          this.liveMatchService.updatePlayerData();
+          // useLastBowledBall=true: checkForExtras_And_AddRun() already
+          // advanced currentBowlNumber past this ball (even to an
+          // out-of-range 6 when the dismissal fell on the over's last
+          // ball), so target previousBowlNumber instead.
+          this.liveMatchService.updatePlayerData(true);
+          this.toastLastBall();
           if (
             this.matchService.teamData[this.matchService.currentRoles['bat']]
               .wicketsLost ===
@@ -121,6 +252,7 @@ export class ScoringActionsComponent {
       });
     } else {
       this.checkForExtras_And_AddRun(run, color, false, null, null, null);
+      this.toastLastBall();
       if (!this.isBallUncounted) this.checkForOverCompletion();
       else if (this.matchService.isSecondInning) {
         if (this.matchService.checkIfTargetChased()) {

@@ -120,14 +120,20 @@ export class LiveMatchService {
     this.eventHandler.NotifyBatsmenSwappedEvent();
   }
 
-  updatePlayerData(overNumber: number = -1): void {
+  /**
+   * @param useLastBowledBall When true, snapshots into the ball that was
+   * just bowled (previousBowlNumber) instead of the upcoming one
+   * (currentBowlNumber). Needed for callers that run *after*
+   * updateBallNumber() has already advanced the counters (e.g.
+   * re-snapshotting a wicket ball once the dismissal's batsman-end
+   * correction is known) - using currentBowlNumber there would index past
+   * the over's last valid ball slot when the dismissal fell on ball 6.
+   */
+  updatePlayerData(useLastBowledBall: boolean = false): void {
     let con = this.currentOverNumber;
-    let cbn = this.currentBowlNumber;
-
-    if (overNumber > -1) {
-      con = overNumber;
-      cbn = 5;
-    }
+    let cbn = useLastBowledBall
+      ? this.previousBowlNumber
+      : this.currentBowlNumber;
 
     this.matchService.teamData[
       this.matchService.currentRoles['bat']

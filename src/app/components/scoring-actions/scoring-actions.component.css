@@ -1,10 +1,350 @@
-.example-button-row .mat-mdc-button-base {
-  border-radius: 40px;
-  width: 50px !important;
-  height: 50px !important;
+/* ============================================================
+   Scoring controls - fills the flexible remainder of the Live tab's
+   no-scroll viewport (see scoring.component.css's `.scoring-actions-flex`
+   host sizing). Internal rows: extras/wicket chips (fixed height) ->
+   run-button grid (flexes to fill what's left) -> Undo pill (fixed
+   height) -> always-visible quick-actions grid (fixed height). A
+   dimmed-backdrop "spotlight tour" (fixed-position overlay, not part of
+   this flow) highlights the run grid while an extra/wicket is toggled on.
+   ============================================================ */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-height: 0;
 }
 
-.smallText .mat-mdc-button-base {
-  font-size: 11px !important;
-  line-height: 1;
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
+
+/* --- Extras / Wicket chips ---
+   Each extra type gets its own color coding (tinted when inactive, solid
+   fill + white text when active) so the chips are easy to tell apart at a
+   glance; .chip stays as the shared shape/sizing/disabled-state base. */
+.extras-row {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chip {
+  flex: 1 1 0;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 4px;
+  cursor: pointer;
+}
+
+.chip:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.chip-wide {
+  border-color: #ffcc80;
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.chip-wide.active {
+  background-color: #ff9800;
+  border-color: #ff9800;
+  color: #fff;
+}
+
+.chip-nb {
+  border-color: #ffab91;
+  background-color: #fbe9e7;
+  color: #d84315;
+}
+
+.chip-nb.active {
+  background-color: #f4511e;
+  border-color: #f4511e;
+  color: #fff;
+}
+
+.chip-lb {
+  border-color: #80cbc4;
+  background-color: #e0f2f1;
+  color: #00695c;
+}
+
+.chip-lb.active {
+  background-color: #00897b;
+  border-color: #00897b;
+  color: #fff;
+}
+
+.chip-bye {
+  border-color: #90caf9;
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.chip-bye.active {
+  background-color: #1e88e5;
+  border-color: #1e88e5;
+  color: #fff;
+}
+
+.chip-wicket {
+  border-color: #ef9a9a;
+  background-color: #ffebee;
+  color: #b71c1c;
+}
+
+.chip-wicket.active {
+  background-color: #d80c0c;
+  border-color: #d80c0c;
+  color: #fff;
+}
+
+.help-btn {
+  flex-shrink: 0;
+  color: #757575;
+}
+
+/* Same static glow ring as the run grid - the extras row is also inside
+   the spotlight cutout so chips stay reachable while the tour is active. */
+.extras-row.tour-active {
+  position: relative;
+  z-index: 1002;
+  border-radius: 999px;
+  box-shadow: 0 0 0 3px #4527a0, 0 0 24px rgba(69, 39, 160, 0.6);
+}
+
+/* --- Run buttons ---
+   The primary tap targets - this is the region that flexes/shrinks first
+   on very small viewports (min-height:0 lets the grid shrink below its
+   content size instead of forcing the page to scroll). */
+.run-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 8px;
+  border-radius: 12px;
+}
+
+/* Static glow ring (no animation/looping pulse) while the spotlight tour
+   is active, plus a stacking context above the dimmed backdrop frames so
+   the grid stays fully visible and tappable. */
+.run-grid.tour-active {
+  position: relative;
+  z-index: 1002;
+  box-shadow: 0 0 0 3px #4527a0, 0 0 24px rgba(69, 39, 160, 0.6);
+}
+
+.run-btn {
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  background-color: #4527a0;
+}
+
+.run-btn.dot {
+  background-color: rgb(156, 155, 153);
+}
+
+.run-btn.run {
+  background-color: #4527a0;
+}
+
+.run-btn.four {
+  background-color: #0b9b67;
+}
+
+.run-btn.six {
+  background-color: #f05129;
+}
+
+/* --- Spotlight tour ---
+   4 fixed-position "frame" rectangles dim + block taps everywhere except
+   the run-grid's rect (computed in the component from getBoundingClientRect,
+   recomputed on toggle and on window resize - the page never scrolls, so
+   continuous scroll-tracking isn't needed). A non-interactive callout
+   bubble carries the instruction text near the grid. */
+.tour-frame {
+  position: fixed;
+  background-color: rgba(0, 0, 0, 0.55);
+  z-index: 1000;
+  pointer-events: auto;
+}
+
+.tour-frame-top {
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.tour-frame-bottom {
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.tour-frame-left {
+  left: 0;
+}
+
+.tour-frame-right {
+  right: 0;
+}
+
+.tour-callout {
+  position: fixed;
+  z-index: 1001;
+  max-width: 260px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #4527a0;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 8px 10px 8px 14px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+
+.tour-callout-text {
+  flex: 1 1 auto;
+}
+
+.tour-cancel-btn {
+  flex-shrink: 0;
+  pointer-events: auto;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background-color: transparent;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+/* --- Undo pill --- */
+.undo-pill {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  align-self: center;
+  border: none;
+  border-radius: 999px;
+  background-color: #ede7f6;
+  color: #4527a0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.undo-pill:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Inline preview chip for the last ball (e.g. "1wd") - a plain span sized
+   to its content, unlike matBadge's fixed-size circle which clipped
+   anything longer than a single digit. */
+.undo-pill-preview {
+  background-color: #4527a0;
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* --- Always-visible secondary actions ---
+   2 rows x 3 cols of compact icon+caption tiles, replacing the old
+   overflow menu so nothing is hidden from the scorer. */
+.quick-actions-grid {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.quick-action-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 1px solid;
+  border-radius: 10px;
+  padding: 6px 2px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  cursor: pointer;
+}
+
+.quick-action-tile mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* Each action gets its own tint + accent color (mirrors the extras-chip
+   color coding) so the six tiles are easy to tell apart at a glance. */
+.tile-penalty {
+  border-color: #ffcc80;
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.tile-retire {
+  border-color: #ce93d8;
+  background-color: #f3e5f5;
+  color: #6a1b9a;
+}
+
+.tile-swap {
+  border-color: #90caf9;
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.tile-bowler {
+  border-color: #80cbc4;
+  background-color: #e0f2f1;
+  color: #00695c;
+}
+
+.tile-end-innings {
+  border-color: #9fa8da;
+  background-color: #e8eaf6;
+  color: #283593;
+}
+
+.tile-exit {
+  border-color: #ef9a9a;
+  background-color: #ffebee;
+  color: #c62828;
+}
+

@@ -1,0 +1,49 @@
+/* ============================================================
+   Live match dashboard - wraps the Live / Score Card tabs. Only the tab
+   bar chrome is styled here (matching match-details' pill-tab pattern);
+   the Live tab's own no-scroll viewport sizing lives in
+   scoring.component.css since it needs to react to THIS tab bar's actual
+   rendered height (see the "--live-tabbar-height" comment there) without
+   this component reaching into either child's internals.
+   ============================================================ */
+
+.live-dashboard-shell {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Pill tab bar (Live / Score Card) - same restyle pattern as
+   match-details' `.match-tab-group`, scoped to `.live-tab-group` so it
+   doesn't leak into other mat-tab-group instances elsewhere in the app. */
+:host ::ng-deep .live-tab-group .mat-mdc-tab-header {
+  border-bottom: none;
+  background-color: #f5f3fa;
+  border-radius: 999px;
+  padding: 4px;
+  margin: 6px 8px 8px;
+  flex-shrink: 0;
+}
+
+:host ::ng-deep .live-tab-group .mdc-tab-indicator {
+  display: none;
+}
+
+:host ::ng-deep .live-tab-group .mdc-tab {
+  border-radius: 999px;
+  height: 36px;
+  flex: 1 1 0;
+}
+
+:host ::ng-deep .live-tab-group .mdc-tab--active {
+  background-color: #ede7f6;
+}
+
+:host ::ng-deep .live-tab-group .mdc-tab--active .mdc-tab__text-label {
+  color: #4527a0 !important;
+  font-weight: 600;
+}
+
+:host ::ng-deep .live-tab-group .mdc-tab:not(.mdc-tab--active) .mdc-tab__text-label {
+  color: #757575 !important;
+}

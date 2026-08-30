@@ -1,56 +1,45 @@
 import {
   ChangeDetectorRef,
   Component,
-  ElementRef,
   inject,
   OnDestroy,
   OnInit,
-  ViewChild,
 } from '@angular/core';
 import { LiveMatchService } from '../../services/live-match.service';
-import { MatTableModule } from '@angular/material/table';
 import { CommonModule } from '@angular/common';
 import { ScoringActionsComponent } from '../scoring-actions/scoring-actions.component';
 import { MatButtonModule } from '@angular/material/button';
-import { MatExpansionModule } from '@angular/material/expansion';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
 import { MatchService } from '../../services/match.service';
 import { EventHandlerService } from '../../services/event-handler.service';
 import { Subscription } from 'rxjs';
 import { UtilityService } from '../../services/utility.service';
-import { PartnershipService } from '../../services/partnership.service';
-import { InningsBreakdown } from '../../models/partnership.interface';
+import { PlayerLiveStatsDialog } from '../dailogs/player-live-stats.dialog';
+import { CalculateTotalRunsInOver } from '../scorecard/scorecard.component';
 
 @Component({
   selector: 'app-scoring',
   standalone: true,
   imports: [
-    MatTableModule,
     CommonModule,
     ScoringActionsComponent,
     MatButtonModule,
-    MatExpansionModule,
+    MatTooltipModule,
+    CalculateTotalRunsInOver,
   ],
   templateUrl: './scoring.component.html',
   styleUrl: './scoring.component.css',
 })
 export class ScoringComponent implements OnInit, OnDestroy {
   private changeDetector: ChangeDetectorRef = inject(ChangeDetectorRef);
-  @ViewChild('overView') overView: ElementRef<HTMLDivElement> | undefined;
   trackByIndex = (index: number) => index;
   subscriptions: Subscription[] = [];
   eventHandler: EventHandlerService = inject(EventHandlerService);
   liveMatchService: LiveMatchService = inject(LiveMatchService);
   utilityService: UtilityService = inject(UtilityService);
   matchService: MatchService = inject(MatchService);
-  partnershipService: PartnershipService = inject(PartnershipService);
-  displayedColumns: string[] = ['nameBat', 'runs', 'balls', 'S/R', '4s', '6s'];
-  displayedColumnsBowler: string[] = [
-    'nameBowl',
-    'runs',
-    'overs',
-    'wickets',
-    'eco',
-  ];
+  dialog: MatDialog = inject(MatDialog);
   ELEMENT_DATA_BATSMEN: any[] = [
     {
       name: this.liveMatchService.striker.name + '*',
@@ -75,9 +64,6 @@ export class ScoringComponent implements OnInit, OnDestroy {
       runs: this.liveMatchService.currentBowler.runs,
     },
   ];
-
-  dataSourceBatsmen = this.ELEMENT_DATA_BATSMEN;
-  dataSourceBowler = this.ELEMENT_DATA_BOWLER;
 
   overCompleted: boolean = false;
 
@@ -131,37 +117,29 @@ export class ScoringComponent implements OnInit, OnDestroy {
       this.ELEMENT_DATA_BOWLER[0].eco;
   }
 
-  openStat(player: string): void {
-    console.log(player);
+  openStat(playerData: any, type: 'batsman' | 'bowler'): void {
+    this.dialog.open(PlayerLiveStatsDialog, {
+      data: { type, ...playerData },
+      maxWidth: '360px',
+      width: '90vw',
+    });
   }
 
-  /**
-   * Fall of Wickets + Partnerships breakdown for the currently batting team,
-   * fully derived from ball-by-ball data (see PartnershipService/
-   * scorecard.component.ts, which uses the same method) - recomputed on
-   * every read so it updates ball-by-ball automatically and stays correct
-   * across Undo.
-   */
-  get currentInningsBreakdown(): InningsBreakdown {
-    return this.partnershipService.getInningsBreakdown(
-      this.matchService.teamData[this.matchService.currentRoles['bat']]
-    );
-  }
-
-  /** Formats a 1-based wicket number as an ordinal, e.g. 1 -> "1st", 2 -> "2nd". */
-  ordinal(n: number): string {
-    const mod100 = n % 100;
-    if (mod100 >= 11 && mod100 <= 13) return n + 'th';
-    switch (n % 10) {
-      case 1:
-        return n + 'st';
-      case 2:
-        return n + 'nd';
-      case 3:
-        return n + 'rd';
-      default:
-        return n + 'th';
+  /** Index of the most-recently-bowled ball in an over, for the over-strip's "latest" ring. */
+  lastBowledIndex(overData: any[]): number {
+    if (!overData) return -1;
+    for (let i = overData.length - 1; i >= 0; i--) {
+      if (overData[i]?.hasBeenBowled) return i;
     }
+    return -1;
+  }
+
+  /** Runs-scored-vs-target percentage for the chase progress bar (2nd innings only), clamped to 100. */
+  get chaseProgressPct(): number {
+    const team =
+      this.matchService.teamData[this.matchService.currentRoles['bat']];
+    if (!team.targetRuns) return 0;
+    return Math.min(100, (team.runsScored / team.targetRuns) * 100);
   }
 
   reAssignBatsmenData(isSwap: boolean = false) {

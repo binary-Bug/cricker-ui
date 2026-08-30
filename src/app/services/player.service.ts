@@ -105,6 +105,15 @@ export class PlayerService {
     mvpSummary: MatchMvpSummary
   ): Promise<void> {
     console.log('Saving Player Data');
+    // CRITICAL: this method deletes the ENTIRE PlayerData collection below
+    // and recreates it from this.players. If the full roster was never
+    // fetched this session (e.g. the user went straight to scoring a match
+    // without ever opening the All Players list), this.players would only
+    // contain the players in *this* match, and every other player's career
+    // stats would be permanently deleted. Always load the full current
+    // roster first so updatePlayerStats() merges into it instead of
+    // starting from an empty/partial array.
+    await this.getAllPlayers();
     let winningTeamKey: string = matchResult.includes(
       this.matchService.teamData['team1'].name
     )
