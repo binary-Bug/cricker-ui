@@ -54,6 +54,27 @@ export class LiveMatchService {
   bowlerRunsBeforeStart: number = 0;
   currentPatnership: { runs: number; balls: number } = { runs: 0, balls: 0 };
 
+  // Restore-point for undo() crossing back over an over boundary, kept
+  // separate from oversPlayedData so the completed over's own last ball
+  // keeps recording what actually happened on that ball (see
+  // updateOnFieldBowler()/handleEndInningsDialog()). In-memory only - never
+  // persisted, never rehydrated from Firestore on reload.
+  private overStartSnapshots = new Map<
+    number,
+    { striker: Batsmen; nonStriker: Batsmen; currentBowler: Bowler }
+  >();
+
+  private snapshotOverStart(overNumber: number): void {
+    this.overStartSnapshots.set(overNumber, {
+      striker: { ...this.striker },
+      nonStriker: { ...this.nonStriker },
+      currentBowler: {
+        ...this.currentBowler,
+        extras: { ...this.currentBowler.extras },
+      },
+    });
+  }
+
   addRunToStriker(
     run: number,
     isNBChecked: boolean,
@@ -198,6 +219,11 @@ export class LiveMatchService {
   // undo-specific timestamp rollback logic is needed.
   undo(): void {
     if (this.currentBowlNumber > 0 || this.currentOverNumber > 0) {
+      // The over being undone out of - needed after currentOverNumber gets
+      // decremented below, to look up its start-of-over snapshot.
+      const overBeingUndoneFrom = this.currentOverNumber;
+      let crossedOverBoundary = false;
+
       this.currentBowlNumber -= 1;
       if (
         !this.matchService.teamData[this.matchService.currentRoles['bat']]
@@ -285,6 +311,7 @@ export class LiveMatchService {
 
         if (this.currentOverNumber > 0) {
           this.currentOverNumber -= 1;
+          crossedOverBoundary = true;
           this.previousBowlNumber =
             this.matchService.teamData[this.matchService.currentRoles['bat']]
               .oversPlayedData[this.currentOverNumber].length - 1;
@@ -359,35 +386,67 @@ export class LiveMatchService {
       if (isWicketBall || wasBatsmenRetired) {
         let batsmens: { batsmenToReplace: string; batsmenToRefer: string } =
           this.determineBatsmensForUndo();
+
+        if (isWicketBall) {
+          // batsmenToRefer is the dismissed batsman being restored to the
+          // crease - read their still-set dismissal status (e.g. "c X b Y")
+          // before undoBatsmenPlayerReferenceForWicket below resets it, so
+          // any catch/stumping/run-out credit given to a fielder can be
+          // reverted too.
+          const dismissedBatsman = this.matchService.teamData[
+            this.matchService.currentRoles['bat']
+          ].Batsmens.find(
+            (b) => b.name.toLowerCase() === batsmens.batsmenToRefer
+          );
+          if (dismissedBatsman) {
+            this.matchService.undoFielderStatsForWicket(
+              dismissedBatsman.status
+            );
+          }
+        }
+
         this.matchService.undoBatsmenPlayerReferenceForWicket(
           batsmens.batsmenToReplace,
           batsmens.batsmenToRefer
         );
       }
 
-      this.striker = {
-        ...this.matchService.teamData[this.matchService.currentRoles['bat']]
-          .oversPlayedData[this.currentOverNumber][this.previousBowlNumber]
-          .striker,
-      };
+      const overStartSnapshot = crossedOverBoundary
+        ? this.overStartSnapshots.get(overBeingUndoneFrom)
+        : undefined;
 
-      this.nonStriker = {
-        ...this.matchService.teamData[this.matchService.currentRoles['bat']]
-          .oversPlayedData[this.currentOverNumber][this.previousBowlNumber]
-          .nonStriker,
-      };
+      if (overStartSnapshot) {
+        this.striker = { ...overStartSnapshot.striker };
+        this.nonStriker = { ...overStartSnapshot.nonStriker };
+        this.currentBowler = {
+          ...overStartSnapshot.currentBowler,
+          extras: { ...overStartSnapshot.currentBowler.extras },
+        };
+      } else {
+        this.striker = {
+          ...this.matchService.teamData[this.matchService.currentRoles['bat']]
+            .oversPlayedData[this.currentOverNumber][this.previousBowlNumber]
+            .striker,
+        };
 
-      this.currentBowler = {
-        ...this.matchService.teamData[this.matchService.currentRoles['bat']]
-          .oversPlayedData[this.currentOverNumber][this.previousBowlNumber]
-          .currentBowler,
-      };
+        this.nonStriker = {
+          ...this.matchService.teamData[this.matchService.currentRoles['bat']]
+            .oversPlayedData[this.currentOverNumber][this.previousBowlNumber]
+            .nonStriker,
+        };
 
-      this.currentBowler.extras = {
-        ...this.matchService.teamData[this.matchService.currentRoles['bat']]
-          .oversPlayedData[this.currentOverNumber][this.previousBowlNumber]
-          .currentBowler.extras,
-      };
+        this.currentBowler = {
+          ...this.matchService.teamData[this.matchService.currentRoles['bat']]
+            .oversPlayedData[this.currentOverNumber][this.previousBowlNumber]
+            .currentBowler,
+        };
+
+        this.currentBowler.extras = {
+          ...this.matchService.teamData[this.matchService.currentRoles['bat']]
+            .oversPlayedData[this.currentOverNumber][this.previousBowlNumber]
+            .currentBowler.extras,
+        };
+      }
 
       this.matchService.updatePlayerReference(
         this.striker,
@@ -699,7 +758,10 @@ export class LiveMatchService {
     }
 
     this.eventHandler.NotifyUpdateOnFieldBowlerEvent();
-    this.updatePlayerData(this.currentOverNumber);
+    // Snapshot the state the NEXT over is starting with, for undo() - do not
+    // write it onto the just-completed over's own last ball (that would
+    // overwrite its real, already-bowled outcome).
+    this.snapshotOverStart(this.currentOverNumber + 1);
   }
 
   pipeDialogs(): void {
@@ -753,7 +815,7 @@ export class LiveMatchService {
           this.eventHandler.NotifyUpdateOnFieldBatsmenEvent();
           this.eventHandler.NotifyUpdateOnFieldBowlerEvent();
           this.eventHandler.OverCompleteEvent$();
-          this.updatePlayerData(this.currentOverNumber);
+          this.snapshotOverStart(this.currentOverNumber);
         });
     }
     if (data.event === 'continue' && data.isAuto === true) {
@@ -928,6 +990,7 @@ export class LiveMatchService {
   }
 
   resetServiceData(): void {
+    this.overStartSnapshots.clear();
     this.striker = {
       name: '',
       runs: 0,

@@ -184,6 +184,55 @@ export class MatchService {
     }
   }
 
+  /** Reverts the fielding credit (catch/stumping/run-out) that
+   * updateBatsmenStatus() recorded for a wicket ball, called from
+   * LiveMatchService.undo() before the dismissed batsman's status gets
+   * reset. `dismissedBatsmenStatus` is the outgoing batsman's `.status`
+   * string at the time of undo (e.g. "c fielder b bowler",
+   * "st fielder b bowler" or "runout (fielder)") - parsed back out since
+   * that's the only place the action player's name is recorded. No-ops for
+   * dismissals without a fielding action (bowled/lbw/hit-wicket) or for
+   * retirements, since their status strings don't match any of these
+   * prefixes. */
+  undoFielderStatsForWicket(dismissedBatsmenStatus: string): void {
+    let actionPlayer = '';
+    let cCount = 0;
+    let sCount = 0;
+    let roCount = 0;
+
+    if (dismissedBatsmenStatus.startsWith('c ')) {
+      actionPlayer = dismissedBatsmenStatus.substring(
+        2,
+        dismissedBatsmenStatus.indexOf(' b ')
+      );
+      cCount = -1;
+    } else if (dismissedBatsmenStatus.startsWith('st ✝')) {
+      actionPlayer = dismissedBatsmenStatus.substring(
+        4,
+        dismissedBatsmenStatus.indexOf(' b ')
+      );
+      sCount = -1;
+    } else if (dismissedBatsmenStatus.startsWith('runout (')) {
+      actionPlayer = dismissedBatsmenStatus.substring(
+        8,
+        dismissedBatsmenStatus.length - 1
+      );
+      roCount = -1;
+    } else {
+      return;
+    }
+
+    this.addOrUpdateFielderToTeam(
+      this.teamData[this.currentRoles['ball']].Fielders.find(
+        (player) => player.name === actionPlayer
+      ),
+      actionPlayer,
+      cCount,
+      sCount,
+      roCount
+    );
+  }
+
   updatePlayerReference(
     striker: Batsmen,
     nonStriker: Batsmen,

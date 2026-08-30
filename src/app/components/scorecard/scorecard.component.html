@@ -647,21 +647,18 @@
         </div>
         <div class="ball-detail-row">
           <span class="ball-detail-label">Bowler</span>
-          {{ sb.ball.currentBowler.name }} - {{ sb.ball.currentBowler.wickets }}/{{
-            sb.ball.currentBowler.runs
+          {{ sb.bowler.name }} - {{ sb.bowler.wickets }}/{{
+            sb.bowler.runs
           }}
-          ({{ sb.ball.currentBowler.overs | number : "1.1-1" }} ov)
+          ({{ sb.bowler.overs | number : "1.1-1" }} ov)
         </div>
         <div class="ball-detail-row">
           <span class="ball-detail-label">Partnership</span>
-          {{ sb.ball.currentPatnership.runs }} ({{
-            sb.ball.currentPatnership.balls
-          }}
-          balls)
+          {{ sb.partnership.runs }} ({{ sb.partnership.balls }} balls)
         </div>
         <div class="ball-detail-row">
           <span class="ball-detail-label">Score</span>
-          {{ sb.ball.currentRuns }}/{{ sb.ball.wicketsLost }}
+          {{ sb.runs }}/{{ sb.wicketsLost }}
         </div>
       </div>
     </ng-template>

@@ -90,6 +90,10 @@ export class ScoringActionsComponent {
             data.newBatsmen,
             data.selectedEnd
           );
+          // Re-snapshot the wicket ball itself so its persisted striker/
+          // nonStriker reflect the corrected end assignment above, not the
+          // (possibly wrong) one baked in by checkForExtras_And_AddRun().
+          this.liveMatchService.updatePlayerData();
           if (
             this.matchService.teamData[this.matchService.currentRoles['bat']]
               .wicketsLost ===

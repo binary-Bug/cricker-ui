@@ -202,16 +202,21 @@ export class ScorecardComponent
   }
 
   /** The ball currently shown in the tap-to-inspect popover, if any.
-   * `onStrike`/`nonStrike` are the batsmen as they stood BEFORE this ball was
-   * bowled - `ball.striker`/`ball.nonStriker` instead store the pair AFTER
-   * the delivery (post strike-rotation), which names the wrong batsman as
-   * facing it whenever the ball rotated strike. */
+   * `onStrike`/`nonStrike`/`bowler`/`runs`/`wicketsLost`/`partnership` are all
+   * as they stood BEFORE this ball was bowled - `ball.striker`/
+   * `ball.nonStriker`/`ball.currentBowler`/`ball.currentRuns`/
+   * `ball.wicketsLost`/`ball.currentPatnership` instead store those values
+   * AFTER the delivery. */
   selectedBall: {
     ball: BALL_DATA;
     overIndex: number;
     ballIndex: number;
     onStrike: Batsmen;
     nonStrike: Batsmen;
+    bowler: Bowler;
+    runs: number;
+    wicketsLost: number;
+    partnership: { runs: number; balls: number };
   } | null = null;
   selectedBallOrigin: CdkOverlayOrigin | null = null;
   /** Ordered fallbacks so the popover stays anchored to the tapped ball even
@@ -227,20 +232,31 @@ export class ScorecardComponent
   ];
 
   /** Walks backwards from (overIndex, ballIndex) to the previous bowled ball
-   * in this innings and returns ITS striker/nonStriker - that's the batting
-   * pair as it stood right before the tapped ball, since nothing else
-   * changes strike between one ball completing and the next one starting -
-   * EXCEPT crossing an over boundary, which always rotates strike once more
-   * regardless of the last ball's runs (ends change every over; see
-   * ScoringActionsComponent.checkForOverCompletion's unconditional
-   * swapStriker() call, which isn't itself written into any ball snapshot).
-   * Falls back to the tapped ball's own striker/nonStriker when it's the
-   * very first bowled ball of the innings (no earlier snapshot to use). */
+   * in this innings and returns the pre-ball state for the tapped ball -
+   * i.e. the batting pair, score and partnership as they stood right before
+   * it was bowled. Strikers require an extra swap when crossing an over
+   * boundary, since ends always rotate once more regardless of the last
+   * ball's runs (see ScoringActionsComponent.checkForOverCompletion's
+   * unconditional swapStriker() call, which isn't itself written into any
+   * ball snapshot) - runs/wickets/partnership need no such adjustment, they
+   * carry over as-is. Falls back to zeroed score/partnership and the
+   * innings' original opening pair (Batsmens[0]/[1], added in strike/
+   * non-strike order before the first ball is ever bowled - see
+   * NewMatchDetailsComponent.openCurrentPlayerDialog() and
+   * LiveMatchService.handleEndInningsDialog()) when it's the very first
+   * bowled ball of the innings, since the tapped ball's own striker/
+   * nonStriker fields store the POST-ball pair, not the pre-ball one. */
   private getPreBallBatsmen(
     teamKey: string,
     overIndex: number,
     ballIndex: number
-  ): { onStrike: Batsmen; nonStrike: Batsmen } {
+  ): {
+    onStrike: Batsmen;
+    nonStrike: Batsmen;
+    runs: number;
+    wicketsLost: number;
+    partnership: { runs: number; balls: number };
+  } {
     const overs = this.matchService.teamData[teamKey].oversPlayedData;
     for (let oi = overIndex; oi >= 0; oi--) {
       const over = overs[oi];
@@ -248,14 +264,68 @@ export class ScorecardComponent
       for (let bi = startBi; bi >= 0; bi--) {
         if (over[bi].hasBeenBowled) {
           const crossedOverBoundary = oi !== overIndex;
-          return crossedOverBoundary
+          const strikers = crossedOverBoundary
             ? { onStrike: over[bi].nonStriker, nonStrike: over[bi].striker }
             : { onStrike: over[bi].striker, nonStrike: over[bi].nonStriker };
+          return {
+            ...strikers,
+            runs: over[bi].currentRuns,
+            wicketsLost: over[bi].wicketsLost,
+            partnership: { ...over[bi].currentPatnership },
+          };
         }
       }
     }
-    const tappedBall = overs[overIndex][ballIndex];
-    return { onStrike: tappedBall.striker, nonStrike: tappedBall.nonStriker };
+    const openers = this.matchService.teamData[teamKey].Batsmens;
+    return {
+      onStrike: { name: openers[0].name, runs: 0, balls: 0, fours: 0, six: 0, status: 'Not Out' },
+      nonStrike: { name: openers[1].name, runs: 0, balls: 0, fours: 0, six: 0, status: 'Not Out' },
+      runs: 0,
+      wicketsLost: 0,
+      partnership: { runs: 0, balls: 0 },
+    };
+  }
+
+  /** Walks backwards from (overIndex, ballIndex) for the bowler's pre-ball
+   * figures. Within the same over the bowler doesn't change, so the previous
+   * ball's post-ball `currentBowler` snapshot is already the correct
+   * pre-current-ball figure. For the first ball of an over, that same
+   * bowler may have last bowled several overs earlier (or never before), so
+   * this searches backwards across all earlier overs for that bowler's most
+   * recent bowled ball, matched by name. */
+  private getPreBallBowler(
+    teamKey: string,
+    overIndex: number,
+    ballIndex: number
+  ): Bowler {
+    const overs = this.matchService.teamData[teamKey].oversPlayedData;
+    const bowlerName = overs[overIndex][ballIndex].currentBowler.name;
+
+    for (let bi = ballIndex - 1; bi >= 0; bi--) {
+      if (overs[overIndex][bi].hasBeenBowled) {
+        const bowler = overs[overIndex][bi].currentBowler;
+        return { ...bowler, extras: { ...bowler.extras } };
+      }
+    }
+
+    for (let oi = overIndex - 1; oi >= 0; oi--) {
+      const over = overs[oi];
+      for (let bi = over.length - 1; bi >= 0; bi--) {
+        if (over[bi].hasBeenBowled && over[bi].currentBowler.name === bowlerName) {
+          const bowler = over[bi].currentBowler;
+          return { ...bowler, extras: { ...bowler.extras } };
+        }
+      }
+    }
+
+    return {
+      name: bowlerName,
+      runs: 0,
+      overs: 0,
+      maidens: 0,
+      wickets: 0,
+      extras: { w: 0, nb: 0, lb: 0 },
+    };
   }
 
   openBallDetail(
@@ -276,6 +346,7 @@ export class ScorecardComponent
       overIndex,
       ballIndex,
       ...this.getPreBallBatsmen(teamKey, overIndex, ballIndex),
+      bowler: this.getPreBallBowler(teamKey, overIndex, ballIndex),
     };
   }
 
