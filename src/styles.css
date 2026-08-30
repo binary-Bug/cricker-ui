@@ -57,3 +57,80 @@ body {
     border-radius: 0;
   }
 }
+
+/* ==========================================================================
+   Shared dialog redesign infra (DIALOG_REDESIGN_CHECKLIST.md)
+   Two panelClass variants to pick from per-dialog:
+   - .app-dialog-panel: short/simple dialogs - stays a small centered
+     rounded card on every viewport, never goes edge-to-edge.
+   - .on-field-player-dialog-panel (above): tall/content-heavy dialogs -
+     roomy modal on desktop, near-fullscreen on phones.
+   ========================================================================== */
+.app-dialog-panel {
+  width: min(92vw, 440px);
+  max-width: min(92vw, 440px);
+}
+.app-dialog-panel .mat-mdc-dialog-container {
+  border-radius: 20px;
+}
+
+/* Icon-badge dialog header (generalized from admin-code.dialog.ts) - used
+   via <app-dialog-icon-header> so every redesigned dialog shares one copy
+   of this markup/CSS instead of each pasting its own. */
+.dlg-icon-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px auto 12px;
+  background-color: #ede7f6;
+}
+.dlg-icon-badge.warn {
+  background-color: #ffebee;
+}
+.dlg-icon {
+  color: #5e35b1;
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+.dlg-icon-badge.warn .dlg-icon {
+  color: #c62828;
+}
+.dlg-title {
+  color: #4527a0;
+  font-weight: 700;
+  margin: 0 0 4px;
+  text-align: center;
+}
+.dlg-title.warn {
+  color: #c62828;
+}
+.dlg-subtitle {
+  color: #757575;
+  font-size: 0.9rem;
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+/* Shared pill action buttons - stack full-width on narrow dialogs, sit
+   side-by-side once there's room (mirrors on-field-player-detail.dialog.ts's
+   existing responsive button pattern). */
+.dlg-btn-primary.mat-mdc-button-base,
+.dlg-btn-secondary.mat-mdc-button-base {
+  flex: 1 1 0;
+  height: 48px;
+  border-radius: 14px;
+  font-weight: 600;
+}
+.dlg-btn-primary.mat-mdc-button-base {
+  box-shadow: 0 4px 14px rgba(69, 39, 160, 0.35);
+}
+.dlg-btn-primary.warn.mat-mdc-button-base {
+  box-shadow: 0 4px 14px rgba(198, 40, 40, 0.35);
+}
+.dlg-btn-secondary.mat-mdc-button-base {
+  color: #757575;
+}

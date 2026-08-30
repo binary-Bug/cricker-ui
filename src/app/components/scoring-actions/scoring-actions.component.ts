@@ -140,7 +140,7 @@ export class ScoringActionsComponent {
   }
 
   openScoringHelp(): void {
-    this.dialog.open(ScoringHelpDialog);
+    this.dialog.open(ScoringHelpDialog, { panelClass: 'app-dialog-panel' });
   }
 
   /**
@@ -469,7 +469,9 @@ export class ScoringActionsComponent {
   }
 
   penaltyRuns(): void {
-    let dialogRef = this.dialog.open(PenaltyRunsDialog);
+    let dialogRef = this.dialog.open(PenaltyRunsDialog, {
+      panelClass: 'app-dialog-panel',
+    });
     dialogRef.afterClosed().subscribe((data) => {
       if (data) {
         this.isPenaltyRun = true;
@@ -485,11 +487,13 @@ export class ScoringActionsComponent {
 
   exitMatch(): void {
     const dialogRef = this.dialog.open(ConfirmDialog, {
-      width: '300px',
+      panelClass: 'app-dialog-panel',
       data: {
         title: 'Exit Match',
         message:
           'Are you sure you want to exit the match? All unsaved progress will be lost.',
+        icon: 'logout',
+        variant: 'warn',
       },
     });
 

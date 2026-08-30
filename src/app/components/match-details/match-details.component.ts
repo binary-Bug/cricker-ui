@@ -187,6 +187,7 @@ export class MatchDetailsComponent
   openMvpHelp(): void {
     this.mvpCalculatorService.loadWeights().then((weights) => {
       this.dialog.open(MvpHelpDialog, {
+        panelClass: 'app-dialog-panel',
         data: {
           sections: this.mvpCalculatorService.describeRules(
             weights,
