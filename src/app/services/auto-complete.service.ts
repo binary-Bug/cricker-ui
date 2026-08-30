@@ -13,7 +13,9 @@ export class AutoCompleteService {
     options: string[],
     shouldExclude: boolean = false
   ): string[] {
-    const filterValue = value.toLowerCase();
+    // Trim so a stray leading/trailing space doesn't make an existing player
+    // look like a non-match (which would otherwise offer a duplicate "Add Player").
+    const filterValue = (value || '').trim().toLowerCase();
     if (shouldExclude) {
       return options.filter((option) => option.toLowerCase() !== filterValue);
     }
@@ -23,23 +25,24 @@ export class AutoCompleteService {
   }
 
   /**
-   * When no options match the current term and the term is non-empty, return a synthetic
-   * "Add Player - {term}" option encoded with a prefix for easy detection in selection handlers.
-   * Otherwise return the filtered options unchanged.
+   * Appends a synthetic "Add Player - {term}" option (encoded for easy detection in
+   * selection handlers) to the end of the filtered list whenever the typed term has
+   * no exact match, so users can add a new player without losing sight of similarly
+   * named existing players (e.g. typing "Jo" still shows "John" before the add option).
+   * Returns the filtered options unchanged if an exact match already exists.
    */
   public withAddPlayerOption(term: string, filtered: string[]): string[] {
     const clean = (term || '').trim();
     if (clean.length === 0) {
       return filtered;
     }
-    // If an exact match already exists, don't show add option
     const hasExact = filtered.some(
       (o) => o.trim().toLowerCase() === clean.toLowerCase()
     );
-    if (!hasExact && filtered.length === 0) {
-      return [this.encodeAddPlayer(clean)];
+    if (hasExact) {
+      return filtered;
     }
-    return filtered;
+    return [...filtered, this.encodeAddPlayer(clean)];
   }
 
   /** Prefix used to mark synthetic add-player options */
@@ -55,6 +58,11 @@ export class AutoCompleteService {
 
   public decodeAddPlayer(option: string): string {
     return (option || '').replace(this.ADD_PREFIX, '');
+  }
+
+  /** Whether a filtered option list contains the synthetic add-player entry. */
+  public hasAddPlayerOption(options: string[] | null | undefined): boolean {
+    return (options || []).some((o) => this.isAddPlayerOption(o));
   }
 
   public populatePlayersArray(players: string[]): string[] {

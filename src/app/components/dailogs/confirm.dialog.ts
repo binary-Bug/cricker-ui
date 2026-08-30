@@ -68,9 +68,10 @@ export interface ConfirmDialogData {
         gap: 10px;
         padding: 12px 24px 20px;
       }
-      @media (max-width: 400px) {
+      @media (max-width: 340px) {
         .confirm-actions.mat-mdc-dialog-actions {
           flex-direction: column-reverse;
+          align-items: stretch;
         }
       }
     `,

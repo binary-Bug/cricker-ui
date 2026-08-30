@@ -8,19 +8,21 @@ import {
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import {
-  MatDialogTitle,
   MatDialogContent,
   MatDialogActions,
   MatDialogRef,
   MAT_DIALOG_DATA,
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Observable, startWith, map } from 'rxjs';
 import { LiveMatchService } from '../../services/live-match.service';
 import { MatchService } from '../../services/match.service';
 import { PlayerService } from '../../services/player.service';
 import { AutoCompleteService } from '../../services/auto-complete.service';
+import { UtilityService } from '../../services/utility.service';
+import { DialogIconHeaderComponent } from './dialog-icon-header.component';
 
 export interface PlayerGroup {
   label: string;
@@ -29,66 +31,163 @@ export interface PlayerGroup {
 
 @Component({
   selector: 'new-bowler-dialog',
-  template: `<h2 mat-dialog-title>Select Bowler</h2>
+  template: `
+    <app-dialog-icon-header
+      icon="change_circle"
+      title="New Bowler"
+      subtitle="Select the bowler for the next over"
+    ></app-dialog-icon-header>
     <mat-dialog-content>
-      <mat-form-field class="example-full-width">
-        <mat-label>New Bowler</mat-label>
-        <input
-          type="text"
-          placeholder="Select Player"
-          matInput
-          [formControl]="newBowler"
-          [matAutocomplete]="auto"
-        />
-        <mat-autocomplete
-          #auto="matAutocomplete"
-          (optionSelected)="onOptionSelected($event.option.value)"
-          (closed)="closed()"
-          (opened)="opened()"
+      <div class="new-bowler-preview">
+        <div
+          class="new-bowler-preview-avatar"
+          [style.background]="bowlerValue ? utilityService.getAvatarColor(bowlerValue) : null"
         >
-          @for (group of filteredOptions; track group) {
-          <mat-optgroup style="font-weight: 500;" [label]="group.label">
-            @for (name of group.names; track name) {
-            <mat-option [value]="name">
-              {{ autoCompleteService.isAddPlayerOption(name)
-                ? ('Add Player - ' + autoCompleteService.decodeAddPlayer(name))
-                : name }}
-            </mat-option>
+          {{ bowlerValue ? utilityService.getInitials(bowlerValue) : '?' }}
+        </div>
+        <div class="new-bowler-preview-name">{{ bowlerValue || 'Not selected' }}</div>
+      </div>
+      <div class="field-group">
+        <span class="field-label">New Bowler *</span>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <input
+            type="text"
+            placeholder="Select Player"
+            matInput
+            [formControl]="newBowler"
+            [matAutocomplete]="auto"
+          />
+          <mat-autocomplete
+            #auto="matAutocomplete"
+            (optionSelected)="onOptionSelected($event.option.value)"
+            (closed)="closed()"
+            (opened)="opened()"
+          >
+            @for (group of filteredOptions; track group) {
+            <mat-optgroup style="font-weight: 500;" [label]="group.label">
+              @for (name of group.names; track name) {
+              <mat-option
+                [value]="name"
+                [class.add-player-option]="autoCompleteService.isAddPlayerOption(name)"
+              >
+                @if (autoCompleteService.isAddPlayerOption(name)) {
+                <span class="add-player-row">
+                  <mat-icon class="add-player-icon">person_add</mat-icon>
+                  <span>Add "<strong>{{ autoCompleteService.decodeAddPlayer(name) }}</strong>" as new player</span>
+                </span>
+                } @else { {{ name }} }
+              </mat-option>
+              }
+            </mat-optgroup>
             }
-          </mat-optgroup>
-          }
-        </mat-autocomplete>
-      </mat-form-field>
+          </mat-autocomplete>
+        </mat-form-field>
+        @if (autoCompleteService.hasAddPlayerOption(filteredOptions[filteredOptions.length - 1]?.names)) {
+        <span class="field-hint">No matching player - select "Add Player" below to add them as new.</span>
+        }
+      </div>
     </mat-dialog-content>
-    <mat-dialog-actions>
+    <mat-dialog-actions class="new-bowler-actions">
       <button
-        mat-button
+        mat-stroked-button
+        class="dlg-btn-secondary"
         [disabled]="data.isAuto ? 'true' : null"
         (click)="onCancelClick()"
       >
         Cancel
       </button>
       <button
-        mat-button
+        mat-flat-button
         color="primary"
+        class="dlg-btn-primary"
         (click)="onOkClick()"
         cdkFocusInitial
         [disabled]="newBowler.invalid"
       >
         Done
       </button>
-    </mat-dialog-actions>`,
+    </mat-dialog-actions>
+  `,
   standalone: true,
   imports: [
     MatFormFieldModule,
     MatInputModule,
     FormsModule,
     MatButtonModule,
-    MatDialogTitle,
     MatDialogContent,
     MatDialogActions,
     ReactiveFormsModule,
     MatAutocompleteModule,
+    MatIconModule,
+    DialogIconHeaderComponent,
+  ],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+      .new-bowler-preview {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        background: #ede7f6;
+        border-radius: 12px;
+        padding: 14px 12px;
+        margin-bottom: 16px;
+      }
+      .new-bowler-preview-avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #bdbdbd;
+        color: white;
+        font-weight: 700;
+        font-size: 1.05rem;
+      }
+      .new-bowler-preview-name {
+        font-weight: 600;
+        font-size: 0.95em;
+        color: #4527a0;
+        text-align: center;
+        overflow-wrap: anywhere;
+      }
+      .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .field-group .mat-mdc-form-field {
+        width: 100%;
+      }
+      .field-label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #757575;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .field-hint {
+        font-size: 0.78rem;
+        color: #5e35b1;
+        font-style: italic;
+      }
+      .new-bowler-actions.mat-mdc-dialog-actions {
+        display: flex;
+        gap: 10px;
+        padding: 12px 24px 20px;
+      }
+      @media (max-width: 340px) {
+        .new-bowler-actions.mat-mdc-dialog-actions {
+          flex-direction: column-reverse;
+          align-items: stretch;
+        }
+      }
+    `,
   ],
 })
 export class NewBowlerDialog implements OnInit, OnDestroy {
@@ -97,7 +196,8 @@ export class NewBowlerDialog implements OnInit, OnDestroy {
     private matchService: MatchService,
     private liveMatchService: LiveMatchService,
     private playerService: PlayerService,
-    public autoCompleteService: AutoCompleteService
+    public autoCompleteService: AutoCompleteService,
+    public utilityService: UtilityService
   ) {
     dialogRef.disableClose = true;
     this.data = inject<any>(MAT_DIALOG_DATA);
@@ -111,6 +211,10 @@ export class NewBowlerDialog implements OnInit, OnDestroy {
   ];
 
   newBowler = new FormControl('', Validators.required);
+
+  get bowlerValue(): string {
+    return (this.newBowler.value || '').trim();
+  }
 
   ngOnInit(): void {
     this.playerService.getAllPlayers().then((players) => {
@@ -156,10 +260,9 @@ export class NewBowlerDialog implements OnInit, OnDestroy {
                 true
               )
             );
-            this.filteredOptions[0].names = this.autoCompleteService.withAddPlayerOption(
-              term,
-              baseThisMatch
-            );
+            // "This Match" is a curated shortlist - the "Add Player" option only
+            // ever appears once, in the "All Players" group set below.
+            this.filteredOptions[0].names = baseThisMatch;
           }
           const baseAll = this.autoCompleteService._filter(term, this.options);
           return this.autoCompleteService.withAddPlayerOption(term, baseAll);

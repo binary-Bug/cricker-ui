@@ -12,10 +12,12 @@ import { MatIconModule } from '@angular/material/icon';
   standalone: true,
   imports: [CommonModule, MatIconModule],
   template: `
-    <div class="dlg-icon-badge" [class.warn]="variant === 'warn'">
-      <mat-icon class="dlg-icon">{{ icon }}</mat-icon>
+    <div class="dlg-header-row">
+      <div class="dlg-icon-badge" [class.warn]="variant === 'warn'">
+        <mat-icon class="dlg-icon">{{ icon }}</mat-icon>
+      </div>
+      <h2 class="dlg-title" [class.warn]="variant === 'warn'">{{ title }}</h2>
     </div>
-    <h2 class="dlg-title" [class.warn]="variant === 'warn'">{{ title }}</h2>
     <p class="dlg-subtitle" *ngIf="subtitle">{{ subtitle }}</p>
   `,
 })

@@ -56,7 +56,36 @@ body {
   .on-field-player-dialog-panel .mat-mdc-dialog-container {
     border-radius: 0;
   }
+
+  /* Force the dialog surface (and the redesigned dialog's own root element,
+     matched generically via the direct-child selector since each dialog
+     component has a different tag name) to stretch to the full-screen pane
+     height. Without this, the surface only grows to fit its content, leaving
+     blank space below mat-dialog-actions instead of the actions sticking to
+     the bottom - and Material's default mat-dialog-content max-height (65vh)
+     would create its own inner scrollbar rather than truly filling the
+     screen. flex-direction: column + content flex:1 makes only the content
+     area scroll (if it must), while the header stays pinned at top and the
+     actions stay pinned at the bottom, giving a true full-screen illusion. */
+  .on-field-player-dialog-panel .mdc-dialog__surface {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100%;
+  }
+  .on-field-player-dialog-panel .mdc-dialog__surface > * {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .on-field-player-dialog-panel .mat-mdc-dialog-content {
+    flex: 1 1 auto;
+    max-height: none;
+    min-height: 0;
+  }
 }
+
 
 /* ==========================================================================
    Shared dialog redesign infra (DIALOG_REDESIGN_CHECKLIST.md)
@@ -76,15 +105,25 @@ body {
 
 /* Icon-badge dialog header (generalized from admin-code.dialog.ts) - used
    via <app-dialog-icon-header> so every redesigned dialog shares one copy
-   of this markup/CSS instead of each pasting its own. */
+   of this markup/CSS instead of each pasting its own. Icon + title sit in
+   a row (not stacked) to save vertical space for the dialog body. */
+.dlg-header-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* Dialog surface itself has zero padding - without this the icon+title
+     row sits flush against the card's edges instead of looking centered. */
+  padding: 20px 24px 0;
+  margin: 0 0 4px;
+}
 .dlg-icon-badge {
-  width: 56px;
-  height: 56px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 4px auto 12px;
+  flex-shrink: 0;
   background-color: #ede7f6;
 }
 .dlg-icon-badge.warn {
@@ -92,9 +131,9 @@ body {
 }
 .dlg-icon {
   color: #5e35b1;
-  font-size: 28px;
-  width: 28px;
-  height: 28px;
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
 }
 .dlg-icon-badge.warn .dlg-icon {
   color: #c62828;
@@ -102,17 +141,24 @@ body {
 .dlg-title {
   color: #4527a0;
   font-weight: 700;
-  margin: 0 0 4px;
-  text-align: center;
+  text-align: left;
+}
+/* Angular Material's `.mat-typography h2` rule (margin: 0 0 16px) outranks
+   the single-class ".dlg-title" selector on specificity - that leftover
+   bottom margin was throwing off the flex row's vertical centering against
+   the icon badge. This selector needs to win, not just append a value. */
+.dlg-header-row .dlg-title {
+  margin: 0;
 }
 .dlg-title.warn {
   color: #c62828;
 }
 .dlg-subtitle {
   color: #757575;
-  font-size: 0.9rem;
-  margin: 0 0 16px;
-  text-align: center;
+  font-size: 0.85rem;
+  padding: 0 24px;
+  margin: 0 0 8px;
+  text-align: left;
 }
 
 /* Shared pill action buttons - stack full-width on narrow dialogs, sit
@@ -134,3 +180,27 @@ body {
 .dlg-btn-secondary.mat-mdc-button-base {
   color: #757575;
 }
+
+/* "Add Player" synthetic autocomplete option (AutoCompleteService.encodeAddPlayer) -
+   rendered in every player-picker dialog (New Batsmen, Retire Batsmen, New Bowler,
+   Wicket Details). Lives in global CSS because mat-autocomplete panels are
+   attached to the CDK overlay container, outside the owning component's DOM. */
+.add-player-option {
+  background-color: #ede7f6;
+}
+.add-player-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #4527a0;
+  white-space: normal;
+  line-height: 1.3;
+}
+.add-player-icon.mat-icon {
+  color: #5e35b1;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+

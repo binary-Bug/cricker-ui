@@ -191,8 +191,7 @@ export class ScoringActionsComponent {
             this.isWideChecked || this.isNBChecked || this.isLBChecked,
           isByeChecked: this.isByesChecked || +run > 0,
         },
-        maxWidth: '100vw',
-        width: '100vw',
+        panelClass: 'on-field-player-dialog-panel',
       });
 
       this.wicketDialogRef.afterClosed().subscribe((data) => {
@@ -232,6 +231,7 @@ export class ScoringActionsComponent {
           ) {
             if (!this.matchService.isSecondInning) {
               let endInningsDialog = this.dialog.open(EndInningsDialog, {
+                panelClass: 'app-dialog-panel',
                 data: { value: 'allOut' },
               });
               endInningsDialog.afterClosed().subscribe((data) => {
@@ -281,6 +281,7 @@ export class ScoringActionsComponent {
       ) {
         if (!this.matchService.isSecondInning) {
           let endInningsDialog = this.dialog.open(EndInningsDialog, {
+            panelClass: 'app-dialog-panel',
             data: { value: 'oversCompleted' },
           });
 
@@ -302,6 +303,7 @@ export class ScoringActionsComponent {
           this.eventHandler.NotifyOverCompleteEvent();
           let newBowlerDialog = this.dialog.open(NewBowlerDialog, {
             data: { isAuto: true },
+            panelClass: 'app-dialog-panel',
           });
           newBowlerDialog.afterClosed().subscribe((data: string) => {
             if (data && data.length > 0)
@@ -321,6 +323,7 @@ export class ScoringActionsComponent {
   changeBowler(): void {
     let newBowlerDialog = this.dialog.open(NewBowlerDialog, {
       data: { isAuto: false },
+      panelClass: 'app-dialog-panel',
     });
     newBowlerDialog.afterClosed().subscribe((data: string) => {
       if (data && data.length > 0)
@@ -449,7 +452,9 @@ export class ScoringActionsComponent {
   }
 
   retireBatsmen(): void {
-    let dialogRef = this.dialog.open(RetireBatsmenDialog);
+    let dialogRef = this.dialog.open(RetireBatsmenDialog, {
+      panelClass: 'app-dialog-panel',
+    });
     dialogRef.afterClosed().subscribe((data) => {
       if (data) {
         this.liveMatchService.updateOnFieldBatsmen(data.old, data.new);
@@ -461,7 +466,9 @@ export class ScoringActionsComponent {
   }
 
   endInnings(): void {
-    let endInningsDialog = this.dialog.open(EndInningsDialog);
+    let endInningsDialog = this.dialog.open(EndInningsDialog, {
+      panelClass: 'app-dialog-panel',
+    });
 
     endInningsDialog.afterClosed().subscribe((data) => {
       this.liveMatchService.handleEndInningsDialog(data);

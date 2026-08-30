@@ -775,6 +775,7 @@ export class LiveMatchService {
     this.dialog
       .open(NewBatsmenDialog, {
         data: { isAuto: true },
+        panelClass: 'app-dialog-panel',
       })
       .afterClosed()
       .pipe(
@@ -784,6 +785,7 @@ export class LiveMatchService {
           return this.dialog
             .open(NewBowlerDialog, {
               data: { isAuto: true },
+              panelClass: 'app-dialog-panel',
             })
             .afterClosed();
         })
@@ -855,6 +857,7 @@ export class LiveMatchService {
         } else {
           let newBatsmenDialog = this.dialog.open(NewBatsmenDialog, {
             data: { isAuto: true },
+            panelClass: 'app-dialog-panel',
           });
           newBatsmenDialog.afterClosed().subscribe((data: string) => {
             if (data && data.length > 0) {
@@ -873,6 +876,7 @@ export class LiveMatchService {
         this.eventHandler.NotifyOverCompleteEvent();
         let newBowlerDialog = this.dialog.open(NewBowlerDialog, {
           data: { isAuto: true },
+          panelClass: 'app-dialog-panel',
         });
         newBowlerDialog.afterClosed().subscribe((data: string) => {
           if (data && data.length > 0) this.updateOnFieldBowler(data);
