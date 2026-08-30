@@ -178,22 +178,35 @@ export class PartnershipService {
           dismissal: dismissedEntry?.status ?? '',
         });
 
-        activeContributors = new Map<string, ContributorState>([
-          [
-            survivorName,
-            {
-              entryRuns: runsOf(ball, survivorName),
-              entryBalls: ballsOf(ball, survivorName),
-            },
-          ],
-          [
-            incomingName,
-            {
-              entryRuns: runsOf(ball, incomingName),
-              entryBalls: ballsOf(ball, incomingName),
-            },
-          ],
-        ]);
+        // 'none' is the codebase-wide placeholder for "no batsman in this
+        // slot" (see live-match.service.ts updateOnFieldBatsmen). Per this
+        // class's docstring, a wicket ball's snapshot already carries the
+        // *real* replacement batsman's name - the only time it's still
+        // 'none' is when there was no replacement to give it, i.e. the
+        // team is genuinely all out on this ball. In that case there is no
+        // next partnership to track, so activeContributors is left empty
+        // rather than starting a phantom stand with a non-existent partner
+        // (which would otherwise surface as a bogus extra "unbroken"
+        // partnership/wicket number after the loop ends).
+        const isAllOut = incomingName === 'none';
+        activeContributors = isAllOut
+          ? new Map<string, ContributorState>()
+          : new Map<string, ContributorState>([
+              [
+                survivorName,
+                {
+                  entryRuns: runsOf(ball, survivorName),
+                  entryBalls: ballsOf(ball, survivorName),
+                },
+              ],
+              [
+                incomingName,
+                {
+                  entryRuns: runsOf(ball, incomingName),
+                  entryBalls: ballsOf(ball, incomingName),
+                },
+              ],
+            ]);
         finalizedForCurrentStand = [];
         prevPair = currPair;
       } else {
