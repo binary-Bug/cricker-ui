@@ -31,34 +31,54 @@
   background-color: #fff;
   border-radius: 12px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
-  padding: 8px 12px;
+  padding: 12px 14px;
 }
 
 .scoreboard-top {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
 }
 
+/* Batting team's name is the single most-glanced-at label on the page,
+   so it gets its own pill + a pulsing glow ("shining lights") instead of
+   plain inline text - everything else here stays flat/static. */
 .team-name {
-  font-weight: 600;
-  /* Dark blue (matches the Score Card innings-tab palette) so this reads
-     distinctly from the purple "Live" tab pill above it. */
-  color: #0d47a1;
-  font-size: 0.95rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #4527a0, #7c4dff);
+  font-size: 1.05rem;
+  letter-spacing: 0.2px;
+  padding: 5px 12px;
+  border-radius: 8px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  animation: team-name-glow 2.2s ease-in-out infinite;
+}
+
+@keyframes team-name-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(124, 77, 255, 0.55), 0 0 16px rgba(124, 77, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 14px rgba(124, 77, 255, 0.85), 0 0 28px rgba(124, 77, 255, 0.55);
+  }
 }
 
 .score-line {
-  font-size: 1.3rem;
+  flex-shrink: 0;
+  font-size: 1.45rem;
+  font-weight: 700;
   white-space: nowrap;
 }
 
 .overs-text {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #757575;
   margin-left: 4px;
 }
@@ -67,9 +87,9 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px 12px;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: #616161;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .chase-banner {

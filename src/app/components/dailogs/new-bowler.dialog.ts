@@ -1,11 +1,21 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  inject,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import {
   FormsModule,
   ReactiveFormsModule,
   FormControl,
   Validators,
 } from '@angular/forms';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import {
+  MatAutocompleteModule,
+  MatAutocompleteTrigger,
+} from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import {
   MatDialogContent,
@@ -35,10 +45,17 @@ export interface PlayerGroup {
     <app-dialog-icon-header
       icon="change_circle"
       title="New Bowler"
-      subtitle="Select the bowler for the next over"
+      subtitle="Tap the card or the field below to search &amp; select the bowler"
     ></app-dialog-icon-header>
     <mat-dialog-content>
-      <div class="new-bowler-preview">
+      <div
+        class="new-bowler-preview"
+        role="button"
+        tabindex="0"
+        aria-label="Open bowler picker"
+        (click)="openPicker()"
+        (keydown.enter)="openPicker()"
+      >
         <div
           class="new-bowler-preview-avatar"
           [style.background]="bowlerValue ? utilityService.getAvatarColor(bowlerValue) : null"
@@ -51,6 +68,7 @@ export interface PlayerGroup {
         <span class="field-label">New Bowler *</span>
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <input
+            #bowlerInput
             type="text"
             placeholder="Select Player"
             matInput
@@ -135,6 +153,13 @@ export interface PlayerGroup {
         border-radius: 12px;
         padding: 14px 12px;
         margin-bottom: 16px;
+        cursor: pointer;
+        border: 2px solid transparent;
+      }
+      .new-bowler-preview:hover,
+      .new-bowler-preview:focus-visible {
+        border-color: #9575cd;
+        outline: none;
       }
       .new-bowler-preview-avatar {
         display: flex;
@@ -191,6 +216,9 @@ export interface PlayerGroup {
   ],
 })
 export class NewBowlerDialog implements OnInit, OnDestroy {
+  @ViewChild(MatAutocompleteTrigger) autoTrigger!: MatAutocompleteTrigger;
+  @ViewChild('bowlerInput') bowlerInput!: ElementRef<HTMLInputElement>;
+
   constructor(
     public dialogRef: MatDialogRef<NewBowlerDialog>,
     private matchService: MatchService,
@@ -214,6 +242,14 @@ export class NewBowlerDialog implements OnInit, OnDestroy {
 
   get bowlerValue(): string {
     return (this.newBowler.value || '').trim();
+  }
+
+  // Lets the preview card double as a picker trigger - clicking it focuses
+  // the (still-visible, still free-typeable) input and opens its panel,
+  // same as clicking directly into the input would.
+  openPicker(): void {
+    this.bowlerInput?.nativeElement.focus();
+    this.autoTrigger?.openPanel();
   }
 
   ngOnInit(): void {

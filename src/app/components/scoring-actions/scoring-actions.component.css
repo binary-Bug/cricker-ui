@@ -247,16 +247,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 9px;
   align-self: center;
   border: none;
   border-radius: 999px;
   background-color: #ede7f6;
   color: #4527a0;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  padding: 10px 20px;
+  padding: 13px 26px;
   cursor: pointer;
+}
+
+.undo-pill mat-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
 }
 
 .undo-pill:disabled {
@@ -271,8 +277,8 @@
   background-color: #4527a0;
   color: #fff;
   border-radius: 999px;
-  padding: 2px 9px;
-  font-size: 0.72rem;
+  padding: 3px 10px;
+  font-size: 0.78rem;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -285,7 +291,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(2, 1fr);
-  gap: 6px;
+  gap: 8px;
 }
 
 .quick-action-tile {
@@ -293,11 +299,11 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 4px;
   border: 1px solid;
   border-radius: 10px;
-  padding: 6px 2px;
-  font-size: 0.62rem;
+  padding: 10px 4px;
+  font-size: 0.72rem;
   font-weight: 700;
   line-height: 1.15;
   text-align: center;
@@ -305,9 +311,9 @@
 }
 
 .quick-action-tile mat-icon {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
 }
 
 /* Each action gets its own tint + accent color (mirrors the extras-chip
