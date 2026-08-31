@@ -322,9 +322,22 @@ export interface DialogData {
       .wicket-type-chip {
         width: 100%;
       }
-      .wicket-type-chip ::ng-deep .mdc-evolution-chip {
+      /* The host stretches to 100% via the rule above, but MDC's inner
+         action <button> (the actual clickable/selectable element) only
+         sizes to its label content by default, leaving the rest of the
+         chip's width unclickable - stretch the cell + button too so a
+         tap anywhere on the chip selects it. */
+      .wicket-type-chip ::ng-deep .mdc-evolution-chip__cell,
+      .wicket-type-chip ::ng-deep .mdc-evolution-chip__action {
         width: 100%;
         justify-content: center;
+      }
+      /* MDC's checkmark/leading-icon slot defaults to flex-grow:1 (it's
+         meant to absorb leftover space in the default left-aligned
+         layout) - that fights the justify-content:center above and
+         shoves the label to the right, so it needs to stop growing. */
+      .wicket-type-chip ::ng-deep .mdc-evolution-chip__graphic {
+        flex-grow: 0;
       }
       @media (max-width: 400px) {
         .wicket-type-grid {
