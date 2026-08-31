@@ -65,6 +65,11 @@ export class MatchListComponent implements OnInit, OnChanges {
   @Input('backTarget') backTarget: string = 'allPlayers';
 
   public matchesList: LoadMatchDTO[] = [];
+  // Full, unfiltered fetch result - matchesList (the player-filtered view)
+  // is always re-derived from this, never mutated/narrowed in place, so
+  // switching to a different player's matchIds (see ngOnChanges) filters
+  // from the complete set instead of an already-narrowed previous list.
+  private allMatches: LoadMatchDTO[] = [];
   // Client-side team-name search - standalone /allMatches usage only (see
   // *ngIf="!isPlayerList" on the search field in the template). No extra
   // Firestore reads: filters the already-fetched matchesList in memory,
@@ -92,12 +97,8 @@ export class MatchListComponent implements OnInit, OnChanges {
     const fetch = this.loadMatchService.getAllMatches();
     const tracked = isColdFetch ? this.spinnerService.wrap(fetch) : fetch;
     tracked.then((matches) => {
-      this.matchesList = matches;
-      if (this.matchIds && this.matchIds?.length > 0) {
-        this.matchesList = this.matchesList.filter((match) =>
-          this.matchIds?.includes(match.id)
-        );
-      }
+      this.allMatches = matches;
+      this.applyMatchIdsFilter();
       this.recomputeCards();
     });
   }
@@ -106,13 +107,26 @@ export class MatchListComponent implements OnInit, OnChanges {
    * Handles this component instance being reused for a different player
    * (e.g. player-details switching currentPlayer while staying on the
    * same route/component instance) - playerName/matchIds/mvpPointsHistory
-   * changing needs cards recomputed the same way the old
-   * recompute-on-every-template-access getter used to react to it. A
-   * no-op (harmlessly recomputes an empty cards array) if this fires
-   * before ngOnInit's initial fetch has resolved.
+   * changing needs matchesList/cards recomputed the same way the old
+   * recompute-on-every-template-access getter used to react to it. Must
+   * re-derive matchesList from allMatches (not just recompute cards from
+   * the previous player's already-narrowed matchesList), otherwise the
+   * new player's card list stays stuck showing the previous player's
+   * matches - including ones the new player was never part of. A no-op
+   * (harmlessly filters an empty allMatches) if this fires before
+   * ngOnInit's initial fetch has resolved.
    */
   ngOnChanges(): void {
+    this.applyMatchIdsFilter();
     this.recomputeCards();
+  }
+
+  /** Re-derives matchesList from allMatches + the current matchIds input. */
+  private applyMatchIdsFilter(): void {
+    this.matchesList =
+      this.matchIds && this.matchIds.length > 0
+        ? this.allMatches.filter((match) => this.matchIds?.includes(match.id))
+        : this.allMatches;
   }
 
   /**
