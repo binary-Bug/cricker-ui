@@ -175,7 +175,12 @@ export class LoadMatchService {
     // matchService.matchNotFound doc comment for how the UI reacts to this.
     this.matchService.matchNotFound = !matchToLoad;
     if (!matchToLoad) {
-      logger.error('Match not found', { matchId }).catch(() => {});
+      logger
+        .error('Match not found', {
+          event: 'match_not_found',
+          matchId,
+        })
+        .catch(() => {});
       return;
     }
 
@@ -189,7 +194,12 @@ export class LoadMatchService {
 
       const teamData = matchToLoad?.data['teamData'];
       if (!teamData) {
-        logger.warn('Team data missing in match', { matchId }).catch(() => {});
+        logger
+          .warn('Team data missing in match', {
+            event: 'match_team_data_missing',
+            matchId,
+          })
+          .catch(() => {});
       }
 
       this.matchService.teamData['team1'] = teamData?.[
@@ -239,7 +249,11 @@ export class LoadMatchService {
       this.eventHandlerService.NotifyMatchLoadCompleteEvent();
     } catch (error: any) {
       logger
-        .error('Error loading match', { matchId, error: error?.message })
+        .error('Error loading match', {
+          event: 'match_load_error',
+          matchId,
+          error: error?.message,
+        })
         .catch(() => {});
       this.matchService.matchNotFound = true;
     }

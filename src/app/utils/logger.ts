@@ -8,19 +8,38 @@ interface LogPayload {
   _time: string;
   level: 'info' | 'warn' | 'error';
   message?: string;
-  event?: string;
+  event: string;
   app: 'cricker-ui';
   [key: string]: any;
 }
 
 interface DeviceInfo {
+  clientId: string;
   userAgent: string;
   platform: string;
   language: string;
+  languages: readonly string[];
   timezone: string;
+  cookieEnabled: boolean;
+  doNotTrack?: string | null;
+  hardwareConcurrency?: number;
+  deviceMemoryGb?: number;
+  maxTouchPoints: number;
+  viewport: {
+    width: number;
+    height: number;
+    pixelRatio: number;
+  };
   screen: {
     width: number;
     height: number;
+  };
+  referrer?: string;
+  connection?: {
+    effectiveType?: string;
+    downlinkMbps?: number;
+    rttMs?: number;
+    saveData?: boolean;
   };
   hostname?: string;
   ipAddress?: string;
@@ -39,6 +58,7 @@ class AxiomLogger {
   private readonly AXIOM_ENDPOINT = 'https://api.axiom.co/v1/datasets';
   private isDevelopment: boolean;
   private deviceInfo: DeviceInfo | null = null;
+  private readonly clientIdStorageKey = 'cricker-ui-client-id';
 
   constructor() {
     this.isDevelopment = !this.isProdEnv();
@@ -62,6 +82,19 @@ class AxiomLogger {
    */
   public initialize(isProdEnv: boolean): void {
     this.isDevelopment = !isProdEnv;
+  }
+
+  private getClientId(): string {
+    try {
+      const existingId = window.localStorage.getItem(this.clientIdStorageKey);
+      if (existingId) return existingId;
+
+      const clientId = crypto.randomUUID();
+      window.localStorage.setItem(this.clientIdStorageKey, clientId);
+      return clientId;
+    } catch {
+      return 'session-' + Math.random().toString(36).slice(2);
+    }
   }
 
   /**
@@ -144,15 +177,52 @@ class AxiomLogger {
     }
 
     const deviceInfo: DeviceInfo = {
+      clientId: this.getClientId(),
       userAgent: navigator.userAgent,
       platform: navigator.platform,
       language: navigator.language,
+      languages: navigator.languages,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      cookieEnabled: navigator.cookieEnabled,
+      doNotTrack: navigator.doNotTrack,
+      hardwareConcurrency: navigator.hardwareConcurrency,
+      deviceMemoryGb: (navigator as Navigator & { deviceMemory?: number })
+        .deviceMemory,
+      maxTouchPoints: navigator.maxTouchPoints,
+      viewport: {
+        width: window.innerWidth,
+        height: window.innerHeight,
+        pixelRatio: window.devicePixelRatio,
+      },
       screen: {
         width: window.screen.width,
         height: window.screen.height,
       },
     };
+
+    try {
+      deviceInfo.referrer = document.referrer || undefined;
+      const connection = (
+        navigator as Navigator & {
+          connection?: {
+            effectiveType?: string;
+            downlink?: number;
+            rtt?: number;
+            saveData?: boolean;
+          };
+        }
+      ).connection;
+      if (connection) {
+        deviceInfo.connection = {
+          effectiveType: connection.effectiveType,
+          downlinkMbps: connection.downlink,
+          rttMs: connection.rtt,
+          saveData: connection.saveData,
+        };
+      }
+    } catch {
+      // Optional browser metadata
+    }
 
     // Try to get IP address and hostname from browser
     try {
@@ -202,16 +272,15 @@ class AxiomLogger {
     const payload: LogPayload = {
       _time: new Date().toISOString(),
       level,
+      event: event || metadata['event'] || `${level}_log`,
       app: 'cricker-ui',
       ...deviceInfo,
       ...metadata,
     };
 
+    payload.event = event || metadata['event'] || `${level}_log`;
     if (message) {
       payload.message = message;
-    }
-    if (event) {
-      payload.event = event;
     }
 
     return payload;
@@ -255,7 +324,7 @@ class AxiomLogger {
     const payload = await this.buildPayload(
       'info',
       message,
-      undefined,
+      'info_log',
       metadata,
     );
 
@@ -277,7 +346,7 @@ class AxiomLogger {
     const payload = await this.buildPayload(
       'warn',
       message,
-      undefined,
+      'warning_log',
       metadata,
     );
 
@@ -296,15 +365,19 @@ class AxiomLogger {
     message: string,
     metadata: Record<string, any> = {},
   ): Promise<void> {
-    const payload = await this.buildPayload(
-      'error',
-      message,
-      undefined,
-      metadata,
-    );
+    const stackTrace =
+      typeof metadata['stackTrace'] === 'string'
+        ? metadata['stackTrace']
+        : typeof metadata['errorStack'] === 'string'
+          ? metadata['errorStack']
+          : new Error(message).stack || 'Stack trace unavailable';
+    const payload = await this.buildPayload('error', message, 'error_log', {
+      ...metadata,
+      stackTrace,
+    });
 
     if (this.isDevelopment) {
-      console.error(`[ERROR] ${message}`, payload);
+      console.error(`[ERROR] ${message}\n${stackTrace}`, payload);
     }
 
     // Always send to Axiom (dev and prod)

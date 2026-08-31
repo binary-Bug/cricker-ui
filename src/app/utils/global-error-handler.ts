@@ -12,16 +12,20 @@ export class GlobalErrorHandler implements ErrorHandler {
   constructor(private injector: Injector) {}
 
   handleError(error: Error | any): void {
-    console.error('Global error caught:', error);
-
     // Extract error details
     const errorMessage = error?.message || 'Unknown error occurred';
-    const errorStack = error?.stack || '';
+    const errorStack =
+      error?.stack ||
+      new Error(errorMessage).stack ||
+      'Stack trace unavailable';
     const errorName = error?.name || 'UnknownError';
+
+    console.error(`Global error caught: ${errorMessage}\n${errorStack}`, error);
 
     // Log to Axiom
     logger
       .error(errorMessage, {
+        event: 'angular_unhandled_error',
         errorName,
         errorStack,
         source: 'angular-global-handler',

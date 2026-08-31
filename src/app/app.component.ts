@@ -68,7 +68,7 @@ export class AppComponent implements OnInit {
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe((event: any) => {
         logger
-          .trackEvent('page_viewed', {
+          .trackEvent(`page_viewed:${event.urlAfterRedirects || event.url}`, {
             route: event.url,
             urlAfterRedirects: event.urlAfterRedirects,
           })
@@ -78,10 +78,11 @@ export class AppComponent implements OnInit {
     // Track page visibility changes
     if (typeof document !== 'undefined') {
       document.addEventListener('visibilitychange', () => {
+        const visibility = document.visibilityState;
         logger
-          .trackEvent('visibility_changed', {
+          .trackEvent(`visibility_changed:${visibility}`, {
             hidden: document.hidden,
-            visibilityState: document.visibilityState,
+            visibilityState: visibility,
           })
           .catch((err) =>
             console.error('Failed to log visibility change:', err),
