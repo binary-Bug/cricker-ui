@@ -26,9 +26,15 @@ import { MatchMvpSummary } from '../../models/mvp.interface';
   template: ` <app-dialog-icon-header
       icon="emoji_events"
       title="Match Complete"
-      [subtitle]="matchResult"
     ></app-dialog-icon-header>
     <mat-dialog-content>
+      <!--
+        The match result is just as much a headline fact as the Man of the
+        Match below it, not a throwaway description of the title - styled
+        bold/centered/dark instead of the shared header's left-aligned gray
+        subtitle so it actually reads as a result, not a caption.
+      -->
+      <div class="match-result">{{ matchResult }}</div>
       <!--
         Man of the Match spotlight + top-5 list - only rendered once MVP
         points have been calculated (see ngOnInit). manOfTheMatch is only
@@ -88,6 +94,14 @@ import { MatchMvpSummary } from '../../models/mvp.interface';
     </mat-dialog-actions>`,
   styles: [
     `
+      .match-result {
+        text-align: center;
+        font-size: 1.15em;
+        font-weight: 700;
+        color: #212121;
+        padding: 0 24px;
+        margin: 0 0 4px;
+      }
       .match-complete-actions.mat-mdc-dialog-actions {
         display: flex;
         gap: 10px;
