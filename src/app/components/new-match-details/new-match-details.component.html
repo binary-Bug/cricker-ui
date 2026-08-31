@@ -1,4 +1,4 @@
-<div class="new-match-container">
+<div class="new-match-container" [class.roomy]="isProdEnv">
   <div class="new-match-header">
     <button mat-mini-fab color="primary" aria-label="Back" (click)="goBack()">
       <mat-icon>arrow_back</mat-icon>
@@ -6,7 +6,7 @@
     <h1 class="new-match-title">New Match</h1>
   </div>
 
-  <form [formGroup]="matchDetailsForm">
+  <form [formGroup]="matchDetailsForm" class="new-match-form">
     <div class="new-match-section">
       <div class="section-label">Teams</div>
       <div class="new-match-card">
@@ -118,10 +118,10 @@
     <div class="new-match-section">
       <div class="section-label">Toss</div>
       <div class="new-match-card">
-        <div class="toggle-row">
+        <div class="toggle-row toggle-row-team">
           <span class="toggle-row-label">Toss Winner</span>
           <mat-button-toggle-group
-            class="segmented-toggle-group"
+            class="segmented-toggle-group team-name-toggle"
             formControlName="tossWinner"
             aria-label="Toss Winner"
           >
@@ -167,16 +167,6 @@
       </div>
     </div>
 
-    <button
-      (click)="openCurrentPlayerDialog()"
-      mat-raised-button
-      color="primary"
-      class="hero-cta"
-      [disabled]="matchDetailsForm.invalid || sameCaptainSelected"
-    >
-      Start Match
-    </button>
-
     <div class="new-match-section dev-mode-section" *ngIf="!isProdEnv">
       <div class="section-label dev-tools-label">Mode</div>
       <mat-button-toggle-group
@@ -188,5 +178,15 @@
         <mat-button-toggle value="prod">Prod</mat-button-toggle>
       </mat-button-toggle-group>
     </div>
+
+    <button
+      (click)="openCurrentPlayerDialog()"
+      mat-raised-button
+      color="primary"
+      class="hero-cta"
+      [disabled]="matchDetailsForm.invalid || sameCaptainSelected"
+    >
+      Start Match
+    </button>
   </form>
 </div>

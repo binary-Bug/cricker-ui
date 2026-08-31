@@ -33,7 +33,7 @@
 .dashboard-container {
   max-width: 640px;
   margin: 0 auto;
-  padding: 24px 16px 40px;
+  padding: 16px 16px 20px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -47,7 +47,7 @@
 /* --- Header --- */
 .dashboard-header {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .app-logo {
@@ -78,13 +78,13 @@
   border-radius: 20px;
   font-size: 1.15rem;
   font-weight: 600;
-  margin-bottom: 28px;
+  margin-bottom: 16px;
   box-shadow: 0 4px 14px rgba(69, 39, 160, 0.35);
 }
 
 /* --- Section labels/dividers --- */
 .dashboard-section {
-  margin-bottom: 28px;
+  margin-bottom: 16px;
 }
 
 .section-label {
@@ -192,7 +192,7 @@
 /* --- Footer --- */
 .version-footer {
   text-align: center;
-  margin-top: 28px;
+  margin-top: 16px;
   color: #9e9e9e;
   font-size: 0.8rem;
 }

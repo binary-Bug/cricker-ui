@@ -6,12 +6,78 @@
    UtilityService helper) for the resolved-team-name preview box.
    ============================================================ */
 
+/* Fills the viewport like room.component.css's :host does, so the flex
+   column below can distribute any leftover vertical space (e.g. prod mode
+   without the dev-only Mode section) instead of leaving it as dead space
+   below the Start Match button. min-height (not height) still lets content
+   grow past the viewport on short screens instead of clipping. */
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Vertical spacing uses dvh-based clamp() (floor, preferred-scaled-to-
+   viewport-height, ceiling) instead of fixed px, so the page fluidly
+   compresses on shorter viewports to avoid a scrollbar down to a ~700px
+   height floor, then just allows natural overflow/scroll below that -
+   compressing further would make things unreadable.
+
+   These custom properties default to the "tight" sizing needed to fit
+   every section (incl. the dev-only Mode toggle) without a scrollbar.
+   The .roomy variant below (applied in prod, where the Mode section is
+   hidden) scales the same properties up so the freed-up vertical room
+   grows the actual content - card padding, fonts, inputs, avatars,
+   toggles - instead of sitting unused as dead space. */
 .new-match-container {
+  --section-gap: clamp(6px, 1.4dvh, 12px);
+  --card-padding: clamp(10px, 1.8dvh, 16px);
+  --card-gap: clamp(8px, 1.4dvh, 12px);
+  --section-label-margin: clamp(4px, 1dvh, 10px);
+  --section-label-size: 0.95rem;
+  --field-label-size: 0.78rem;
+  --input-min-height: 40px;
+  --input-padding: 8px;
+  --avatar-size: clamp(26px, 3.6dvh, 32px);
+  --team-name-size: 0.82em;
+  --preview-box-padding: clamp(6px, 1dvh, 10px) 10px;
+  --toggle-line-height: 32px;
+  --toggle-padding: 0 10px;
+  --toggle-font-size: 0.85em;
+  --hero-height: clamp(44px, 6.4dvh, 56px);
+  --hero-font-size: 1.1rem;
+  --header-title-size: 1.4rem;
+  --header-gap: 14px;
   max-width: 640px;
   margin: 0 auto;
-  padding: 16px 16px 32px;
+  padding: clamp(8px, 1.8dvh, 12px) 16px clamp(8px, 1.8dvh, 16px);
   width: 100%;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+}
+
+.new-match-container.roomy {
+  --section-gap: clamp(8px, 1.8dvh, 16px);
+  --card-padding: clamp(12px, 2.1dvh, 18px);
+  --card-gap: clamp(9px, 1.6dvh, 14px);
+  --section-label-margin: clamp(5px, 1.1dvh, 11px);
+  --section-label-size: 1rem;
+  --field-label-size: 0.82rem;
+  --input-min-height: 44px;
+  --input-padding: 9px;
+  --avatar-size: clamp(28px, 4dvh, 36px);
+  --team-name-size: 0.86em;
+  --preview-box-padding: clamp(8px, 1.3dvh, 13px) 11px;
+  --toggle-line-height: 36px;
+  --toggle-padding: 0 12px;
+  --toggle-font-size: 0.88em;
+  --hero-height: clamp(46px, 6.8dvh, 58px);
+  --hero-font-size: 1.14rem;
+  --header-title-size: 1.48rem;
+  --header-gap: 15px;
 }
 
 @media (min-width: 1024px) {
@@ -24,12 +90,24 @@
 .new-match-header {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 20px;
+  gap: var(--header-gap);
+  margin-bottom: var(--section-gap);
+  flex-shrink: 0;
+}
+
+/* The form's own flex column fills whatever's left after the header - most
+   of any surplus room is already consumed by the .roomy content growth
+   above, so space-between here only needs to redistribute a small residual
+   (rather than the large gaps it produced before content itself grew). */
+.new-match-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  justify-content: space-between;
 }
 
 .new-match-title {
-  font-size: 1.4rem;
+  font-size: var(--header-title-size);
   font-weight: 700;
   color: #263238;
   margin: 0;
@@ -37,16 +115,16 @@
 
 /* --- Section labels + cards --- */
 .new-match-section {
-  margin-bottom: 20px;
+  margin-bottom: var(--section-gap);
 }
 
 .section-label {
-  font-size: 0.95rem;
+  font-size: var(--section-label-size);
   font-weight: 600;
   color: #616161;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  margin: 0 0 10px 4px;
+  margin: 0 0 var(--section-label-margin) 4px;
 }
 
 .dev-tools-label {
@@ -56,10 +134,10 @@
 .new-match-card {
   background: #fafafa;
   border-radius: 12px;
-  padding: 16px;
+  padding: var(--card-padding);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--card-gap);
 }
 
 .full-width-field {
@@ -77,8 +155,18 @@
   gap: 4px;
 }
 
+/* Material's default outlined field infix reserves a roomy 56px min-height
+   (16px top/bottom padding) meant for a floating label - this app's fields
+   use a plain-text label above instead (see comment below), so that extra
+   height is pure unused space here. ::ng-deep needed, infix lives inside
+   mat-form-field's own template. */
+.field-group ::ng-deep .mat-mdc-form-field-infix {
+  min-height: var(--input-min-height);
+  padding: var(--input-padding) 0;
+}
+
 .field-label {
-  font-size: 0.78rem;
+  font-size: var(--field-label-size);
   font-weight: 600;
   color: #757575;
   text-transform: uppercase;
@@ -109,14 +197,14 @@
   gap: 10px;
   background: #ede7f6;
   border-radius: 12px;
-  padding: 14px 12px;
+  padding: var(--preview-box-padding);
 }
 
 .team-preview-side {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex: 1 1 0;
   min-width: 0;
 }
@@ -126,17 +214,18 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
   border-radius: 50%;
   color: white;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.8rem;
 }
 
 .team-preview-name {
   font-weight: 600;
-  font-size: 0.95em;
+  font-size: var(--team-name-size);
+  line-height: 1.15;
   color: #4527a0;
   text-align: center;
   overflow-wrap: anywhere;
@@ -181,6 +270,38 @@
   flex-shrink: 0;
 }
 
+/* Shrinks Material's default ~56px-tall toggle buttons down to a more
+   compact pill - ::ng-deep needed since the label lives inside
+   mat-button-toggle's own template, outside this component's style scope.
+   Grows back up via .roomy when there's room to spare (prod). */
+.segmented-toggle-group ::ng-deep .mat-button-toggle-label-content {
+  line-height: var(--toggle-line-height);
+  padding: var(--toggle-padding);
+  font-size: var(--toggle-font-size);
+}
+
+/* Toss Winner's options become the resolved team names once both captains
+   are picked - those can run much longer than "Team 1"/"Team 2" and won't
+   fit next to the "Toss Winner" label on one line. Stacking the group below
+   the label (full width, each option sharing it equally) shows the full
+   name without truncating it and without an unpredictable wrap-to-two-lines
+   jump in row height. */
+.toggle-row-team {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.team-name-toggle {
+  width: 100%;
+}
+.team-name-toggle ::ng-deep .mat-button-toggle {
+  flex: 1 1 0;
+  text-align: center;
+}
+.team-name-toggle ::ng-deep .mat-button-toggle-label-content {
+  width: 100%;
+}
+
 .dev-mode-section .segmented-toggle-group.mat-button-toggle-group {
   width: 160px;
 }
@@ -188,10 +309,10 @@
 /* --- Start Match hero CTA - matches room.component.css's .hero-cta --- */
 .hero-cta.mat-mdc-button-base {
   width: 100%;
-  height: 56px;
+  height: var(--hero-height);
   border-radius: 20px;
-  font-size: 1.1rem;
+  font-size: var(--hero-font-size);
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   box-shadow: 0 4px 14px rgba(69, 39, 160, 0.35);
 }

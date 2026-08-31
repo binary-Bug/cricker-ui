@@ -82,7 +82,7 @@ export interface PlayerGroup {
             }
           </mat-autocomplete>
         </mat-form-field>
-        @if (autoCompleteService.hasAddPlayerOption(filteredOptions[filteredOptions.length - 1]?.names)) {
+        @if (autoCompleteService.hasAddPlayerOption(filteredOptions[filteredOptions.length - 1].names)) {
         <span class="field-hint">No matching player - select "Add Player" below to add them as new.</span>
         }
       </div>
