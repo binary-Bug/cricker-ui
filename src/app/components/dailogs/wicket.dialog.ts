@@ -1,12 +1,21 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnInit,
+  ViewChild,
+  inject,
+} from '@angular/core';
 import {
   FormsModule,
   ReactiveFormsModule,
   FormControl,
   Validators,
 } from '@angular/forms';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import {
+  MatAutocompleteModule,
+  MatAutocompleteTrigger,
+} from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule, MatChipListboxChange } from '@angular/material/chips';
 import {
@@ -160,7 +169,15 @@ export interface DialogData {
           this.matchService.teamData[this.matchService.currentRoles['bat']]
             .wicketsLost !== this.matchService.totalPlayers! - 2
         ) {
-        <div class="new-batsmen-preview">
+        <div
+          class="new-batsmen-preview"
+          role="button"
+          tabindex="0"
+          aria-label="Open new batsman picker"
+          (click)="openNewBatsmenPicker()"
+          (keydown.enter)="openNewBatsmenPicker()"
+        >
+          <div class="new-batsmen-preview-label">New Batsman (replacing the dismissed player)</div>
           <div
             class="new-batsmen-preview-avatar"
             [style.background]="newBatsmenValue ? utilityService.getAvatarColor(newBatsmenValue) : null"
@@ -173,6 +190,8 @@ export interface DialogData {
           <span class="field-label">New Batsman *</span>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <input
+              #newBatsmenInput
+              #newBatsmenTrigger="matAutocompleteTrigger"
               type="text"
               placeholder="Select Player"
               matInput
@@ -373,6 +392,21 @@ export interface DialogData {
         border-radius: 12px;
         padding: 6px 12px;
         margin-bottom: 10px;
+        cursor: pointer;
+        border: 2px solid transparent;
+      }
+      .new-batsmen-preview:hover,
+      .new-batsmen-preview:focus-visible {
+        border-color: #9575cd;
+        outline: none;
+      }
+      .new-batsmen-preview-label {
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: #7e57c2;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        text-align: center;
       }
       .new-batsmen-preview-avatar {
         display: flex;
@@ -438,6 +472,16 @@ export class WicketDialog implements OnInit {
   filteredOptionsNewBatsmen!: string[];
   actionPlayerLabel: string = '';
   isInvalid: boolean = true;
+
+  @ViewChild('newBatsmenInput') newBatsmenInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('newBatsmenTrigger') newBatsmenTrigger?: MatAutocompleteTrigger;
+
+  // Lets the new-batsman preview card double as a picker trigger, matching
+  // the New Bowler dialog's click-to-open behaviour.
+  openNewBatsmenPicker(): void {
+    this.newBatsmenInput?.nativeElement.focus();
+    this.newBatsmenTrigger?.openPanel();
+  }
 
   currentWicketOption: string = '';
   selectedBatsmen: string = '';

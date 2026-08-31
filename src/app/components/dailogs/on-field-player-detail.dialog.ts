@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import {
   FormsModule,
   ReactiveFormsModule,
@@ -21,7 +21,10 @@ import { MatchService } from '../../services/match.service';
 import { map, Observable, startWith } from 'rxjs';
 import { PlayerService } from '../../services/player.service';
 import { UtilityService } from '../../services/utility.service';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import {
+  MatAutocompleteModule,
+  MatAutocompleteTrigger,
+} from '@angular/material/autocomplete';
 import { CommonModule } from '@angular/common';
 import { AutoCompleteService } from '../../services/auto-complete.service';
 
@@ -33,11 +36,18 @@ import { AutoCompleteService } from '../../services/auto-complete.service';
     <p class="dialog-subtitle">
       {{ data.isAuto
         ? "Second innings is underway - pick the new opening pair and first bowler."
-        : "Pick your opening batting pair and first bowler to begin." }}
+        : "Tap a card below (or its field further down) to search &amp; select that player." }}
     </p>
     <mat-dialog-content>
       <div class="on-field-preview">
-        <div class="on-field-preview-chip">
+        <div
+          class="on-field-preview-chip"
+          role="button"
+          tabindex="0"
+          aria-label="Open striker picker"
+          (click)="openStrikerPicker()"
+          (keydown.enter)="openStrikerPicker()"
+        >
           <div
             class="on-field-preview-avatar"
             [style.background]="strikerValue ? utilityService.getAvatarColor(strikerValue) : null"
@@ -47,7 +57,14 @@ import { AutoCompleteService } from '../../services/auto-complete.service';
           <div class="on-field-preview-name">{{ strikerValue || 'Not selected' }}</div>
           <div class="on-field-preview-role">Striker</div>
         </div>
-        <div class="on-field-preview-chip">
+        <div
+          class="on-field-preview-chip"
+          role="button"
+          tabindex="0"
+          aria-label="Open non-striker picker"
+          (click)="openNonStrikerPicker()"
+          (keydown.enter)="openNonStrikerPicker()"
+        >
           <div
             class="on-field-preview-avatar"
             [style.background]="nonStrikerValue ? utilityService.getAvatarColor(nonStrikerValue) : null"
@@ -57,7 +74,14 @@ import { AutoCompleteService } from '../../services/auto-complete.service';
           <div class="on-field-preview-name">{{ nonStrikerValue || 'Not selected' }}</div>
           <div class="on-field-preview-role">Non-Striker</div>
         </div>
-        <div class="on-field-preview-chip">
+        <div
+          class="on-field-preview-chip"
+          role="button"
+          tabindex="0"
+          aria-label="Open bowler picker"
+          (click)="openBowlerPicker()"
+          (keydown.enter)="openBowlerPicker()"
+        >
           <div
             class="on-field-preview-avatar"
             [style.background]="currentBowlerValue ? utilityService.getAvatarColor(currentBowlerValue) : null"
@@ -76,6 +100,8 @@ import { AutoCompleteService } from '../../services/auto-complete.service';
             <span class="field-label">Striker *</span>
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <input
+                #strikerInput
+                #strikerTrigger="matAutocompleteTrigger"
                 type="text"
                 placeholder="Select Player"
                 matInput
@@ -101,6 +127,8 @@ import { AutoCompleteService } from '../../services/auto-complete.service';
             <span class="field-label">Non-Striker *</span>
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <input
+                #nonStrikerInput
+                #nonStrikerTrigger="matAutocompleteTrigger"
                 type="text"
                 placeholder="Select Player"
                 matInput
@@ -136,6 +164,8 @@ import { AutoCompleteService } from '../../services/auto-complete.service';
             <span class="field-label">Opening Bowler *</span>
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <input
+                #bowlerInput
+                #bowlerTrigger="matAutocompleteTrigger"
                 type="text"
                 placeholder="Select Player"
                 matInput
@@ -296,6 +326,15 @@ import { AutoCompleteService } from '../../services/auto-complete.service';
         align-items: center;
         gap: 4px;
         min-width: 84px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        border-radius: 10px;
+        padding: 4px;
+      }
+      .on-field-preview-chip:hover,
+      .on-field-preview-chip:focus-visible {
+        border-color: #9575cd;
+        outline: none;
       }
 
       .on-field-preview-avatar {
@@ -386,6 +425,28 @@ export class OnFieldPlayerDetailsDialog implements OnInit {
     const striker = this.strikerValue.trim().toLowerCase();
     const nonStriker = this.nonStrikerValue.trim().toLowerCase();
     return !!striker && !!nonStriker && striker === nonStriker;
+  }
+
+  @ViewChild('strikerInput') strikerInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('strikerTrigger') strikerTrigger?: MatAutocompleteTrigger;
+  @ViewChild('nonStrikerInput') nonStrikerInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('nonStrikerTrigger') nonStrikerTrigger?: MatAutocompleteTrigger;
+  @ViewChild('bowlerInput') bowlerInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('bowlerTrigger') bowlerTrigger?: MatAutocompleteTrigger;
+
+  // Each preview chip doubles as a picker trigger for its own field, same
+  // as the New Bowler dialog's click-to-open behaviour.
+  openStrikerPicker(): void {
+    this.strikerInput?.nativeElement.focus();
+    this.strikerTrigger?.openPanel();
+  }
+  openNonStrikerPicker(): void {
+    this.nonStrikerInput?.nativeElement.focus();
+    this.nonStrikerTrigger?.openPanel();
+  }
+  openBowlerPicker(): void {
+    this.bowlerInput?.nativeElement.focus();
+    this.bowlerTrigger?.openPanel();
   }
 
   ngOnInit(): void {

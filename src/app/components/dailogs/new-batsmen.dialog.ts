@@ -1,12 +1,21 @@
 import { AsyncPipe, CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  inject,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import {
   FormsModule,
   ReactiveFormsModule,
   FormControl,
   Validators,
 } from '@angular/forms';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import {
+  MatAutocompleteModule,
+  MatAutocompleteTrigger,
+} from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import {
   MatDialogContent,
@@ -31,10 +40,17 @@ import { DialogIconHeaderComponent } from './dialog-icon-header.component';
     <app-dialog-icon-header
       icon="person_add"
       title="New Batsman"
-      subtitle="Select the next batsman to come to the crease"
+      subtitle="Tap the card or the field below to search &amp; select the batsman"
     ></app-dialog-icon-header>
     <mat-dialog-content>
-      <div class="new-batsmen-preview">
+      <div
+        class="new-batsmen-preview"
+        role="button"
+        tabindex="0"
+        aria-label="Open new batsman picker"
+        (click)="openPicker()"
+        (keydown.enter)="openPicker()"
+      >
         <div
           class="new-batsmen-preview-avatar"
           [style.background]="batsmanValue ? utilityService.getAvatarColor(batsmanValue) : null"
@@ -47,6 +63,8 @@ import { DialogIconHeaderComponent } from './dialog-icon-header.component';
         <span class="field-label">New Batsman *</span>
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <input
+            #newBatsmenInput
+            #newBatsmenTrigger="matAutocompleteTrigger"
             type="text"
             placeholder="Select Player"
             matInput
@@ -126,6 +144,13 @@ import { DialogIconHeaderComponent } from './dialog-icon-header.component';
         border-radius: 12px;
         padding: 14px 12px;
         margin-bottom: 16px;
+        cursor: pointer;
+        border: 2px solid transparent;
+      }
+      .new-batsmen-preview:hover,
+      .new-batsmen-preview:focus-visible {
+        border-color: #9575cd;
+        outline: none;
       }
       .new-batsmen-preview-avatar {
         display: flex;
@@ -200,8 +225,18 @@ export class NewBatsmenDialog implements OnInit {
 
   newBatsmen = new FormControl('', Validators.required);
 
+  @ViewChild('newBatsmenInput') newBatsmenInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('newBatsmenTrigger') newBatsmenTrigger?: MatAutocompleteTrigger;
+
   get batsmanValue(): string {
     return (this.newBatsmen.value || '').trim();
+  }
+
+  // Lets the preview card double as a picker trigger, same as the New
+  // Bowler dialog's click-to-open behaviour.
+  openPicker(): void {
+    this.newBatsmenInput?.nativeElement.focus();
+    this.newBatsmenTrigger?.openPanel();
   }
 
   ngOnInit(): void {
